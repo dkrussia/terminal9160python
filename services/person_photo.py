@@ -1,7 +1,7 @@
 import base64
 import os
 
-from main import PHOTO_DIR
+from main import PHOTO_DIR, SERVER_PORT, SERVER_HOST
 
 
 class PersonPhoto:
@@ -18,3 +18,7 @@ class PersonPhoto:
             os.remove(f"{PHOTO_DIR}/{person_id}.jpg")
         except FileNotFoundError:
             pass
+
+    @staticmethod
+    def get_photo_url(person_id):
+        return f"http://{SERVER_HOST}:{SERVER_PORT}/photo/{person_id}.jpg"

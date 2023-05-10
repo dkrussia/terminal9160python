@@ -15,7 +15,7 @@ def test_save_file_from_base_base64():
     PersonPhoto.remove_photo(0)
 
 
-def test_photo_static_url():
+def test_check_photo_url():
     PersonPhoto.base64_to_file(0, test_photo)
     with TestClient(app) as client:
         response = client.get("/photo/0.jpg")

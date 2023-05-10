@@ -5,8 +5,12 @@ import uvicorn
 from fastapi import FastAPI, Request
 from starlette.staticfiles import StaticFiles
 
+from services.devices import Devices
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 PHOTO_DIR = f"{BASE_DIR}/photo"
+SERVER_HOST = "192.168.1.130"
+SERVER_PORT = 8080
 
 app = FastAPI()
 app.mount("/photo", StaticFiles(directory=PHOTO_DIR), name="photo")
@@ -40,7 +44,22 @@ async def index(request: Request):
 @app.post("/api/devices/login")
 async def device_login(request: Request):
     await print_request(request)
-    # 
+    d = await request.json()
+    # {
+    # 'appVersionCode': 10415,
+    #  'appVersionName': '1.4.15C_DBG',
+    #  'devLanguage': 'english',
+    #  'devName': 'YGKJ202107TR08EL0007',
+    #  'devSn': 'YGKJ202107TR08EL0007',
+    #  'loginName': 'admin',
+    #  'model': '9160-K5',
+    #  'networkIp': '192.168.1.100',
+    #  'networkType': 1,
+    #  'onlineStatus': 0,
+    #  'romVersion': ''
+    #  }
+    #
+    Devices.add_device(d["devSn"])
     return {
         "code": 0,
         "data": {
@@ -69,6 +88,6 @@ async def dconfig(request: Request):
 if __name__ == '__main__':
     uvicorn.run(
         app=app,
-        port=8080,
-        host='192.168.1.130',
+        port=SERVER_PORT,
+        host=SERVER_HOST,
     )

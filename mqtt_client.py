@@ -1,74 +1,27 @@
-import random
-
 import paho.mqtt.client as mqtt
 import json
-import time
 
-client = mqtt.Client("my_client")
-client.username_pw_set('admin', 'admin123')
-client.connect("192.168.1.130", 8086, 60)
-client.loop_start()
-# USER_ID = random.randint(100, 10000)
-USER_ID = 71
-create_person_payload = {
-    "type": 3,
-    "id": 222,
-    "devSn": "YGKJ202107TR08EL0007",
-    "feedbackUrl": "http://192.168.1.130:8080",
-    "operations":
-        [
-            {
-                "createBy": "",
-                "createTime": 1602843134000,
-                "deptId": 104,
-                "id": USER_ID,
-                "sex": 0,
-                "status": 0,
-                "updateBy": "",
-                "userCode": str(USER_ID),
-                "userName": "John",
-                "firstName": "Sergey",
-                "lastName": "Kuznetsov",
-                "userPhone": "15575681394",
-                "cardNum": "ABCD",
-                "wiegandNum": "100",
-                "company": "1",
-                "department": "1",
-                "group": "1",
-                "remark": "1",
-                "expiry": ""
-            }
-        ]
 
-}
+class ExceptionOnPublishMQTTMessage(Exception):
+    pass
 
-update_person_payload = {
-    "type": 4,
-    "id": 11,
-    "devSn": "YGKJ202107TR08EL0007",
-    "feedbackUrl": "",
-    "operations":
-        {
-            "createBy": "",
-            "deptId": 104,
-            "id": USER_ID,
-            "sex": 0,
-            "status": 0,
-            "updateBy": "",
-            "userCode": str(USER_ID),
-            "userName": "John",
-            "firstName": "John",
-            "lastName": "John",
-            "userPhone": "15575681394",
-            "cardNum": "ABCD",
-            "wiegandNum": str(USER_ID),
-            "company": "",
-            "department": "",
-            "group": "",
-            "remark": "",
-            "expiry": ""
-        }
-}
+
+def get_mqtt_client():
+    client = mqtt.Client("terminal_mqtt")
+    client.username_pw_set('admin', 'admin123')
+    return client
+
+
+mqtt_client = get_mqtt_client()
+
+
+def mqtt_publish_command(sn_device, payload: dict):
+    mqtt_client.loop_start()
+    result = mqtt_client.publish(f"/_dispatch/command/{sn_device}", json.dumps(payload))
+    if result != mqtt.MQTT_ERR_SUCCESS:
+        raise ExceptionOnPublishMQTTMessage()
+    mqtt_client.loop_stop()
+
 
 query_person_payload = {
     "type": 1000,
@@ -84,25 +37,3 @@ query_person_payload = {
         "page_idx": 0
     }
 }
-
-delete_person_payload = {
-    "devSn": "YGKJ202107TR08EL0007",
-    "id": 1,
-    "operations":
-        [{
-            "id": USER_ID,
-            "params": {}
-        }],
-    "type": 5
-}
-
-client.publish("/_dispatch/command/YGKJ202107TR08EL0007", json.dumps(create_person_payload))
-time.sleep(1)
-client.publish("/_dispatch/command/YGKJ202107TR08EL0007", json.dumps(update_person_payload))
-time.sleep(2)
-client.publish("/_dispatch/command/YGKJ202107TR08EL0007", json.dumps(query_person_payload))
-client.publish("/_dispatch/command/YGKJ202107TR08EL0007", json.dumps(query_person_payload))
-time.sleep(1)
-client.publish("/_dispatch/command/YGKJ202107TR08EL0007", json.dumps(delete_person_payload))
-time.sleep(1)
-client.loop_stop()

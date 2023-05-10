@@ -3,3 +3,4 @@
 /.idea
 *.ini
 /tests/.pytest_cache/
+/tests/I.jpg

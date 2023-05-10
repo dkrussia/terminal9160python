@@ -5,9 +5,10 @@ class CreatePersonJsonException(Exception):
     pass
 
 
-def create_person_json(id: int, lastName: str = "", firstName: str = "", ):
+def create_person_json(id: int, lastName: str = "", firstName: str = "", face_str: str = ""):
     if not isinstance(id, int) or id < 1:
         raise CreatePersonJsonException
+    # TODO: add faceUrl
     return {
         "createBy": "",
         "createTime": 0,
@@ -52,7 +53,7 @@ class CommandForTerminal:
             "feedbackUrl": "",
         }
 
-    def result(self):
+    def result_json(self):
         return self.payload
 
     def add_operation_in_list(self, data_json: dict):

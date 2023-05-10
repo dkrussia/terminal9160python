@@ -14,6 +14,7 @@ def test_person_create_json():
         "status": 0,
         "updateBy": "",
         "userCode": "1000",
+        "faceUrl": "http://localhost:5000/photo/1000.jpg",
         "userName": "",
         "firstName": "Sergey",
         "lastName": "Kuznetsov",
@@ -26,8 +27,9 @@ def test_person_create_json():
         "remark": "",
         "expiry": ""
     }
-    json = person_service.create_person_json(1000, 'Sergey', 'Kuznetsov')
+    json = person_service.create_person_json(1000, 'Sergey', 'Kuznetsov', face_str="123")
     assert json == test1_json
+
     test2_json = {
         "createBy": "",
         "createTime": 0,
@@ -36,6 +38,7 @@ def test_person_create_json():
         "sex": 0,
         "status": 0,
         "updateBy": "",
+        "faceUrl": "",
         "userCode": "1000",
         "userName": "",
         "firstName": "",
@@ -49,7 +52,7 @@ def test_person_create_json():
         "remark": "",
         "expiry": ""
     }
-    json = person_service.create_person_json(1000, '', '')
+    json = person_service.create_person_json(1001, '', '',  face_str="")
     assert json == test2_json
 
     with pytest.raises(CreatePersonJsonException):
