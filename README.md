@@ -8,6 +8,7 @@
 
 `/_report/state`  
 `/_report/received`
+  
 -----------------------
 **Пример рабочего потока данных Matrix-Terminal:**  
   
