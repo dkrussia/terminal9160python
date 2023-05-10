@@ -2,3 +2,4 @@
 /venv/
 /.idea
 *.ini
+/tests/.pytest_cache/
