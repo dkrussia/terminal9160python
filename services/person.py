@@ -1,3 +1,6 @@
+import time
+
+
 class CreatePersonJsonException(Exception):
     pass
 
@@ -38,7 +41,10 @@ def delete_person_json(id: int):
 class CommandForTerminal:
     type = 0
 
-    def __init__(self, *, id_command: int, sn_device: str):
+    def __init__(self, id_command: int, sn_device: str):
+        if not id_command:
+            id_command = int(time.time())
+
         self.payload = {
             "type": CommandCreatePerson.type,
             "id": id_command,
