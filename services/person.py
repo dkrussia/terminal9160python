@@ -1,4 +1,5 @@
 import time
+from .person_photo import PersonPhoto as person_photo_service
 
 
 class CreatePersonJsonException(Exception):
@@ -9,7 +10,7 @@ def create_person_json(id: int, lastName: str = "", firstName: str = "", face_st
     if not isinstance(id, int) or id < 1:
         raise CreatePersonJsonException
     # TODO: add faceUrl
-    return {
+    d = {
         "createBy": "",
         "createTime": 0,
         "deptId": 0,
@@ -30,6 +31,10 @@ def create_person_json(id: int, lastName: str = "", firstName: str = "", face_st
         "remark": "",
         "expiry": ""
     }
+    if face_str:
+        photo_url = person_photo_service.base64_to_file(person_id=id, photo_base64=face_str)
+        d["faceUrl"] = photo_url
+    return d
 
 
 def delete_person_json(id: int):

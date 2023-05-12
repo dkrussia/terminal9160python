@@ -7,17 +7,24 @@ from starlette.staticfiles import StaticFiles
 
 from services.devices import Devices
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-PHOTO_DIR = f"{BASE_DIR}/photo"
 SERVER_HOST = "192.168.1.130"
 SERVER_PORT = 8080
 
-app = FastAPI()
-app.mount("/photo", StaticFiles(directory=PHOTO_DIR), name="photo")
+BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+PHOTO_DIR = f"{BASE_DIR}/photo"
+PHOTO_PATH = "/photo"
+PHOTO_URL = f"{BASE_URL}/{PHOTO_PATH}"
+
+
+print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
+print("PHOTO URL: ", PHOTO_URL)
 print("PHOTO DIR: ", PHOTO_DIR)
 
+app = FastAPI()
+app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
 
 # Test
 # При добавлении персон в терминал, надо дождаться результата выполнения

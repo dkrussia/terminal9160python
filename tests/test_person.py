@@ -1,10 +1,14 @@
-import pytest
+import os
 
+import pytest
+from starlette.testclient import TestClient
+
+from main import BASE_URL, app, PHOTO_URL
 from services import person as person_service
 from services.person import CreatePersonJsonException
 
 
-def test_person_create_json():
+def test_person_create_json(base64_photo):
     test1_json = {
         "createBy": "",
         "createTime": 0,
@@ -14,7 +18,7 @@ def test_person_create_json():
         "status": 0,
         "updateBy": "",
         "userCode": "1000",
-        "faceUrl": "http://localhost:5000/photo/1000.jpg",
+        "faceUrl": f"{PHOTO_URL}/1000.jpg",
         "userName": "",
         "firstName": "Sergey",
         "lastName": "Kuznetsov",
@@ -27,8 +31,12 @@ def test_person_create_json():
         "remark": "",
         "expiry": ""
     }
-    json = person_service.create_person_json(1000, 'Sergey', 'Kuznetsov', face_str="123")
+    json = person_service.create_person_json(1000, 'Sergey', 'Kuznetsov', face_str=base64_photo)
     assert json == test1_json
+
+    with TestClient(app) as client:
+        response = client.get("/photo/1000.jpg")
+        assert response.status_code == 200
 
     test2_json = {
         "createBy": "",
@@ -38,7 +46,6 @@ def test_person_create_json():
         "sex": 0,
         "status": 0,
         "updateBy": "",
-        "faceUrl": "",
         "userCode": "1000",
         "userName": "",
         "firstName": "",
@@ -52,7 +59,7 @@ def test_person_create_json():
         "remark": "",
         "expiry": ""
     }
-    json = person_service.create_person_json(1001, '', '',  face_str="")
+    json = person_service.create_person_json(1000, '', '',  face_str="")
     assert json == test2_json
 
     with pytest.raises(CreatePersonJsonException):
