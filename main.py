@@ -7,7 +7,7 @@ from starlette.staticfiles import StaticFiles
 
 from services.devices import Devices
 
-SERVER_HOST = "192.168.1.130"
+SERVER_HOST = "192.168.1.64"
 SERVER_PORT = 8080
 
 BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
@@ -15,8 +15,12 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 PHOTO_DIR = f"{BASE_DIR}/photo"
 PHOTO_PATH = "/photo"
-PHOTO_URL = f"{BASE_URL}/{PHOTO_PATH}"
+PHOTO_URL = f"{BASE_URL}{PHOTO_PATH}"
 
+MQTT_HOST = "192.168.1.64"
+MQTT_PORT = 8086
+MQTT_USER = "admin"
+MQTT_PASSWORD = "admin123"
 
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
@@ -66,13 +70,13 @@ async def device_login(request: Request):
     #  'romVersion': ''
     #  }
     #
-    Devices.add_device(d["devSn"])
+    # Devices.add_device(d["devSn"])
     return {
         "code": 0,
         "data": {
-            "mqttUserName": "admin",
-            "mqttPassword": "admin123",
-            "mqttUrl": "tcp://192.168.1.130:8086",
+            "mqttUserName": MQTT_USER,
+            "mqttPassword": MQTT_PASSWORD,
+            "mqttUrl": F"tcp://{MQTT_HOST}:{MQTT_PORT}",
             "token": "token",
         },
         "desc": "123",
