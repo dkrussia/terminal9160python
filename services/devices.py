@@ -18,3 +18,5 @@ class Devices:
             channel.exchange.declare(exchange='broadcast')
             channel.queue.bind(exchange='broadcast', queue='commands_' + sn_device)
 
+
+devices = Devices()

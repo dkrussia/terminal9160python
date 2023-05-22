@@ -17,5 +17,5 @@ MQTT_PASSWORD = "admin123"
 
 TEST_SN_DEVICE = "YGKJ202107TR08EL0007"
 
-with open('tests/base64photo.txt', 'r') as f:
+with open(f'{BASE_DIR}/tests/base64photo.txt', 'r') as f:
     TEST_MY_PHOTO = f.read()

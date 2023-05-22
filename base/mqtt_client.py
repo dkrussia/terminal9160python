@@ -99,3 +99,6 @@ class MQTTClientWrapper:
     def disconnect(self):
         self.stop_receiving()
         self.client.disconnect()
+
+
+mqtt_client = MQTTClientWrapper()
