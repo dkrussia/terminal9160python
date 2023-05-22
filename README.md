@@ -49,3 +49,21 @@ TERMINAL appVersionName': `1.4.15C_DBG`
 * Затем выполнить
 * /etc/init.d/S50laucher stop
 * /etc/init.d/S50laucher start
+__________________________________
+**Шина сообщений MCI_SERVICE.**  
+
+1. MCI_SERVICE отправляет: CommandsQueue => commands_$device.    
+
+                      Header                                      Body
+       {"command_type": "user_update"}               |   {id, firsName, lastName}
+       {"command_type": "user_delete"}               |   {id}
+       {"command_type": "user_update_biophoto"}      |   {id, picture}  
+       {"command_type": "multiuser_update"}          |   []user_update   
+       {"command_type": "multiuser_update_biophoto"} |   []user_update_biophoto     
+
+
+2. MCI_SERVICE слушает ReceiveEvents) => events_$device.      
+  `{sn: str, time:2000-01-01:21:00:00, status:str, pin: int,str}`  
+  sn: $device или номер камеры).  
+  status = '1' (Успешный проход)   
+  (pin Тоже самое, что и id) (Идентификатор человека)
