@@ -46,6 +46,17 @@ def delete_person_json(id: int):
     }
 
 
+def query_person_json(id: int):
+    return {
+        "emp_id": id,
+        "keyword": "",
+        "need_feature": False,
+        "need_photo": False,
+        "page_num": 1,
+        "page_idx": 0
+    }
+
+
 class CommandForTerminal:
     type = 0
 
@@ -93,3 +104,11 @@ class CommandDeletePerson(CommandForTerminal):
     # Удаление так же как и создание, можно выполнять списком
     def add_person(self, person_json):
         self.add_operation_in_list(person_json)
+
+
+class CommandGetPerson(CommandForTerminal):
+    type = 1000
+
+    def search_person(self, id):
+        payload = query_person_json(id)
+        self.add_operation_in_list(payload)
