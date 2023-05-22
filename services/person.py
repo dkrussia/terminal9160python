@@ -65,7 +65,7 @@ class CommandForTerminal:
             id_command = int(time.time())
 
         self.payload = {
-            "type": CommandCreatePerson.type,
+            "type": self.type,
             "id": id_command,
             "devSn": sn_device,
             "feedbackUrl": "",
@@ -102,8 +102,9 @@ class CommandDeletePerson(CommandForTerminal):
     type = 5
 
     # Удаление так же как и создание, можно выполнять списком
-    def add_person(self, person_json):
-        self.add_operation_in_list(person_json)
+    def delete_person(self, id):
+        payload = delete_person_json(id=id)
+        self.add_operation_in_list(payload)
 
 
 class CommandGetPerson(CommandForTerminal):
