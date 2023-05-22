@@ -37,7 +37,8 @@ TERMINAL appVersionName': `1.4.15C_DBG`
 
 ------------------------
 *Заметки*  
-`[update_person/create] userName = firstName + lastName`
+`[update_person/create] userName = firstName + lastName`  
+`MQTT команда update_user создает персону`  
 
 Для DEBUG режима и просмотра логов по ssh
 
