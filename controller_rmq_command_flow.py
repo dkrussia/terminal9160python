@@ -1,9 +1,5 @@
 from services import person as person_service
-from mqtt_client import mqtt_publish_command
-
-sn_device = "YGKJ202107TR08EL0007"
-with open('tests/base64photo.txt', 'r') as f:
-    base64_photo = f.read()
+from mqtt_client import MQTTClientWrapper
 
 # Получить персону
 # command = person_service.CommandGetPerson(sn_device=sn_device)

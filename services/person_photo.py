@@ -1,7 +1,7 @@
 import base64
 import os
 
-from main import PHOTO_DIR, SERVER_PORT, SERVER_HOST, PHOTO_URL
+from config import PHOTO_DIR, PHOTO_URL
 
 
 class PersonPhoto:

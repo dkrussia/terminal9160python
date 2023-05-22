@@ -1,26 +1,14 @@
-import os
 from pprint import pprint
-
 import uvicorn
 from fastapi import FastAPI, Request
 from starlette.staticfiles import StaticFiles
 
+from config import BASE_URL, BASE_DIR, PHOTO_URL, PHOTO_DIR, PHOTO_PATH, TEST_SN_DEVICE, \
+    SERVER_PORT, SERVER_HOST, MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
+from services import person as person_service
+
+from mqtt_client import MQTTClientWrapper, ExceptionOnPublishMQTTMessage
 from services.devices import Devices
-
-SERVER_HOST = "192.168.1.64"
-SERVER_PORT = 8080
-
-BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
-PHOTO_DIR = f"{BASE_DIR}/photo"
-PHOTO_PATH = "/photo"
-PHOTO_URL = f"{BASE_URL}{PHOTO_PATH}"
-
-MQTT_HOST = "192.168.1.64"
-MQTT_PORT = 8086
-MQTT_USER = "admin"
-MQTT_PASSWORD = "admin123"
 
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
@@ -29,6 +17,10 @@ print("PHOTO DIR: ", PHOTO_DIR)
 
 app = FastAPI()
 app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
+
+mqtt_client = MQTTClientWrapper()
+mqtt_client.start_receiving()
+
 
 # Test
 # При добавлении персон в терминал, надо дождаться результата выполнения
@@ -46,10 +38,20 @@ async def print_request(request: Request):
     pprint(d)
 
 
-@app.post("/")
-async def index(request: Request):
-    await print_request(request)
-    return {}
+@app.get("/")
+def index():
+    command = person_service.CommandCreatePerson(sn_device=TEST_SN_DEVICE)
+    person_json = person_service.create_person_json(
+        1000,
+        firstName="Sergey",
+        lastName="Kuznetsov",
+    )
+    command.add_person(person_json)
+    try:
+        r = mqtt_client.send_command_and_wait_result(command, timeout=5)
+    except ExceptionOnPublishMQTTMessage:
+        return {"result": False}
+    return {"result": True, "payload": r}
 
 
 @app.post("/api/devices/login")
@@ -94,7 +96,6 @@ async def dconfig(request: Request):
 async def dconfig(request: Request):
     await print_request(request)
     return {}
-
 
 if __name__ == '__main__':
     uvicorn.run(

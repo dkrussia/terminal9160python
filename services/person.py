@@ -64,10 +64,13 @@ class CommandForTerminal:
         if not id_command:
             id_command = int(time.time())
 
+        self.sn_device = sn_device
+        self.id_command = id_command
+
         self.payload = {
             "type": self.type,
-            "id": id_command,
-            "devSn": sn_device,
+            "id": self.id_command,
+            "devSn": self.sn_device,
             "feedbackUrl": "",
         }
 
