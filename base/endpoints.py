@@ -1,7 +1,7 @@
 from pprint import pprint
 from typing import Optional
 
-from fastapi import APIRouter, Request, UploadFile, File, Form, Body, Depends, HTTPException
+from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
@@ -11,8 +11,40 @@ from base.schema import PersonCreate
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVICE, \
     TIMEOUT_WAIT_MQTT_ANSWER
 from services import person as person_service
+from services.devices import device_service
 
 base_router = APIRouter()
+
+
+def create_or_update(sn_device, id_person, person_payload, photo):
+    import base64
+
+    person_json = person_service.create_person_json(
+        person_payload.id,
+        firstName=person_payload.firstName,
+        lastName=person_payload.lastName,
+        face_str=base64.b64encode(photo.file.read()).decode("utf-8") if photo else ""
+    )
+
+    person_response = get_person(id_person=id_person)
+
+    if person_response["answer"]["operations"]["executeStatus"] == 2:
+        command = person_service.CommandCreatePerson(sn_device=sn_device)
+        command.add_person(person_json)
+    else:
+        print('update')
+        command = person_service.CommandUpdatePerson(sn_device=sn_device)
+        command.update_person(person_json)
+
+    try:
+        answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
+    except ExceptionOnPublishMQTTMessage:
+        answer = None
+
+    return {
+        "answer": answer,
+        "command": command.result_json()
+    }
 
 
 def get_all_user(sn_device=TEST_SN_DEVICE):
@@ -30,7 +62,7 @@ def get_all_user(sn_device=TEST_SN_DEVICE):
 
 
 def get_person(id_person, sn_device=TEST_SN_DEVICE):
-    command = person_service.CommandGetPerson(sn_device=TEST_SN_DEVICE)
+    command = person_service.CommandGetPerson(sn_device=sn_device)
     command.search_person(id_person)
 
     try:
@@ -104,41 +136,25 @@ def checker(person_payload: str = Form(...)):
 async def person_create_or_update(
         id: int = 0,
         person_payload: PersonCreate = Depends(),
-        file: Optional[UploadFile] = File(None),
+        photo: Optional[UploadFile] = File(None),
 ):
-    import base64
-
     """
     Endpoint создает или обновляет пользователя.
     Возвращает результат ответа Device через MQTT.
     Таймаут ожидания 5 секунд.
     Фотография не обязательна.
     """
-    person_json = person_service.create_person_json(
-        person_payload.id,
-        firstName=person_payload.firstName,
-        lastName=person_payload.lastName,
-        face_str=base64.b64encode(file.file.read()).decode("utf-8") if file else ""
-
+    return create_or_update(
+        sn_device=TEST_SN_DEVICE,
+        id_person=id,
+        person_payload=person_payload,
+        photo=photo
     )
 
-    person_response = get_person(id_person=id)
-    if person_response["answer"]["operations"]["executeStatus"] == 2:
-        command = person_service.CommandCreatePerson(sn_device=TEST_SN_DEVICE)
-        command.add_person(person_json)
-    else:
-        command = person_service.CommandUpdatePerson(sn_device=TEST_SN_DEVICE)
-        command.update_person(person_response)
 
-    try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
-    except ExceptionOnPublishMQTTMessage:
-        answer = None
-
-    return {
-        "answer": answer,
-        "command": command.result_json()
-    }
+@base_router.get('/registered_devices')
+def all_devices_has_registered():
+    return device_service.get_all_devices()
 
 
 @base_router.post("/api/devices/login")

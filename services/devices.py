@@ -9,7 +9,7 @@ class Devices:
         # Lock?
         if sn_device not in cls.devices:
             cls.devices.add(sn_device)
-            cls.bind_rmq_broadcast(sn_device=sn_device)
+            # cls.bind_rmq_broadcast(sn_device=sn_device)
 
     @classmethod
     def bind_rmq_broadcast(cls, sn_device):
@@ -18,5 +18,8 @@ class Devices:
             channel.exchange.declare(exchange='broadcast')
             channel.queue.bind(exchange='broadcast', queue='commands_' + sn_device)
 
+    def get_all_devices(self):
+        return self.devices
 
-devices = Devices()
+
+device_service = Devices()
