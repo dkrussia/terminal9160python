@@ -29,6 +29,21 @@ def get_all_user(sn_device=TEST_SN_DEVICE):
     }
 
 
+def get_person(id_person, sn_device=TEST_SN_DEVICE):
+    command = person_service.CommandGetPerson(sn_device=TEST_SN_DEVICE)
+    command.search_person(id_person)
+
+    try:
+        answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
+    except ExceptionOnPublishMQTTMessage:
+        answer = None
+
+    return {
+        "command": command.result_json(),
+        "answer": answer,
+    }
+
+
 async def print_request(request: Request):
     h = request.headers.items()
     c = request.cookies.items()
@@ -41,22 +56,10 @@ async def print_request(request: Request):
 
 @base_router.get("/person/{id}")
 @base_router.get("/person")
-def get_person(id: Optional[int] = ""):
+def _get_person(id: Optional[int] = ""):
     if not id:
         return get_all_user()
-
-    command = person_service.CommandGetPerson(sn_device=TEST_SN_DEVICE)
-    command.search_person(id)
-
-    try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
-    except ExceptionOnPublishMQTTMessage:
-        answer = None
-
-    return {
-        "answer": answer,
-        "command": command.result_json()
-    }
+    return get_person(id_person=id)
 
 
 @base_router.delete("/person")
@@ -96,19 +99,21 @@ def checker(person_payload: str = Form(...)):
     return model
 
 
+@base_router.post("/person/{id}")
 @base_router.post("/person/create")
 async def person_create_or_update(
+        id: int = 0,
         person_payload: PersonCreate = Depends(),
         file: Optional[UploadFile] = File(None),
 ):
     import base64
+
     """
     Endpoint создает или обновляет пользователя.
     Возвращает результат ответа Device через MQTT.
     Таймаут ожидания 5 секунд.
     Фотография не обязательна.
     """
-    # TODO: check if created yet
     person_json = person_service.create_person_json(
         person_payload.id,
         firstName=person_payload.firstName,
@@ -116,8 +121,14 @@ async def person_create_or_update(
         face_str=base64.b64encode(file.file.read()).decode("utf-8") if file else ""
 
     )
-    command = person_service.CommandCreatePerson(sn_device=TEST_SN_DEVICE)
-    command.add_person(person_json)
+
+    person_response = get_person(id_person=id)
+    if person_response["answer"]["operations"]["executeStatus"] == 2:
+        command = person_service.CommandCreatePerson(sn_device=TEST_SN_DEVICE)
+        command.add_person(person_json)
+    else:
+        command = person_service.CommandUpdatePerson(sn_device=TEST_SN_DEVICE)
+        command.update_person(person_response)
 
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
