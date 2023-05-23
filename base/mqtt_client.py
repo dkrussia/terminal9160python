@@ -3,7 +3,7 @@ import threading
 import paho.mqtt.client as mqtt
 import json
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
-from services.rmq import publish_request
+from services.rmq import rmq_publish_message
 
 
 class ExceptionOnPublishMQTTMessage(Exception):
@@ -52,7 +52,7 @@ class MQTTClientWrapper:
 
         if topic == "/_report/state":
             "Отправляем пинг устройства в очередь"
-            publish_request(
+            rmq_publish_message(
                 queue=f'ping_{payload_json["sn"]}',
                 exchange="",
                 data={'sn': f'camera_{payload_json["sn"]}'}

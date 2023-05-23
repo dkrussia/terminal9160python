@@ -174,7 +174,7 @@ async def device_login(request: Request):
     #  'romVersion': ''
     #  }
     #
-    # Devices.add_device(d["devSn"])
+    device_service.add_device(d["devSn"])
     return {
         "code": 0,
         "data": {

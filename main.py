@@ -23,7 +23,6 @@ print("PHOTO_PATH: ", PHOTO_PATH)
 app = FastAPI()
 app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
 app.include_router(base_router, tags=['API'])
-mqtt_client.start_receiving()
 
 # Test
 # При добавлении персон в терминал, надо дождаться результата выполнения
@@ -32,6 +31,7 @@ mqtt_client.start_receiving()
 
 
 if __name__ == '__main__':
+    mqtt_client.start_receiving()
     uvicorn.run(
         app=app,
         port=SERVER_PORT,
