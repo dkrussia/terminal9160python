@@ -3,6 +3,7 @@ import threading
 import paho.mqtt.client as mqtt
 import json
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
+from services.rmq import publish_request
 
 
 class ExceptionOnPublishMQTTMessage(Exception):
@@ -35,7 +36,7 @@ class MQTTClientWrapper:
 
     def _on_connect(self, client, userdata, flags, rc):
         print("Подключено: " + str(rc))
-        # client.subscribe("/_report/state")
+        client.subscribe("/_report/state")
         client.subscribe("/_report/received")
 
     def _on_message(self, client, userdata, msg):
@@ -48,6 +49,15 @@ class MQTTClientWrapper:
         print(f'ВХОДЯЩИЕ СООБЩЕНИЕ на {topic}')
         pprint(payload_json)
         print('*' * 10)
+
+        if topic == "/_report/state":
+            "Отправляем пинг устройства в очередь"
+            publish_request(
+                queue=f'ping_{payload_json["sn"]}',
+                exchange="",
+                data={'sn': f'camera_{payload_json["sn"]}'}
+            )
+            return
 
         event_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
         with lock:
