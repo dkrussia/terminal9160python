@@ -32,7 +32,6 @@ def create_or_update(sn_device, id_person, person_payload, photo):
         command = person_service.CommandCreatePerson(sn_device=sn_device)
         command.add_person(person_json)
     else:
-        print('update')
         command = person_service.CommandUpdatePerson(sn_device=sn_device)
         command.update_person(person_json)
 
