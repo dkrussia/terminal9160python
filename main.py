@@ -22,7 +22,7 @@ print("PHOTO_PATH: ", PHOTO_PATH)
 
 app = FastAPI()
 app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
-app.include_router(base_router)
+app.include_router(base_router, tags=['API'])
 mqtt_client.start_receiving()
 
 # Test
