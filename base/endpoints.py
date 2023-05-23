@@ -11,6 +11,20 @@ from services import person as person_service
 base_router = APIRouter()
 
 
+def get_all_user(sn_device=TEST_SN_DEVICE):
+    command = person_service.CommandGetPerson(sn_device=sn_device)
+    command.search_person("")
+    try:
+        answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
+    except ExceptionOnPublishMQTTMessage:
+        answer = None
+
+    return {
+        "command": command.result_json(),
+        "answer": answer,
+    }
+
+
 async def print_request(request: Request):
     h = request.headers.items()
     c = request.cookies.items()
@@ -24,18 +38,18 @@ async def print_request(request: Request):
 @base_router.get("/person/{id}")
 @base_router.get("/person")
 def get_person(id: Optional[int] = ""):
+    if not id:
+        return get_all_user()
+
     command = person_service.CommandGetPerson(sn_device=TEST_SN_DEVICE)
     command.search_person(id)
 
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
-        result = True
     except ExceptionOnPublishMQTTMessage:
         answer = None
-        result = False
 
     return {
-        "result": result,
         "answer": answer,
         "command": command.result_json()
     }
@@ -45,17 +59,22 @@ def get_person(id: Optional[int] = ""):
 @base_router.delete("/person/{id}")
 def delete_person(id: int = None):
     command = person_service.CommandDeletePerson(sn_device=TEST_SN_DEVICE)
-    command.delete_person(id)
+
+    if not id:
+        all_users_response = get_all_user()
+        if all_users_response['answer']:
+            # Надо ли обрабатывать этот случай?
+            for user in all_users_response['answer']['operations']['users']:
+                command.delete_person(user['id'])
+    else:
+        command.delete_person(id)
 
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
-        result = True
     except ExceptionOnPublishMQTTMessage:
         answer = None
-        result = False
 
     return {
-        "result": result,
         "answer": answer,
         "command": command.result_json()
     }
@@ -83,13 +102,10 @@ def person_create_or_update(
 
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
-        result = True
     except ExceptionOnPublishMQTTMessage:
         answer = None
-        result = False
 
     return {
-        "result": result,
         "answer": answer,
         "command": command.result_json()
     }
