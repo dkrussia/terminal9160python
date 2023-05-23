@@ -1,7 +1,11 @@
 from pprint import pprint
 from typing import Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, UploadFile, File, Form, Body, Depends, HTTPException
+from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
+from starlette import status
+
 from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage
 from base.schema import PersonCreate
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVICE, \
@@ -80,11 +84,24 @@ def delete_person(id: int = None):
     }
 
 
+def checker(person_payload: str = Form(...)):
+    try:
+        model = PersonCreate.parse_raw(person_payload)
+    except ValidationError as e:
+        raise HTTPException(
+            detail=jsonable_encoder(e.errors()),
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    return model
+
+
 @base_router.post("/person/create")
-def person_create_or_update(
-        person_payload: PersonCreate,
-        # file: Optional[UploadFile] = File(...),
+async def person_create_or_update(
+        person_payload: PersonCreate = Depends(),
+        file: Optional[UploadFile] = File(None),
 ):
+    import base64
     """
     Endpoint создает или обновляет пользователя.
     Возвращает результат ответа Device через MQTT.
@@ -96,6 +113,8 @@ def person_create_or_update(
         person_payload.id,
         firstName=person_payload.firstName,
         lastName=person_payload.lastName,
+        face_str=base64.b64encode(file.file.read()).decode("utf-8") if file else ""
+
     )
     command = person_service.CommandCreatePerson(sn_device=TEST_SN_DEVICE)
     command.add_person(person_json)
