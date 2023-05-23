@@ -24,8 +24,7 @@ class ResultEvent(object):
 
 class MQTTClientWrapper:
     def __init__(self):
-        mqtt_client = get_mqtt_client()
-        self.client = mqtt_client
+        self.client = get_mqtt_client()
         self.result_events = {}
         self.lock = threading.Lock()
         self.is_receiving = False
@@ -71,13 +70,13 @@ class MQTTClientWrapper:
         print("--MQTT SUCCESS PUBLISH COMMAND--")
 
     def send_command_and_wait_result(self, command, timeout):
-        self.publish_command(sn_device=command.sn_device, payload=command.result_json())
-
         result_event = ResultEvent()
-
         event_key = f'command_{command.id_command}_{command.sn_device}'
+
         with self.lock:
             self.result_events[event_key] = result_event
+
+        self.publish_command(sn_device=command.sn_device, payload=command.result_json())
         self.result_events[event_key].event.wait(timeout=timeout)
         result = result_event.result
 

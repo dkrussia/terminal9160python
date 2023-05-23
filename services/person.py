@@ -48,7 +48,7 @@ def delete_person_json(id: int):
 
 def query_person_json(id: int):
     return {
-        "emp_id": id,
+        "emp_id": str(id),
         "keyword": "",
         "need_feature": False,
         "need_photo": False,
@@ -115,4 +115,4 @@ class CommandGetPerson(CommandForTerminal):
 
     def search_person(self, id):
         payload = query_person_json(id)
-        self.add_operation_in_list(payload)
+        self.set_operation_as_dict(payload)
