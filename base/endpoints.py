@@ -180,7 +180,7 @@ async def device_login(request: Request):
         "data": {
             "mqttUserName": MQTT_USER,
             "mqttPassword": MQTT_PASSWORD,
-            "mqttUrl": F"tcp://{MQTT_HOST}:{MQTT_PORT}",
+            "mqttUrl": f"tcp://{MQTT_HOST}:{MQTT_PORT}",
             "token": "token",
         },
         "desc": "123",

@@ -1,5 +1,4 @@
-from services.mci import handle_mci_command
-from services.rmq import rmq_channel
+from services.mci import subscribe_device_mci_command
 
 
 class Devices:
@@ -7,11 +6,9 @@ class Devices:
 
     @classmethod
     def add_device(cls, sn_device):
-        # Lock?
         if sn_device not in cls.devices:
             cls.devices.add(sn_device)
-            with rmq_channel as channel:
-                channel.consume_queue('commands_' + sn_device, handle_mci_command)
+            subscribe_device_mci_command(sn_device)
 
     def get_all_devices(self):
         return self.devices
