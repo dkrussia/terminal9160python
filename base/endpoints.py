@@ -8,7 +8,7 @@ from starlette import status
 from base.schema import PersonCreate
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVICE
 from base import mqtt_api
-from services.rmq import rmq_publish_message
+from base.rmq_client import rmq_publish_message
 
 base_router = APIRouter()
 
@@ -23,6 +23,18 @@ async def print_request(request: Request):
     pprint(d)
 
 
+def checker(person_payload: str = Form(...)):
+    try:
+        model = PersonCreate.parse_raw(person_payload)
+    except ValidationError as e:
+        raise HTTPException(
+            detail=jsonable_encoder(e.errors()),
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    return model
+
+
 @base_router.get("/person/{id}")
 @base_router.get("/person")
 def get_person(id: Optional[int] = ""):
@@ -35,18 +47,6 @@ def get_person(id: Optional[int] = ""):
 @base_router.delete("/person/{id}")
 def delete_person(id: int = None):
     return mqtt_api.delete_person(id)
-
-
-def checker(person_payload: str = Form(...)):
-    try:
-        model = PersonCreate.parse_raw(person_payload)
-    except ValidationError as e:
-        raise HTTPException(
-            detail=jsonable_encoder(e.errors()),
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        )
-
-    return model
 
 
 @base_router.post("/person/{id}")
@@ -78,23 +78,23 @@ def all_devices_has_registered():
 
 @base_router.post("/api/devices/login")
 async def device_login(request: Request):
+    """
+        Example request payload:
+        {
+            'base_routerVersionCode': 10415,
+             'base_routerVersionName': '1.4.15C_DBG',
+             'devLanguage': 'english',
+             'devName': 'YGKJ202107TR08EL0007',
+             'devSn': 'YGKJ202107TR08EL0007',
+             'loginName': 'admin',
+             'model': '9160-K5',
+             'networkIp': '192.168.1.100',
+             'networkType': 1,
+             'onlineStatus': 0,
+             'romVersion': ''
+        }
+    """
     await print_request(request)
-    d = await request.json()
-    # {
-    # 'base_routerVersionCode': 10415,
-    #  'base_routerVersionName': '1.4.15C_DBG',
-    #  'devLanguage': 'english',
-    #  'devName': 'YGKJ202107TR08EL0007',
-    #  'devSn': 'YGKJ202107TR08EL0007',
-    #  'loginName': 'admin',
-    #  'model': '9160-K5',
-    #  'networkIp': '192.168.1.100',
-    #  'networkType': 1,
-    #  'onlineStatus': 0,
-    #  'romVersion': ''
-    #  }
-    #
-    # device_service.add_device(d["devSn"])
     return {
         "code": 0,
         "data": {
@@ -116,15 +116,38 @@ async def dconfig(request: Request):
 
 @base_router.post("/api/devices/passRecord/addRecord")
 async def pass_face(request: Request):
+    """
+        Example request payload:
+        {
+            'atType': 2,
+            'devName': 'YGKJ202107TR08EL0007',
+            'devSn': 'YGKJ202107TR08EL0007',
+            'devUserDeptId': 0,
+            'devUserId': 20964,
+            'facemask': 0,
+            'firstName': '',
+            'id': 66,
+            'lastName': '',
+            'passStatus': 0,
+            'passType': 0,
+            'passageTime': '2023-05-25 18:31:22',
+            'remark': '',
+            'temperature': 0,
+            'userName': ''
+        }
+    """
     await print_request(request)
     payload = await request.json()
     sn_device = payload["devSn"]
+    id_user = payload["devUserId"]
+    passageTime = payload["passageTime"].repalce(" ", "T")
+    # datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
     rmq_publish_message(
         data={
             'sn': f'events_{sn_device}',
-            'time': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+            'time': passageTime,
             'status': '1',
-            "pin": payload["id"],
+            "pin": id_user,
         },
         queue=f'events_{sn_device}',
         exchange=""

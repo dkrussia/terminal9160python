@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from base import mqtt_api
-from services.rmq import global_rmq_chanel, send_reply_to
+from base.rmq_client import global_rmq_chanel, send_reply_to
 
 
 def subscribe_device_mci_command(sn_device):

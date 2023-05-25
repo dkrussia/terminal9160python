@@ -17,7 +17,7 @@ from config import (
 )
 from base.endpoints import base_router
 from base.mqtt_client import mqtt_client
-from services.rmq import global_rmq_chanel
+from base.rmq_client import global_rmq_chanel
 
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)

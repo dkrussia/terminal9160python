@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 import json
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
 from services.devices import device_service
-from services.rmq import rmq_publish_message
+from base.rmq_client import rmq_publish_message
 
 
 class ExceptionOnPublishMQTTMessage(Exception):
