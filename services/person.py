@@ -52,7 +52,7 @@ def query_person_json(id: int):
         "keyword": "",
         "need_feature": False,
         "need_photo": False,
-        "page_num": 1,
+        "page_num": 1000,
         "page_idx": 0
     }
 
