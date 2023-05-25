@@ -67,6 +67,7 @@ def get_person(id_person, sn_device=TEST_SN_DEVICE):
 
 
 def delete_person(id: int = None):
+    # TODO: Удалять фото также
     command = person_service.CommandDeletePerson(sn_device=TEST_SN_DEVICE)
 
     if not id:

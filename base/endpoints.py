@@ -140,16 +140,17 @@ async def pass_face(request: Request):
     payload = await request.json()
     sn_device = payload["devSn"]
     id_user = payload["devUserId"]
-    passageTime = payload["passageTime"].repalce(" ", "T")
-    # datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-    rmq_publish_message(
-        data={
-            'sn': f'events_{sn_device}',
-            'time': passageTime,
-            'status': '1',
-            "pin": id_user,
-        },
-        queue=f'events_{sn_device}',
-        exchange=""
-    )
+    passageTime = payload["passageTime"].replace(" ", "T")
+    if id_user > 0:
+        # datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        rmq_publish_message(
+            data={
+                'sn': f'events_{sn_device}',
+                'time': passageTime,
+                'status': '1',
+                "pin": id_user,
+            },
+            queue=f'events_{sn_device}',
+            exchange=""
+        )
     return {}
