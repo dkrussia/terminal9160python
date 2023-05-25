@@ -41,7 +41,7 @@ TERMINAL appVersionName': `1.4.15C_DBG`
 ------------------------
 *Заметки*  
 `[update_person/create] userName = firstName + lastName`  
-`MQTT команда update_user создает персону`  
+`???MQTT команда update_user создает персону`  
 
 Для DEBUG режима и просмотра логов по ssh
 
@@ -56,7 +56,7 @@ TERMINAL appVersionName': `1.4.15C_DBG`
 __________________________________
 **Шина сообщений MCI_SERVICE.**  
 
-1. MCI_SERVICE отправляет: CommandsQueue => commands_$device.    
+1. MCI_SERVICE отправляет команды на выполнения для устройства в очередь => commands_$device.    
 
                       Header                                      Body
        {"command_type": "user_update"}               |   {id, firsName, lastName}
@@ -66,8 +66,13 @@ __________________________________
        {"command_type": "multiuser_update_biophoto"} |   []user_update_biophoto     
 
 
-2. MCI_SERVICE слушает ReceiveEvents) => events_$device.      
+2. MCI_SERVICE слушает события в очереди => events_$device.      
   `{sn: str, time:2000-01-01:21:00:00, status:str, pin: int,str}`  
-  sn: $device или номер камеры).  
+  sn: номер устройства.  
   status = '1' (Успешный проход)   
-  (pin Тоже самое, что и id) (Идентификатор человека)
+  pin === id_person (Идентификатор человека)
+  
+
+3. MCI_SERVICE слушает очередь Ping => events_$device.
+  `{sn: str}`    
+  sn: номер устройства.

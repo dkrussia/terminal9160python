@@ -149,7 +149,7 @@ async def pass_face(request: Request):
                 'sn': f'events_{sn_device}',
                 'time': passageTime,
                 'status': '1',
-                "pin": id_user,
+                "pin": str(id_user),
             },
             queue=f'events_{sn_device}',
             exchange=""
