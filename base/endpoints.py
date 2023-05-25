@@ -10,7 +10,8 @@ from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVIC
 from base import mqtt_api
 from base.rmq_client import rmq_publish_message
 
-base_router = APIRouter()
+device_router = APIRouter(prefix='/api/devices')
+person_router = APIRouter(prefix='/person')
 
 
 async def print_request(request: Request):
@@ -35,22 +36,22 @@ def checker(person_payload: str = Form(...)):
     return model
 
 
-@base_router.get("/person/{id}")
-@base_router.get("/person")
+@person_router.get("/{id}", description="Получение пользователя по ID")
+@person_router.get("", description="Получение всех пользователей")
 def get_person(id: Optional[int] = ""):
     if not id:
         return mqtt_api.get_all_user()
     return mqtt_api.get_person(id_person=id)
 
 
-@base_router.delete("/person")
-@base_router.delete("/person/{id}")
+@person_router.delete("/{id}", description="Удаление пользователя по ID")
+@person_router.delete("", description="Удаление всех пользователей")
 def delete_person(id: int = None):
     return mqtt_api.delete_person(id)
 
 
-@base_router.post("/person/{id}")
-@base_router.post("/person/create")
+@person_router.post("/{id}", description="Создание или обновление пользователя по ID")
+@person_router.post("/create", description="Создание или обновление нового пользователя")
 async def person_create_or_update(
         id: int = 0,
         person_payload: PersonCreate = Depends(),
@@ -71,12 +72,12 @@ async def person_create_or_update(
     )
 
 
-@base_router.get('/registered_devices')
+@device_router.get('/all')
 def all_devices_has_registered():
     pass
 
 
-@base_router.post("/api/devices/login")
+@device_router.post("/login")
 async def device_login(request: Request):
     """
         Example request payload:
@@ -108,13 +109,13 @@ async def device_login(request: Request):
     }
 
 
-@base_router.post("/api/devices/updateConfig")
+@device_router.post("/updateConfig")
 async def dconfig(request: Request):
     await print_request(request)
     return {}
 
 
-@base_router.post("/api/devices/passRecord/addRecord")
+@device_router.post("/passRecord/addRecord")
 async def pass_face(request: Request):
     """
         Example request payload:

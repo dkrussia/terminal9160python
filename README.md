@@ -1,3 +1,5 @@
+*Swagger UI Доступен по пути: `/docs`*  
+![img.png](docs/img.png)  
 *Терминал 9160 подписывается на следующее топики*
 
 `/_dispatch/_get_state/[device_sn]`      

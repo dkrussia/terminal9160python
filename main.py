@@ -15,7 +15,7 @@ from config import (
     SERVER_PORT,
     SERVER_HOST
 )
-from base.endpoints import base_router
+from base.endpoints import device_router, person_router
 from base.mqtt_client import mqtt_client
 from base.rmq_client import global_rmq_chanel
 
@@ -27,7 +27,8 @@ print("PHOTO_PATH: ", PHOTO_PATH)
 
 app = FastAPI()
 app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
-app.include_router(base_router, tags=['API'])
+app.include_router(person_router, tags=['Управление персонами'])
+app.include_router(device_router, tags=['API for Device'])
 
 
 # Test
