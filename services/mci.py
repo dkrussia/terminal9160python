@@ -1,4 +1,7 @@
-from services.rmq import global_rmq_chanel
+from datetime import datetime
+
+from base import mqtt_api
+from services.rmq import global_rmq_chanel, send_reply_to
 
 
 def subscribe_device_mci_command(sn_device):
@@ -8,22 +11,44 @@ def subscribe_device_mci_command(sn_device):
 
 
 def handle_mci_command(message):
+    t1 = datetime.now()
     type_command = message.properties['headers'].get('command_type')
     reply_to = message.properties.get('reply_to')
     payload = message.json()
-    print(type_command, reply_to)
+    sn_device = message.method["routing_key"].split("_")[-1]
+    print(type_command, reply_to,)
 
-    if type_command == 'user_update':
-        pass
+    if type_command == 'user_update' or type_command == 'user_update_biophoto':
+        result = mqtt_api.create_or_update(
+            sn_device=sn_device,
+            id_person=int(payload["id"]),
+            firstName=payload["firstName"],
+            lastName=payload["lastName"],
+            photo=payload.get('picture', ""),
+        )
 
-    if type_command == 'multiuser_update':
-        pass
+    if type_command == 'multiuser_update' or type_command == 'multiuser_update_biophoto':
+        for user in payload:
+            result = mqtt_api.create_or_update(
+                sn_device=sn_device,
+                id_person=int(user["id"]),
+                firstName=user["firstName"],
+                lastName=user["lastName"],
+                photo=user.get('picture', ""),
+            )
 
     if type_command == 'user_delete':
-        pass
+        result = mqtt_api.delete_person(int(payload["id"]))
 
-    if type_command == 'user_update_biophoto':
-        pass
+    # if type_command == 'user_update_biophoto':
+    #     pass
+    #
+    # if type_command == 'multiuser_update_biophoto':
+    #     pass
 
-    if type_command == 'multiuser_update_biophoto':
-        pass
+    send_reply_to(
+        reply_to=reply_to,
+        data={"result": 'Successful', 'Return': "0"}
+    )
+    t2 = datetime.now()
+    print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')

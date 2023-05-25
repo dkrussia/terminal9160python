@@ -3,6 +3,7 @@ import threading
 import paho.mqtt.client as mqtt
 import json
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
+from services.devices import device_service
 from services.rmq import rmq_publish_message
 
 
@@ -51,12 +52,14 @@ class MQTTClientWrapper:
         print('*' * 10)
 
         if topic == "/_report/state":
-            "Отправляем пинг устройства в очередь"
+            # Отправляем пинг устройства в очередь
             rmq_publish_message(
                 queue=f'ping_{payload_json["sn"]}',
                 exchange="",
                 data={'sn': f'camera_{payload_json["sn"]}'}
             )
+            # Добавляем устройство
+            device_service.add_device(payload_json["sn"])
             return
 
         event_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'

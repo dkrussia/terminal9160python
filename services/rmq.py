@@ -67,5 +67,17 @@ def rmq_publish_message(queue, exchange, data, headers=None):
         )
 
 
+def send_reply_to(reply_to, data):
+    with Channel() as channel:
+        logger.info(f'Ответ на {reply_to} отправлен.')
+        channel.basic.publish(
+            routing_key=reply_to,
+            body=json.dumps(data),
+            properties={
+                'content_type': 'application/json'
+            },
+        )
+
+
 global_rmq_connect = create_connection()
 global_rmq_chanel = global_rmq_connect.channel()
