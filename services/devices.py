@@ -12,8 +12,15 @@ class Devices:
             subscribe_device_mci_command(sn_device)
 
     @classmethod
-    def add_meta(cls):
+    def add_meta_on_login(cls):
+        pass
 
+    @classmethod
+    def add_meta_update_conf(cls):
+        pass
+
+    @classmethod
+    def add_meta_on_state(cls):
         pass
 
     def get_all_devices(self):
