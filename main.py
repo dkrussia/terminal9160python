@@ -29,7 +29,7 @@ app = FastAPI()
 app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
 app.include_router(person_router, tags=['Управление персонами'])
 app.include_router(device_router, tags=['API for Device'])
-
+# TODO: firmware url + generate Enum firmware file
 
 # Test
 # При добавлении персон в терминал, надо дождаться результата выполнения
