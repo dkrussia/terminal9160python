@@ -84,20 +84,21 @@ def all_devices_has_registered():
 @device_router.post("/login")
 async def device_login(request: Request):
     """
-        Example request payload:
-        {
-            'base_routerVersionCode': 10415,
-             'base_routerVersionName': '1.4.15C_DBG',
-             'devLanguage': 'english',
-             'devName': 'YGKJ202107TR08EL0007',
-             'devSn': 'YGKJ202107TR08EL0007',
-             'loginName': 'admin',
-             'model': '9160-K5',
-             'networkIp': '192.168.1.100',
-             'networkType': 1,
-             'onlineStatus': 0,
-             'romVersion': ''
-        }
+    TERMINAL отдает данные сюда в формате:
+    Example request payload:
+    {
+        'base_routerVersionCode': 10415,
+         'base_routerVersionName': '1.4.15C_DBG',
+         'devLanguage': 'english',
+         'devName': 'YGKJ202107TR08EL0007',
+         'devSn': 'YGKJ202107TR08EL0007',
+         'loginName': 'admin',
+         'model': '9160-K5',
+         'networkIp': '192.168.1.100',
+         'networkType': 1,
+         'onlineStatus': 0,
+         'romVersion': ''
+    }
     """
     await print_request(request)
     return {
@@ -122,24 +123,25 @@ async def dconfig(request: Request):
 @device_router.post("/passRecord/addRecord")
 async def pass_face(request: Request):
     """
-        Example request payload:
-        {
-            'atType': 2,
-            'devName': 'YGKJ202107TR08EL0007',
-            'devSn': 'YGKJ202107TR08EL0007',
-            'devUserDeptId': 0,
-            'devUserId': 20964,
-            'facemask': 0,
-            'firstName': '',
-            'id': 66,
-            'lastName': '',
-            'passStatus': 0,
-            'passType': 0,
-            'passageTime': '2023-05-25 18:31:22',
-            'remark': '',
-            'temperature': 0,
-            'userName': ''
-        }
+    TERMINAL отдает данные сюда в формате:
+    Example request payload:
+    {
+        'atType': 2,
+        'devName': 'YGKJ202107TR08EL0007',
+        'devSn': 'YGKJ202107TR08EL0007',
+        'devUserDeptId': 0,
+        'devUserId': 20964,
+        'facemask': 0,
+        'firstName': '',
+        'id': 66,
+        'lastName': '',
+        'passStatus': 0,
+        'passType': 0,
+        'passageTime': '2023-05-25 18:31:22',
+        'remark': '',
+        'temperature': 0,
+        'userName': ''
+    }
     """
     await print_request(request)
     payload = await request.json()

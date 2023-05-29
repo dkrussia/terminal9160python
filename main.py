@@ -1,8 +1,5 @@
 import threading
-import time
-
 import uvicorn
-from amqpstorm import AMQPChannelError
 from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 
@@ -17,7 +14,7 @@ from config import (
 )
 from base.endpoints import device_router, person_router
 from base.mqtt_client import mqtt_client
-from base.rmq_client import global_rmq_chanel
+from base.rmq_client import global_rmq_chanel, start_rmq_consume
 
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
@@ -36,18 +33,9 @@ app.include_router(device_router, tags=['API for Device'])
 # и затем уже отправлять снова.
 # Если надо загрузить много персон сразу, то делаем это пачками по 100 человек.
 
-def start_consume(chanel):
-    while True:
-        try:
-            chanel.start_consuming()
-        except AMQPChannelError as e:
-            time.sleep(1)
-            print(e)
-
-
 if __name__ == '__main__':
     mqtt_client.start_receiving()
-    threading.Thread(target=start_consume, args=(global_rmq_chanel,)).start()
+    threading.Thread(target=start_rmq_consume, args=(global_rmq_chanel,)).start()
     uvicorn.run(
         app=app,
         port=SERVER_PORT,

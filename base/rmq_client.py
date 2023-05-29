@@ -4,6 +4,7 @@ import time
 import amqpstorm
 
 # TODO: обработка случая когда RabbitMQ включен\выключен
+from amqpstorm import AMQPChannelError
 
 from config import RMQ_HOST, RMQ_USER, RMQ_PASSWORD, RMQ_PORT
 
@@ -77,6 +78,15 @@ def send_reply_to(reply_to, data):
                 'content_type': 'application/json'
             },
         )
+
+
+def start_rmq_consume(chanel):
+    while True:
+        try:
+            chanel.start_consuming()
+        except AMQPChannelError as e:
+            time.sleep(1)
+            print(e)
 
 
 global_rmq_connect = create_connection()
