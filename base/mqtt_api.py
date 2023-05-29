@@ -2,7 +2,7 @@ from fastapi import UploadFile
 from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage
 from config import TIMEOUT_WAIT_MQTT_ANSWER, TEST_SN_DEVICE, FIRMWARE_URL, TEST_FIRMWARE
 from services import device_command as person_service
-from services.device_command import CommandControlTerminal, ControlAction
+from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig
 
 
 def create_or_update(sn_device, id_person, firstName, lastName, photo):
@@ -115,4 +115,15 @@ def control_action(action, sn_device=TEST_SN_DEVICE):
 
 
 def update_config(payload, sn_device=TEST_SN_DEVICE):
-    pass
+    command = CommandUpdateConfig(sn_device=sn_device)
+    command.update_config(payload)
+
+    try:
+        answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
+    except ExceptionOnPublishMQTTMessage:
+        answer = None
+
+    return {
+        "answer": answer,
+        "command": command.result_json()
+    }

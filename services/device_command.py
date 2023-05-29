@@ -163,3 +163,10 @@ class CommandControlTerminal(BaseCommand):
             "apkUrl": firmware_url,
             "id": self.sn_device
         })
+
+
+class CommandUpdateConfig(BaseCommand):
+    type = 8
+
+    def update_config(self, payload):
+        self.set_operation_as_dict(payload)

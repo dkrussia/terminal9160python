@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPExc
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
-from base.schema import PersonCreate
+from base.schema import PersonCreate, UpdateConfig
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVICE
 from base import mqtt_api
 from base.rmq_client import rmq_publish_message
@@ -177,3 +177,32 @@ async def send_control_action(
     UPDATE_SOFTWARE = 5 \n
     """
     return mqtt_api.control_action(action)
+
+
+@device_router.post("/config/update", )
+async def update_config(device_config: UpdateConfig):
+    """
+    Обновить настройки конфигурации на терминале
+    adminPassword	String	Device login password\n
+    brightness	Int	Screen backlight brightness [1,100]\n
+    deviceVolume	Int	Device volume [0,100]\n
+    featureThreshold	Int	Face recognition threshold\n
+    living	Int	Living body detection switch (0=Off,1=On)\n
+    recogizeInterval	Int	Repeat the recognition interval. After recognition is successful,
+    you need to wait for the recogizeInterval before recognition is successful again
+    minSize	Int	Minimum face size for recognition（pixel）\n
+    temperature	Int	Temperature detection switch (0=Off,1=On)\n
+    playVoice	Bool	Voice broadcast prompt switch\n
+    lowPower	Bool	When the low-power enable switch is turned on, when the proximity sensor does
+    not detect an object for a continuous idletime, the device turns off the fill light, infrared
+    light and NFC module, and stops the face detection function to reduce power consumption.
+    idleTime	Int	Idle time before entering low power consumption\n
+    passMethod	Int	Access mode: 0: face / card / QR code, 1: face + card\n
+    openDuration	Int	Relay opening time\n
+    alarmEnabled	Bool	Alarm function when the door is not closed after opening (it needs the support\n
+    of access control hardware to enable the equipment to sense the opening / closing state of the door)\n
+    alarmDuration	Int	Alarm duration\n
+    cardNumDecimal	Bool	Decimal card number\n
+    cardNumReverse	Bool	Reverse sequence card number\n
+    """
+    return mqtt_api.update_config(device_config.dict(exclude_none=True))
