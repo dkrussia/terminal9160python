@@ -9,10 +9,13 @@ from base.schema import PersonCreate
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVICE
 from base import mqtt_api
 from base.rmq_client import rmq_publish_message
+from services.device_command import ControlAction
 
 device_router = APIRouter(prefix='/api/devices')
 person_router = APIRouter(prefix='/person')
 
+
+# TODO: Добавить во все вызовы API серийный номер устройства
 
 async def print_request(request: Request):
     h = request.headers.items()
@@ -25,6 +28,7 @@ async def print_request(request: Request):
 
 
 def checker(person_payload: str = Form(...)):
+    print(1)
     try:
         model = PersonCreate.parse_raw(person_payload)
     except ValidationError as e:
@@ -157,3 +161,17 @@ async def pass_face(request: Request):
             exchange=""
         )
     return {}
+
+
+@device_router.post("/control/{action}", )
+async def send_control_action(
+        action: ControlAction,
+):
+    """
+    Отправить действие на терминал: \n
+    RESTART_SYSTEM = 2 \n
+    RESTART_SOFTWARE = 3 \n
+    DOOR_OPEN = 4 \n
+    UPDATE_SOFTWARE = 5 \n
+    """
+    return mqtt_api.control_action(action)

@@ -1,7 +1,23 @@
+"""
+Создание json-команд для терминалов 9160
+Которые будут отправлены в MQTT[commands_$sn_device]
+"""
 import time
 from typing import Optional
+from enum import Enum
 
 from .person_photo import PersonPhoto as person_photo_service
+
+
+class ControlAction(str, Enum):
+    # Перезагрузка
+    RESTART_SYSTEM = 'RESTART_SYSTEM'
+    # Перезагрузка софта? (Не включился экран, не работает mqtt)
+    RESTART_SOFTWARE = 'RESTART_SOFTWARE'
+    # Открытие на проход(Загорается зеленная рамка)
+    DOOR_OPEN = 'DOOR_OPEN'
+    # ... Тестировать ...
+    UPDATE_SOFTWARE = 'UPDATE_SOFTWARE'
 
 
 class CreatePersonJsonException(Exception):
@@ -57,7 +73,7 @@ def query_person_json(id: int):
     }
 
 
-class CommandForTerminal:
+class BaseCommand:
     type = 0
 
     def __init__(self, sn_device: str, id_command: Optional[int] = None):
@@ -87,21 +103,21 @@ class CommandForTerminal:
         self.payload["operations"] = data_json
 
 
-class CommandCreatePerson(CommandForTerminal):
+class CommandCreatePerson(BaseCommand):
     type = 3
 
     def add_person(self, person_json: dict):
         self.add_operation_in_list(person_json)
 
 
-class CommandUpdatePerson(CommandForTerminal):
+class CommandUpdatePerson(BaseCommand):
     type = 4
 
     def update_person(self, person_json: dict):
         self.set_operation_as_dict(person_json)
 
 
-class CommandDeletePerson(CommandForTerminal):
+class CommandDeletePerson(BaseCommand):
     type = 5
 
     # Удаление так же как и создание, можно выполнять списком
@@ -110,9 +126,40 @@ class CommandDeletePerson(CommandForTerminal):
         self.add_operation_in_list(payload)
 
 
-class CommandGetPerson(CommandForTerminal):
+class CommandGetPerson(BaseCommand):
     type = 1000
 
     def search_person(self, id):
         payload = query_person_json(id)
         self.set_operation_as_dict(payload)
+
+
+class CommandControlTerminal(BaseCommand):
+    type = 9
+
+    def restart_system(self):
+        self.set_operation_as_dict({
+            "devAction": 2,
+            "apkUrl": "",
+            "id": self.sn_device
+        })
+
+    def restart_software(self):
+        self.set_operation_as_dict({
+            "devAction": 3,
+            "apkUrl": "",
+            "id": self.sn_device
+        })
+
+    def open_door(self):
+        self.set_operation_as_dict({
+            "devAction": 4,
+            "id": self.sn_device
+        })
+
+    def update_software(self, firmware_url):
+        self.set_operation_as_dict({
+            "devAction": 5,
+            "apkUrl": firmware_url,
+            "id": self.sn_device
+        })

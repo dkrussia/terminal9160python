@@ -3,6 +3,7 @@ from faker import Faker
 from pydantic import BaseModel
 
 from config import TEST_SN_DEVICE
+from services.device_command import ControlAction
 
 fake = Faker()
 
@@ -17,3 +18,7 @@ class PersonCreate(BaseModel):
     firstName: str = fake.name().split(' ')[0]
     lastName: str = fake.name().split(' ')[1]
     snDevice: str = TEST_SN_DEVICE
+
+
+class DeviceControl(BaseModel):
+    action: ControlAction

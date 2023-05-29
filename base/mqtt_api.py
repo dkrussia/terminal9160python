@@ -1,8 +1,8 @@
 from fastapi import UploadFile
-
 from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage
 from config import TIMEOUT_WAIT_MQTT_ANSWER, TEST_SN_DEVICE
-from services import person as person_service
+from services import device_command as person_service
+from services.device_command import CommandControlTerminal, ControlAction
 
 
 def create_or_update(sn_device, id_person, firstName, lastName, photo):
@@ -79,6 +79,30 @@ def delete_person(id: int = None):
     else:
         command.delete_person(id)
 
+    try:
+        answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
+    except ExceptionOnPublishMQTTMessage:
+        answer = None
+
+    return {
+        "answer": answer,
+        "command": command.result_json()
+    }
+
+
+def control_action(action, sn_device=TEST_SN_DEVICE):
+
+    command = CommandControlTerminal(sn_device=sn_device)
+
+    print(action, type(action))
+
+    if action == ControlAction.RESTART_SYSTEM:
+        command.restart_system()
+    if action == ControlAction.RESTART_SOFTWARE:
+        command.restart_software()
+    if action == ControlAction.DOOR_OPEN:
+        command.open_door()
+    # TODO: Update Software
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
     except ExceptionOnPublishMQTTMessage:

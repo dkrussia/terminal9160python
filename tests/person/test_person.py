@@ -3,9 +3,9 @@ import os
 import pytest
 from starlette.testclient import TestClient
 
-from main import BASE_URL, app, PHOTO_URL
-from services import person as person_service
-from services.person import CreatePersonJsonException
+from main import app, PHOTO_URL
+from services import device_command as person_service
+from services.device_command import CreatePersonJsonException
 
 
 def test_person_create_json(base64_photo):

@@ -6,7 +6,7 @@ from base.rmq_client import global_rmq_chanel, send_reply_to
 
 def subscribe_device_mci_command(sn_device):
     queue = f'commands_{sn_device}'
-    global_rmq_chanel.queue.declare(sn_device)
+    global_rmq_chanel.queue.declare(queue)
     global_rmq_chanel.basic.consume(handle_mci_command, queue)
 
 
