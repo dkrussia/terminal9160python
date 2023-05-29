@@ -19,23 +19,27 @@ def handle_mci_command(message):
     print(type_command, reply_to,)
 
     if type_command == 'user_update' or type_command == 'user_update_biophoto':
-        result = mqtt_api.create_or_update(
-            sn_device=sn_device,
-            id_person=int(payload["id"]),
-            firstName=payload["firstName"],
-            lastName=payload["lastName"],
-            photo=payload.get('picture', ""),
-        )
+        photo = payload.get('picture', "")
+        if photo:
+            result = mqtt_api.create_or_update(
+                sn_device=sn_device,
+                id_person=int(payload["id"]),
+                firstName=payload["firstName"],
+                lastName=payload["lastName"],
+                photo=photo,
+            )
 
     if type_command == 'multiuser_update' or type_command == 'multiuser_update_biophoto':
         for user in payload:
-            result = mqtt_api.create_or_update(
-                sn_device=sn_device,
-                id_person=int(user["id"]),
-                firstName=user["firstName"],
-                lastName=user["lastName"],
-                photo=user.get('picture', ""),
-            )
+            photo = user.get('picture', "")
+            if photo:
+                result = mqtt_api.create_or_update(
+                    sn_device=sn_device,
+                    id_person=int(user["id"]),
+                    firstName=user["firstName"],
+                    lastName=user["lastName"],
+                    photo=photo,
+                )
 
     if type_command == 'user_delete':
         result = mqtt_api.delete_person(int(payload["id"]))
