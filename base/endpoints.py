@@ -88,16 +88,16 @@ async def device_login(request: Request):
     Example request payload:
     {
         'base_routerVersionCode': 10415,
-         'base_routerVersionName': '1.4.15C_DBG',
-         'devLanguage': 'english',
-         'devName': 'YGKJ202107TR08EL0007',
-         'devSn': 'YGKJ202107TR08EL0007',
-         'loginName': 'admin',
-         'model': '9160-K5',
-         'networkIp': '192.168.1.100',
-         'networkType': 1,
-         'onlineStatus': 0,
-         'romVersion': ''
+        'base_routerVersionName': '1.4.15C_DBG',
+        'devLanguage': 'english',
+        'devName': 'YGKJ202107TR08EL0007',
+        'devSn': 'YGKJ202107TR08EL0007',
+        'loginName': 'admin',
+        'model': '9160-K5',
+        'networkIp': '192.168.1.100',
+        'networkType': 1,
+        'onlineStatus': 0,
+        'romVersion': ''
     }
     """
     await print_request(request)

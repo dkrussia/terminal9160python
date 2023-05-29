@@ -1,3 +1,4 @@
+from datetime import datetime
 from pprint import pprint
 import threading
 import paho.mqtt.client as mqtt
@@ -46,10 +47,11 @@ class MQTTClientWrapper:
         payload_json = json.loads(payload)
         result_events, lock = userdata
 
-        print('*' * 10)
-        print(f'ВХОДЯЩИЕ СООБЩЕНИЕ на {topic}')
+        print('\n')
+        print('***', datetime.now().strftime('%H:%M:%S'), '***')
+        print(f'GOT MESSAGE ON {topic}')
         pprint(payload_json)
-        print('*' * 10)
+        print('*' * 16)
 
         if topic == "/_report/state":
             # Отправляем пинг устройства в очередь
@@ -70,7 +72,8 @@ class MQTTClientWrapper:
                 result_event.event.set()
 
     def publish_command(self, sn_device, payload: dict):
-        print("-----MQTT PUBLISH COMMAND------")
+        print('***', datetime.now().strftime('%H:%M:%S'), '***')
+        print("-----PUBLISH COMMAND TO MQTT------")
         print(f"---TO SN_DEVICE: {sn_device}--")
         print("-----       PAYLOAD      ------")
         pprint(payload)

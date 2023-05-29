@@ -10,7 +10,9 @@ from config import (
     PHOTO_DIR,
     PHOTO_PATH,
     SERVER_PORT,
-    SERVER_HOST
+    SERVER_HOST,
+    FIRMWARE_PATH,
+    FIRMWARE_DIR
 )
 from base.endpoints import device_router, person_router
 from base.mqtt_client import mqtt_client
@@ -23,10 +25,12 @@ print("PHOTO DIR: ", PHOTO_DIR)
 print("PHOTO_PATH: ", PHOTO_PATH)
 
 app = FastAPI()
+
 app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
+app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
+
 app.include_router(person_router, tags=['Управление персонами'])
 app.include_router(device_router, tags=['API for Device'])
-# TODO: firmware url + generate Enum firmware file
 
 # Test
 # При добавлении персон в терминал, надо дождаться результата выполнения
