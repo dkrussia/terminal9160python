@@ -10,6 +10,7 @@ from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVIC
 from base import mqtt_api
 from base.rmq_client import rmq_publish_message
 from services.device_command import ControlAction
+from services.devices import device_service
 
 device_router = APIRouter(prefix='/api/devices')
 person_router = APIRouter(prefix='/person')
@@ -42,21 +43,22 @@ def checker(person_payload: str = Form(...)):
 
 @person_router.get("/{id}", description="Получение пользователя по ID")
 @person_router.get("", description="Получение всех пользователей")
-def get_person(id: Optional[int] = ""):
+def get_person(sn_device: str = TEST_SN_DEVICE, id: Optional[int] = ""):
     if not id:
-        return mqtt_api.get_all_user()
+        return mqtt_api.get_all_user(sn_device=sn_device)
     return mqtt_api.get_person(id_person=id)
 
 
 @person_router.delete("/{id}", description="Удаление пользователя по ID")
 @person_router.delete("", description="Удаление всех пользователей")
-def delete_person(id: int = None):
-    return mqtt_api.delete_person(id)
+def delete_person(sn_device: str = TEST_SN_DEVICE, id: int = None):
+    return mqtt_api.delete_person(sn_device=sn_device, id=id)
 
 
 @person_router.post("/{id}", description="Создание или обновление пользователя по ID")
 @person_router.post("/create", description="Создание или обновление нового пользователя")
 async def person_create_or_update(
+        sn_device: str = TEST_SN_DEVICE,
         id: int = 0,
         person_payload: PersonCreate = Depends(),
         photo: Optional[UploadFile] = File(None),
@@ -68,7 +70,7 @@ async def person_create_or_update(
     Фотография не обязательна.
     """
     return mqtt_api.create_or_update(
-        sn_device=TEST_SN_DEVICE,
+        sn_device=sn_device,
         id_person=id,
         firstName=person_payload.firstName,
         lastName=person_payload.lastName,

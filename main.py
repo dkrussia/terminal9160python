@@ -37,8 +37,9 @@ app.include_router(device_router, tags=['API for Device'])
 # и затем уже отправлять снова.
 # Если надо загрузить много персон сразу, то делаем это пачками по 100 человек.
 
+mqtt_client.start_receiving()
+
 if __name__ == '__main__':
-    mqtt_client.start_receiving()
     threading.Thread(target=start_rmq_consume, args=(global_rmq_chanel,)).start()
     uvicorn.run(
         app=app,

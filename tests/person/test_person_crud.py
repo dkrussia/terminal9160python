@@ -1,5 +1,5 @@
 from starlette.testclient import TestClient
-from config import TEST_ID_PERSON
+from config import TEST_ID_PERSON, TEST_SN_DEVICE
 from main import app
 
 
@@ -18,21 +18,30 @@ def test_crud_on_device():
         body = response.json()
         assert body["answer"]["operations"]["executeStatus"] == 2
 
+        response = client.get(f"/person")
+        body = response.json()
+        assert body["answer"]["operations"]["executeStatus"] == 1
+        count_users = len(body["answer"]["operations"]["users"])
+
         person = {
             "id": TEST_ID_PERSON,
             "firstName": "Mark",
             "lastName": "Mcgee",
-            "snDevice": "YGKJ202107TR08EL0007"
         }
-        response = client.post(f"/person/create", json=person)
+        response = client.post(f"/person/create", params=person, data={"photo": ""})
         body = response.json()
         assert body["answer"]["operations"]["executeStatus"] == 1
 
-        response = client.get(f"/person/{TEST_ID_PERSON}")
+        response = client.get(f"/person")
+        body = response.json()
+        assert body["answer"]["operations"]["executeStatus"] == 1
+        assert count_users + 1 == len(body["answer"]["operations"]["users"])
+
+        response = client.get(f"/person/{TEST_ID_PERSON}", )
         body = response.json()
         assert body["answer"]["operations"]["executeStatus"] == 1
 
-        response = client.delete(f"/person/{TEST_ID_PERSON}")
+        response = client.delete(f"/person/{TEST_ID_PERSON}", )
         body = response.json()
 
         assert body["answer"]["operations"]["executeStatus"] == 1

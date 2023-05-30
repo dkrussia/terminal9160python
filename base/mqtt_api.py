@@ -3,6 +3,7 @@ from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage
 from config import TIMEOUT_WAIT_MQTT_ANSWER, TEST_SN_DEVICE, FIRMWARE_URL, TEST_FIRMWARE
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig
+from services.devices import device_service
 
 
 def create_or_update(sn_device, id_person, firstName, lastName, photo):
@@ -37,7 +38,7 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo):
     }
 
 
-def get_all_user(sn_device=TEST_SN_DEVICE):
+def get_all_user(sn_device):
     command = person_service.CommandGetPerson(sn_device=sn_device)
     command.search_person("")
     try:
@@ -66,12 +67,12 @@ def get_person(id_person, sn_device=TEST_SN_DEVICE):
     }
 
 
-def delete_person(id: int = None):
+def delete_person(sn_device: str, id: int = None):
     # TODO: Удалять фото также
     command = person_service.CommandDeletePerson(sn_device=TEST_SN_DEVICE)
 
     if not id:
-        all_users_response = get_all_user()
+        all_users_response = get_all_user(sn_device)
         if all_users_response['answer']:
             # Надо ли обрабатывать этот случай?
             for user in all_users_response['answer']['operations']['users']:
@@ -120,6 +121,7 @@ def update_config(payload, sn_device=TEST_SN_DEVICE):
 
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_WAIT_MQTT_ANSWER)
+        device_service.add_meta_update_conf(sn_device, answer.get('operations'))
     except ExceptionOnPublishMQTTMessage:
         answer = None
 

@@ -19,7 +19,6 @@ class PersonCreate(BaseModel):
     id: int = random.randint(55555, 66666)
     firstName: str = fake.name().split(' ')[0]
     lastName: str = fake.name().split(' ')[1]
-    snDevice: str = TEST_SN_DEVICE
 
 
 class DeviceControl(BaseModel):

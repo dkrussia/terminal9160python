@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from services.mci import subscribe_device_mci_command
 
 
@@ -16,8 +18,12 @@ class Devices:
         pass
 
     @classmethod
-    def add_meta_update_conf(cls):
-        pass
+    def add_meta_update_conf(cls, sn_device, payload):
+        if payload:
+            d = cls.devices_meta.get(sn_device, {})
+            d["config"] = payload
+            d["config_update_time"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+            cls.devices_meta[sn_device] = d
 
     @classmethod
     def add_meta_on_state(cls):
