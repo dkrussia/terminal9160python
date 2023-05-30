@@ -80,7 +80,12 @@ async def person_create_or_update(
 
 @device_router.get('/all')
 def all_devices_has_registered():
-    pass
+    for sn_device in device_service.devices:
+        if sn_device in device_service.devices_meta.keys() \
+                and 'config' not in device_service.devices_meta[sn_device].keys():
+            # Вызвать это для получения конфига с сервера с пустой нагрузкой
+            mqtt_api.update_config({})
+    return device_service.devices_meta
 
 
 @device_router.post("/login")
@@ -118,7 +123,13 @@ async def device_login(request: Request):
 
 @device_router.post("/updateConfig")
 async def dconfig(request: Request):
+    """
+    Устройство отдает данные конфигурации сюда
+    """
     await print_request(request)
+    d = await request.json()
+    sn_device = d["devSn"]
+    device_service.add_meta_update_conf(sn_device, d)
     return {}
 
 
@@ -152,6 +163,7 @@ async def pass_face(request: Request):
     passDateTime = datetime.strptime(
         payload['passageTime'], '%Y-%m-%d %H:%M:%S'
     ).strftime('%Y-%m-%dT%H:%M:%S')
+
     if id_user > 0:
         #
         rmq_publish_message(

@@ -26,8 +26,12 @@ class Devices:
             cls.devices_meta[sn_device] = d
 
     @classmethod
-    def add_meta_on_state(cls):
-        pass
+    def add_meta_on_state(cls, payload):
+        sn_device = payload["sn"]
+        d = cls.devices_meta.get(sn_device, {})
+        d["state"] = payload
+        d["state_update_time"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        cls.devices_meta[sn_device] = d
 
     def get_all_devices(self):
         return self.devices

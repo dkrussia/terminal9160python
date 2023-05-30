@@ -62,6 +62,7 @@ class MQTTClientWrapper:
             )
             # Добавляем устройство
             device_service.add_device(payload_json["sn"])
+            device_service.add_meta_on_state(payload=payload_json)
             return
 
         event_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
