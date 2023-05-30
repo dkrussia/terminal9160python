@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from starlette.testclient import TestClient
 
@@ -69,7 +67,7 @@ def test_person_create_json(base64_photo):
 
 
 def test_command_base():
-    person_command = person_service.CommandForTerminal(id_command=1, sn_device="XYZ")
+    person_command = person_service.BaseCommand(id_command=1, sn_device="XYZ")
     assert person_command.payload["id"] == 1
     assert person_command.payload["devSn"] == "XYZ"
 

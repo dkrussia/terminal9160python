@@ -2,7 +2,7 @@
 Создание json-команд для терминалов 9160
 Которые будут отправлены в MQTT[commands_$sn_device]
 """
-import time
+
 from datetime import datetime
 from typing import Optional
 from enum import Enum

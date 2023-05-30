@@ -25,7 +25,7 @@ MCI_SERVICE Отправляет результаты выполнение ко�
 _______________________
 *EMQX, RABBIT in Docker*  
 
-`docker run -d --name emqx -p 8086:1883 -p 8081:8081 -p 8083:8083 -p 8084:8084 -p 8883:8883 -p 8085:18083 emqx/emqx:latest`    
+`docker run -d --name emqx -p 8086:1883 -p 8085:18083 emqx/emqx:latest`    
 `docker run -p 15672:15672 -p 5672:5672 rabbitmq:3.10.7-management`  
 _______________________
 
