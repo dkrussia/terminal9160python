@@ -153,6 +153,10 @@ async def pass_face(request: Request):
     """
     TERMINAL отдает данные сюда в формате:
     Example request payload:
+    atType:
+        IN: 2
+        OUT: 3
+        TRIP: 4 + REMARK
     {
         'atType': 2,
         'devName': 'YGKJ202107TR08EL0007',

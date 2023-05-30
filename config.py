@@ -30,5 +30,7 @@ TIMEOUT_WAIT_MQTT_ANSWER = 5
 TEST_SN_DEVICE = "YGKJ202107TR08EL0007"
 TEST_ID_PERSON = 999
 
+MAX_WORKERS_MCI_COMMAND = 8
+
 with open(f'{BASE_DIR}/tests/base64photo.txt', 'r') as f:
     TEST_MY_PHOTO = f.read()
