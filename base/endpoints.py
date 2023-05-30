@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 from base.schema import PersonCreate, UpdateConfig
-from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVICE
+from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVICE, BASE_DIR
 from base import mqtt_api
 from base.rmq_client import rmq_publish_message
 from services.device_command import ControlAction
@@ -53,6 +53,21 @@ def get_person(sn_device: str = TEST_SN_DEVICE, id: Optional[int] = ""):
 @person_router.delete("", description="Удаление всех пользователей")
 def delete_person(sn_device: str = TEST_SN_DEVICE, id: int = None):
     return mqtt_api.delete_person(sn_device=sn_device, id=id)
+
+
+@person_router.post("/self", description="Добавить себя")
+def add_self_person(
+        sn_device: str = TEST_SN_DEVICE,
+):
+    with open(f'{BASE_DIR}/tests/base64photo.txt', 'r') as f:
+        p = f.read()
+    return mqtt_api.create_or_update(
+        sn_device=sn_device,
+        id_person=999,
+        firstName="Сергей",
+        lastName="Кузнецов",
+        photo=p
+    )
 
 
 @person_router.post("/{id}", description="Создание или обновление пользователя по ID")
