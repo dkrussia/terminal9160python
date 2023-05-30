@@ -16,7 +16,6 @@ def handle_mci_command(message):
     reply_to = message.properties.get('reply_to')
     payload = message.json()
     sn_device = message.method["routing_key"].split("_")[-1]
-    print(type_command, reply_to,)
 
     if type_command == 'user_update' or type_command == 'user_update_biophoto':
         photo = payload.get('picture', "")
@@ -42,7 +41,7 @@ def handle_mci_command(message):
                 )
 
     if type_command == 'user_delete':
-        result = mqtt_api.delete_person(int(payload["id"]))
+        result = mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
 
     # if type_command == 'user_update_biophoto':
     #     pass

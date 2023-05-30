@@ -1,5 +1,5 @@
 from starlette.testclient import TestClient
-from config import TEST_ID_PERSON, TEST_SN_DEVICE
+from config import TEST_ID_PERSON
 from main import app
 
 
