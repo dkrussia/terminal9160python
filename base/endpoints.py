@@ -46,7 +46,7 @@ def checker(person_payload: str = Form(...)):
 def get_person(sn_device: str = TEST_SN_DEVICE, id: Optional[int] = ""):
     if not id:
         return mqtt_api.get_all_user(sn_device=sn_device)
-    return mqtt_api.get_person(id_person=id)
+    return mqtt_api.get_person(id_person=id, sn_device=sn_device)
 
 
 @person_router.delete("/{id}", description="Удаление пользователя по ID")
@@ -99,7 +99,7 @@ def all_devices_has_registered():
         if sn_device in device_service.devices_meta.keys() \
                 and 'config' not in device_service.devices_meta[sn_device].keys():
             # Вызвать это для получения конфига с сервера с пустой нагрузкой
-            mqtt_api.update_config({})
+            mqtt_api.update_config({}, sn_device=sn_device)
     return device_service.devices_meta
 
 
@@ -150,6 +150,7 @@ async def dconfig(request: Request):
 
 @device_router.post("/passRecord/addRecord")
 async def pass_face(request: Request):
+    print(request.client.host)
     """
     TERMINAL отдает данные сюда в формате:
     Example request payload:
@@ -201,6 +202,7 @@ async def pass_face(request: Request):
 @device_router.post("/control/{action}", )
 async def send_control_action(
         action: ControlAction,
+        sn_device: str = TEST_SN_DEVICE,
 ):
     """
     Отправить действие на терминал: \n
@@ -209,11 +211,11 @@ async def send_control_action(
     DOOR_OPEN = 4 \n
     UPDATE_SOFTWARE = 5 \n
     """
-    return mqtt_api.control_action(action)
+    return mqtt_api.control_action(action, sn_device=sn_device)
 
 
 @device_router.post("/config/update", )
-async def update_config(device_config: UpdateConfig):
+async def update_config(device_config: UpdateConfig, sn_device: str = TEST_SN_DEVICE,):
     """
     Обновить настройки конфигурации на терминале
     adminPassword	String	Device login password\n
@@ -238,4 +240,4 @@ async def update_config(device_config: UpdateConfig):
     cardNumDecimal	Bool	Decimal card number\n
     cardNumReverse	Bool	Reverse sequence card number\n
     """
-    return mqtt_api.update_config(device_config.dict(exclude_none=True))
+    return mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)

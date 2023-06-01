@@ -3,6 +3,8 @@ from pprint import pprint
 import threading
 import paho.mqtt.client as mqtt
 import json
+
+import config
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
 from services.devices import device_service
 from base.rmq_client import rmq_publish_message
@@ -86,7 +88,7 @@ class MQTTClientWrapper:
             raise ExceptionOnPublishMQTTMessage()
         print("--MQTT SUCCESS PUBLISH COMMAND--")
 
-    def send_command_and_wait_result(self, command, timeout):
+    def send_command_and_wait_result(self, command, timeout=config.TIMEOUT_MQTT_RESPONSE):
         result_event = ResultEvent()
         event_key = f'command_{command.id_command}_{command.sn_device}'
 
