@@ -1,6 +1,7 @@
 import threading
 import uvicorn
 from fastapi import FastAPI
+from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 
 from config import (
@@ -12,7 +13,7 @@ from config import (
     SERVER_PORT,
     SERVER_HOST,
     FIRMWARE_PATH,
-    FIRMWARE_DIR
+    FIRMWARE_DIR,
 )
 from base.endpoints import device_router, person_router
 from base.mqtt_client import mqtt_client
@@ -31,6 +32,15 @@ app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
 
 app.include_router(person_router, tags=['Управление персонами'])
 app.include_router(device_router, tags=['API for Device'])
+
+app.mount('/dashboard', StaticFiles(directory=f'{BASE_DIR}/dashboard/dist', html=True), name='static', )
+
+
+# Маршрут для отображения SPA-приложения на префиксном пути
+@app.get('/dashboard/{path:path}')
+def index(path: str):
+    return FileResponse(f'{BASE_DIR}/dashboard/dist/index.html')
+
 
 # Test
 # При добавлении персон в терминал, надо дождаться результата выполнения

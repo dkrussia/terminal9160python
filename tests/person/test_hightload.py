@@ -54,3 +54,10 @@ def test_data_set_100():
     data_set(10)
     t2 = datetime.now()
     print(f'Total: 100 Person - {(t2 - t1).total_seconds()}')
+
+
+def test_rabbit(rabbitmq):
+    print("checking first channel")
+    channel = rabbitmq.channel()
+    assert channel.is_open
+    print(rabbitmq)
