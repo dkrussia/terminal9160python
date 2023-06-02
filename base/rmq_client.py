@@ -3,13 +3,20 @@ import logging
 import time
 import amqpstorm
 
-# TODO: обработка случая когда RabbitMQ включен\выключен
 from amqpstorm import AMQPChannelError
 
-from config import RMQ_HOST, RMQ_USER, RMQ_PASSWORD, RMQ_PORT
+from config import (
+    RMQ_HOST,
+    RMQ_USER,
+    RMQ_PASSWORD,
+    RMQ_PORT
+)
 
 logger = logging.getLogger('rmq_log')
 logger.setLevel(logging.INFO)
+
+
+# TODO: обработка случая когда RabbitMQ включен\выключен
 
 
 def create_connection():
@@ -68,7 +75,7 @@ def rmq_publish_message(queue, exchange, data, headers=None):
         )
 
 
-def send_reply_to(reply_to, data):
+def rmq_send_reply_to(reply_to, data):
     with Channel() as channel:
         logger.info(f'Ответ на {reply_to} отправлен.')
         channel.basic.publish(
@@ -80,7 +87,7 @@ def send_reply_to(reply_to, data):
         )
 
 
-def start_rmq_consume(chanel):
+def rmq_start_consume(chanel):
     while True:
         try:
             chanel.start_consuming()
@@ -89,5 +96,11 @@ def start_rmq_consume(chanel):
             print(e)
 
 
-global_rmq_connect = create_connection()
-global_rmq_chanel = global_rmq_connect.channel()
+rmq_connect = create_connection()
+rmq_global_chanel = rmq_connect.channel()
+
+
+def rmq_subscribe_on_mci_command(sn_device, func):
+    queue = f'commands_{sn_device}'
+    rmq_global_chanel.queue.declare(queue)
+    rmq_global_chanel.basic.consume(func, queue)

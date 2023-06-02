@@ -17,7 +17,7 @@ from config import (
 )
 from base.endpoints import device_router, person_router
 from base.mqtt_client import mqtt_client
-from base.rmq_client import global_rmq_chanel, start_rmq_consume
+from base.rmq_client import rmq_global_chanel, rmq_start_consume
 
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
@@ -33,7 +33,15 @@ app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
 app.include_router(person_router, tags=['Управление персонами'])
 app.include_router(device_router, tags=['API for Device'])
 
-app.mount('/dashboard', StaticFiles(directory=f'{BASE_DIR}/dashboard/dist', html=True), name='static', )
+try:
+    app.mount(
+        '/dashboard',
+        StaticFiles(directory=f'{BASE_DIR}/dashboard/dist', html=True),
+        name='static',
+    )
+except RuntimeError:
+    "Директория не существует dist"
+    pass
 
 
 # Маршрут для отображения SPA-приложения на префиксном пути
@@ -50,7 +58,7 @@ def index(path: str):
 mqtt_client.start_receiving()
 
 if __name__ == '__main__':
-    threading.Thread(target=start_rmq_consume, args=(global_rmq_chanel,)).start()
+    threading.Thread(target=rmq_start_consume, args=(rmq_global_chanel,)).start()
     uvicorn.run(
         app=app,
         port=SERVER_PORT,

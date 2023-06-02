@@ -12,6 +12,7 @@ from base.rmq_client import rmq_publish_message
 from services.device_command import ControlAction
 from services.devices import device_service
 
+# TODO: Разделить то что пушит девайс, и свои роуты
 device_router = APIRouter(prefix='/api/devices')
 person_router = APIRouter(prefix='/person')
 
@@ -81,7 +82,7 @@ async def person_create_or_update(
     """
     Endpoint создает или обновляет пользователя.
     Возвращает результат ответа Device через MQTT.
-    Таймаут ожидания 5 секунд.
+    Таймаут ожидания указан в конфиге {TIMEOUT_MQTT_RESPONSE}.
     Фотография не обязательна.
     """
     return mqtt_api.create_or_update(
@@ -123,6 +124,11 @@ async def device_login(request: Request):
     }
     """
     await print_request(request)
+
+    payload = await request.json()
+    sn_device = payload["devSn"]
+    device_service.add_ip_address(sn_device, request.client.host)
+
     return {
         "code": 0,
         "data": {
@@ -143,14 +149,15 @@ async def dconfig(request: Request):
     """
     await print_request(request)
     d = await request.json()
+
     sn_device = d["devSn"]
+    device_service.add_ip_address(sn_device, request.client.host)
     device_service.add_meta_update_conf(sn_device, d)
     return {}
 
 
 @device_router.post("/passRecord/addRecord")
 async def pass_face(request: Request):
-    print(request.client.host)
     """
     TERMINAL отдает данные сюда в формате:
     Example request payload:
@@ -183,6 +190,8 @@ async def pass_face(request: Request):
     passDateTime = datetime.strptime(
         payload['passageTime'], '%Y-%m-%d %H:%M:%S'
     ).strftime('%Y-%m-%dT%H:%M:%S')
+
+    device_service.add_ip_address(sn_device, request.client.host)
 
     if id_user > 0:
         #
