@@ -2,8 +2,8 @@ import json
 import logging
 import time
 import amqpstorm
-
 from amqpstorm import AMQPChannelError
+from base.utils import catch_exceptions
 
 from config import (
     RMQ_HOST,
@@ -55,6 +55,7 @@ class Channel(object):
             self.connection.close()
 
 
+@catch_exceptions(cancel_on_failure=False)
 def rmq_publish_message(queue, exchange, data, headers=None):
     ttl = 30
     arguments = {'x-message-ttl': ttl * 1000} if 'ping' in queue else {}
@@ -75,6 +76,7 @@ def rmq_publish_message(queue, exchange, data, headers=None):
         )
 
 
+@catch_exceptions(cancel_on_failure=False)
 def rmq_send_reply_to(reply_to, data):
     with Channel() as channel:
         logger.info(f'Ответ на {reply_to} отправлен.')
@@ -85,6 +87,12 @@ def rmq_send_reply_to(reply_to, data):
                 'content_type': 'application/json'
             },
         )
+
+
+def rmq_subscribe_on_mci_command(sn_device, func):
+    queue = f'commands_{sn_device}'
+    rmq_global_chanel.queue.declare(queue)
+    rmq_global_chanel.basic.consume(func, queue)
 
 
 def rmq_start_consume(chanel):
@@ -98,9 +106,3 @@ def rmq_start_consume(chanel):
 
 rmq_connect = create_connection()
 rmq_global_chanel = rmq_connect.channel()
-
-
-def rmq_subscribe_on_mci_command(sn_device, func):
-    queue = f'commands_{sn_device}'
-    rmq_global_chanel.queue.declare(queue)
-    rmq_global_chanel.basic.consume(func, queue)
