@@ -35,7 +35,7 @@ app.include_router(device_router, tags=['API for Device'])
 
 app.mount(
     '/static',
-    StaticFiles(directory=f'{BASE_DIR}/dashboard/dist', ),
+    StaticFiles(directory=f'{BASE_DIR}/dashboard/dist/static', ),
     name='static',
 )
 
