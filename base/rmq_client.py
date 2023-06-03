@@ -2,7 +2,7 @@ import json
 import logging
 import time
 import amqpstorm
-from amqpstorm import AMQPChannelError
+from amqpstorm import AMQPChannelError, Channel
 from base.utils import catch_exceptions
 
 from config import (
@@ -43,7 +43,7 @@ def create_connection():
     return connection
 
 
-class Channel(object):
+class MyChannel(object):
     def __init__(self):
         self.connection = create_connection()
 
@@ -60,7 +60,7 @@ def rmq_publish_message(queue, exchange, data, headers=None):
     ttl = 30
     arguments = {'x-message-ttl': ttl * 1000} if 'ping' in queue else {}
 
-    with Channel() as channel:
+    with MyChannel() as channel:
         if queue:
             channel.queue.declare(queue, arguments=arguments)
         prop = {
@@ -95,13 +95,15 @@ def rmq_subscribe_on_mci_command(sn_device, func):
     rmq_global_chanel.basic.consume(func, queue)
 
 
-def rmq_start_consume(chanel):
+def rmq_start_consume(chanel: Channel):
     while True:
         try:
+            # Проверить chanel и сделать reconnect при необходимости
+            # chanel.is_open
             chanel.start_consuming()
-        except AMQPChannelError as e:
-            time.sleep(1)
-            print(e)
+        except AMQPChannelError as why:
+            time.sleep(3)
+            print(why)
 
 
 rmq_connect = create_connection()
