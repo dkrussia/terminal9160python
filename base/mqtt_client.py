@@ -60,7 +60,7 @@ class MQTTClientWrapper:
             rmq_publish_message(
                 queue=f'ping_{payload_json["sn"]}',
                 exchange="",
-                data={'sn': f'camera_{payload_json["sn"]}'}
+                data={'sn': f'{payload_json["sn"]}'}
             )
             # Добавляем устройство
             device_service.add_device(payload_json["sn"])

@@ -95,7 +95,7 @@ async def person_create_or_update(
 
 
 @device_router.get('/all')
-def all_devices_has_registered():
+def all_devices_registered():
     for sn_device in device_service.devices:
         if sn_device in device_service.devices_meta.keys() \
                 and 'config' not in device_service.devices_meta[sn_device].keys():

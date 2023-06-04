@@ -78,7 +78,7 @@ def rmq_publish_message(queue, exchange, data, headers=None):
 
 @catch_exceptions(cancel_on_failure=False)
 def rmq_send_reply_to(reply_to, data):
-    with Channel() as channel:
+    with MyChannel() as channel:
         logger.info(f'Ответ на {reply_to} отправлен.')
         channel.basic.publish(
             routing_key=reply_to,
