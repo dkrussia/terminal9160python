@@ -13,6 +13,8 @@ from services.device_command import ControlAction
 from services.devices import device_service
 
 # TODO: Разделить то что пушит девайс, и свои роуты
+from services.person_photo import PersonPhoto
+
 device_router = APIRouter(prefix='/api/devices')
 person_router = APIRouter(prefix='/person')
 
@@ -46,7 +48,11 @@ def checker(person_payload: str = Form(...)):
 @person_router.get("", description="Получение всех пользователей")
 def get_person(sn_device: str = TEST_SN_DEVICE, id: Optional[int] = ""):
     if not id:
-        return mqtt_api.get_all_user(sn_device=sn_device)
+        resp = mqtt_api.get_all_person(sn_device=sn_device)
+        if resp.get('answer'):
+            for person in resp["answer"]["operations"]["users"]:
+                person.update({"faceUrl": PersonPhoto.get_photo_url(person["id"])})
+        return resp
     return mqtt_api.get_person(id_person=id, sn_device=sn_device)
 
 
@@ -224,7 +230,7 @@ async def send_control_action(
 
 
 @device_router.post("/config/update", )
-async def update_config(device_config: UpdateConfig, sn_device: str = TEST_SN_DEVICE,):
+async def update_config(device_config: UpdateConfig, sn_device: str = TEST_SN_DEVICE, ):
     """
     Обновить настройки конфигурации на терминале
     adminPassword	String	Device login password\n

@@ -43,7 +43,7 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo,
     }
 
 
-def get_all_user(sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
+def get_all_person(sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
     command = person_service.CommandGetPerson(sn_device=sn_device)
     command.search_person("")
     try:
@@ -81,7 +81,7 @@ def delete_person(sn_device: str, id: int = None, timeout=config.TIMEOUT_MQTT_RE
     command = person_service.CommandDeletePerson(sn_device=sn_device)
 
     if not id:
-        all_users_response = get_all_user(sn_device)
+        all_users_response = get_all_person(sn_device)
         if all_users_response['answer']:
             # Надо ли обрабатывать этот случай?
             for user in all_users_response['answer']['operations']['users']:
