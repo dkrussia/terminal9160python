@@ -2,6 +2,8 @@
 Модуль хранит данные об устройствах
 """
 from datetime import datetime
+
+from base import mqtt_api
 from base.rmq_client import rmq_subscribe_on_mci_command
 from services.mci import callback_on_get_mci_command
 

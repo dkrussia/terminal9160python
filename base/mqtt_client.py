@@ -14,6 +14,10 @@ class ExceptionOnPublishMQTTMessage(Exception):
     pass
 
 
+class ExceptionNoResponseReceived(Exception):
+    pass
+
+
 def get_mqtt_client():
     client = mqtt.Client("terminal_mqtt")
     client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
@@ -102,6 +106,8 @@ class MQTTClientWrapper:
         with self.lock:
             del self.result_events[event_key]
 
+        if result is None:
+            raise ExceptionNoResponseReceived
         return result
 
     def start_receiving(self):

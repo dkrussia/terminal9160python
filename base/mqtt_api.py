@@ -1,7 +1,7 @@
 from fastapi import UploadFile
 
 import config
-from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage
+from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage, ExceptionNoResponseReceived
 from config import TIMEOUT_MQTT_RESPONSE, FIRMWARE_URL, TEST_FIRMWARE
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig
@@ -34,6 +34,8 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo,
         answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
     except ExceptionOnPublishMQTTMessage:
         answer = None
+    except ExceptionNoResponseReceived:
+        answer = None
 
     return {
         "answer": answer,
@@ -47,6 +49,8 @@ def get_all_user(sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
     except ExceptionOnPublishMQTTMessage:
+        answer = None
+    except ExceptionNoResponseReceived:
         answer = None
 
     return {
@@ -62,6 +66,8 @@ def get_person(id_person, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
     except ExceptionOnPublishMQTTMessage:
+        answer = None
+    except ExceptionNoResponseReceived:
         answer = None
 
     return {
@@ -87,6 +93,8 @@ def delete_person(sn_device: str, id: int = None, timeout=config.TIMEOUT_MQTT_RE
         answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
     except ExceptionOnPublishMQTTMessage:
         answer = None
+    except ExceptionNoResponseReceived:
+        answer = None
 
     return {
         "answer": answer,
@@ -110,6 +118,8 @@ def control_action(action, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
         answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
     except ExceptionOnPublishMQTTMessage:
         answer = None
+    except ExceptionNoResponseReceived:
+        answer = None
 
     return {
         "answer": answer,
@@ -117,14 +127,16 @@ def control_action(action, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
     }
 
 
-def update_config(payload, sn_device):
+def update_config(payload, sn_device, timeout=TIMEOUT_MQTT_RESPONSE):
     command = CommandUpdateConfig(sn_device=sn_device)
     command.update_config(payload)
 
     try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=TIMEOUT_MQTT_RESPONSE)
+        answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
         device_service.add_meta_update_conf(sn_device, answer.get('operations'))
     except ExceptionOnPublishMQTTMessage:
+        answer = None
+    except ExceptionNoResponseReceived:
         answer = None
 
     return {

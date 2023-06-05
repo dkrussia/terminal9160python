@@ -1,6 +1,7 @@
 import threading
 import uvicorn
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse
 from starlette.staticfiles import StaticFiles
 
@@ -33,6 +34,15 @@ app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
 app.include_router(person_router, tags=['Управление персонами'])
 app.include_router(device_router, tags=['API for Device'])
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        'http://192.168.129.153:9090'
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.mount(
     '/static',
     StaticFiles(directory=f'{BASE_DIR}/dashboard/dist/static', ),
@@ -42,8 +52,14 @@ app.mount(
 
 # Маршрут для отображения SPA-приложения на префиксном пути
 @app.get('/dashboard/{path:path}', response_class=HTMLResponse)
-def index(path: str):
+def dashboard_index(path: str):
     return FileResponse(f'{BASE_DIR}/dashboard/dist/index.html')
+
+
+# Корневая страница
+@app.get('/', response_class=HTMLResponse)
+def index():
+    return FileResponse(f'{BASE_DIR}/dashboard/index.html')
 
 
 # Test
