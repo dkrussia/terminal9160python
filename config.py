@@ -5,6 +5,7 @@ SERVER_PORT = 8080
 
 BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+CORS = ['http://192.168.129.153:9090']
 
 PHOTO_DIR = f"{BASE_DIR}/photo"
 PHOTO_PATH = "/photo"

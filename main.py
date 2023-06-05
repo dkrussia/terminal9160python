@@ -15,6 +15,7 @@ from config import (
     SERVER_HOST,
     FIRMWARE_PATH,
     FIRMWARE_DIR,
+    CORS
 )
 from base.endpoints import device_router, person_router
 from base.mqtt_client import mqtt_client
@@ -36,9 +37,7 @@ app.include_router(device_router, tags=['API for Device'])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        'http://192.168.129.153:9090'
-    ],
+    allow_origins=CORS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
