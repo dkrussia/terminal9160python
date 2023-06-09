@@ -24,21 +24,27 @@ class UpdateConfig(BaseModel):
     adminPassword: str = None
     brightness: Optional[int] = Field(ge=1, le=100)
     deviceVolume: Optional[int] = Field(ge=0, le=100)
-    # featureThreshold
+    featureThreshold: int = None
     living: Literal[1, 0] = None
-    # recogizeInterval
-    # minSize
+    recogizeInterval: int = None
+    minSize : int = None
     temperature: Literal[1, 0] = None
     playVoice: bool = None
     lowPower: bool = None
-    # idleTime
-
-    # Access
-    # mode: 0: face / card / QR
-    # code, 1: face + card
+    idleTime: int = None
+    businessTrip: list = None
     passMethod: Literal[1, 0] = None
-    # openDuration
+    openDuration: int = None
     alarmEnabled: bool = None
-    # alarmDuration
+    alarmDuration: int = None
     cardNumDecimal: bool = None
     cardNumReverse: bool = None
+    wiegandFmt: Literal[26, 32, 34] = None
+    recgSuccessText: str = None
+    recgFailedText: str = None
+    passScene: bool = None
+    passHeadPhoto: bool = None
+    recordStranger: bool = None
+    fillLight: Literal[0,1,2] = None
+    recordLimitTime: int = None
+    recordLimitNumber: int = None

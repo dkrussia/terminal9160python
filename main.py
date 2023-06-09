@@ -1,8 +1,11 @@
 import threading
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from starlette import status
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import FileResponse, HTMLResponse
+from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
 from config import (
@@ -41,6 +44,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def parse_pydantic_validation_error(errors):
+    data = {}
+    for filed in errors:
+        if len(filed['loc']) > 1:
+            field = filed['loc'][-1]
+        else:
+            field = filed['loc'][0]
+        data[field] = filed['msg']
+    return data
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    response = parse_pydantic_validation_error(exc.errors())
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=jsonable_encoder(response),
+    )
+
 
 app.mount(
     '/static',

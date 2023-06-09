@@ -229,7 +229,7 @@ async def send_control_action(
     return mqtt_api.control_action(action, sn_device=sn_device)
 
 
-@device_router.post("/config/update", )
+@device_router.post("/config", )
 async def update_config(device_config: UpdateConfig, sn_device: str = TEST_SN_DEVICE, ):
     """
     Обновить настройки конфигурации на терминале

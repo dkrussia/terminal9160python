@@ -17,7 +17,7 @@ class ControlAction(str, Enum):
     RESTART_SOFTWARE = 'RESTART_SOFTWARE'
     # Открытие на проход(Загорается зеленная рамка)
     DOOR_OPEN = 'DOOR_OPEN'
-    # ... Тестировать ...
+    # Обновить прошивку
     UPDATE_SOFTWARE = 'UPDATE_SOFTWARE'
 
 
