@@ -20,9 +20,9 @@ from config import (
     FIRMWARE_DIR,
     CORS
 )
-from base.endpoints import device_router, person_router
+from base.endpoints import device_router, person_router, device_push_router
 from base.mqtt_client import mqtt_client
-from base.rmq_client import rmq_global_chanel, rmq_start_consume
+from base.rmq_client import rmq_start_consume
 
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
@@ -36,7 +36,8 @@ app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
 app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
 
 app.include_router(person_router, tags=['Управление персонами'])
-app.include_router(device_router, tags=['API for Device'])
+app.include_router(device_router, tags=['M API for Device'])
+app.include_router(device_push_router, tags=['Push API Device'])
 
 app.add_middleware(
     CORSMiddleware,
@@ -92,8 +93,10 @@ def index():
 
 mqtt_client.start_receiving()
 
+# TODO: Device Discovery
+
 if __name__ == '__main__':
-    threading.Thread(target=rmq_start_consume, args=(rmq_global_chanel,)).start()
+    threading.Thread(target=rmq_start_consume).start()
     uvicorn.run(
         app=app,
         port=SERVER_PORT,

@@ -15,8 +15,10 @@ from services.devices import device_service
 # TODO: Разделить то что пушит девайс, и свои роуты
 from services.person_photo import PersonPhoto
 
-device_router = APIRouter(prefix='/api/devices')
-person_router = APIRouter(prefix='/person')
+device_push_router = APIRouter(prefix='/api/devices')
+
+device_router = APIRouter(prefix='/api/devices/my')
+person_router = APIRouter(prefix='/api/devices/my/person')
 
 
 # TODO: Добавить во все вызовы API серийный номер устройства
@@ -107,10 +109,13 @@ def all_devices_registered():
                 and 'config' not in device_service.devices_meta[sn_device].keys():
             # Вызвать это для получения конфига с сервера с пустой нагрузкой
             mqtt_api.update_config({}, sn_device=sn_device)
-    return device_service.devices_meta
+    return {
+        'meta': device_service.devices_meta,
+        'observed': device_service.devices_observed
+    }
 
 
-@device_router.post("/login")
+@device_push_router.post("/login")
 async def device_login(request: Request):
     """
     TERMINAL отдает данные сюда в формате:
@@ -148,7 +153,7 @@ async def device_login(request: Request):
     }
 
 
-@device_router.post("/updateConfig")
+@device_push_router.post("/updateConfig")
 async def dconfig(request: Request):
     """
     Устройство отдает данные конфигурации сюда
@@ -162,7 +167,7 @@ async def dconfig(request: Request):
     return {}
 
 
-@device_router.post("/passRecord/addRecord")
+@device_push_router.post("/passRecord/addRecord")
 async def pass_face(request: Request):
     """
     TERMINAL отдает данные сюда в формате:
@@ -256,3 +261,13 @@ async def update_config(device_config: UpdateConfig, sn_device: str = TEST_SN_DE
     cardNumReverse	Bool	Reverse sequence card number\n
     """
     return mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
+
+
+@device_router.post("/to_observed", )
+async def add_to_observed(sn_device: str = TEST_SN_DEVICE, ):
+    return device_service.add_device_to_observed(sn_device)
+
+
+@device_router.post("/unobserved", )
+async def unobserved(sn_device: str = TEST_SN_DEVICE, ):
+    return device_service.remove_device_from_observed(sn_device)

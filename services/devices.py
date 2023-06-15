@@ -1,16 +1,16 @@
 """
 Модуль хранит данные об устройствах
 """
+import json
 from datetime import datetime
 
 from base import mqtt_api
 from base.rmq_client import rmq_subscribe_on_mci_command
+from config import DEVICE_JSON_DATA_FILE
 from services.mci import callback_on_get_mci_command
 
 
 class Devices:
-    devices = set()
-    devices_meta = {}
     """
     devices_meta
     {
@@ -23,6 +23,47 @@ class Devices:
         }
     }
     """
+
+    devices = set()
+    devices_meta = {}
+    devices_observed = []
+
+    def __new__(cls):
+        d = cls.read_from_json()
+        cls.devices_meta = d.get('meta', {})
+        cls.devices_observed = d.get('observed', [])
+        return object.__new__(cls)
+
+    @classmethod
+    def add_device_to_observed(cls, sn):
+        if sn not in cls.devices_observed:
+            cls.devices_observed.append(sn)
+            cls.write_to_json()
+        return cls.devices_observed
+
+    @classmethod
+    def remove_device_from_observed(cls, sn):
+        if sn in cls.devices_observed:
+            cls.devices_observed.remove(sn)
+            cls.write_to_json()
+        return cls.devices_observed
+
+    @classmethod
+    def write_to_json(cls):
+        d = {
+            'meta': cls.devices_meta,
+            'observed': list(cls.devices_observed)
+        }
+        with open(DEVICE_JSON_DATA_FILE, 'w') as f:
+            json.dump(d, f)
+
+    @classmethod
+    def read_from_json(cls):
+        try:
+            with open(DEVICE_JSON_DATA_FILE, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
 
     @classmethod
     def add_device(cls, sn_device):

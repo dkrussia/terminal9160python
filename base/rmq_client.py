@@ -2,7 +2,7 @@ import json
 import logging
 import time
 import amqpstorm
-from amqpstorm import AMQPChannelError, Channel
+from amqpstorm import AMQPChannelError, AMQPConnectionError
 from base.utils import catch_exceptions
 
 from config import (
@@ -95,13 +95,16 @@ def rmq_subscribe_on_mci_command(sn_device, func):
     rmq_global_chanel.basic.consume(func, queue)
 
 
-def rmq_start_consume(chanel: Channel):
+def rmq_start_consume():
     while True:
         try:
             # Проверить chanel и сделать reconnect при необходимости
             # chanel.is_open
-            chanel.start_consuming()
+            rmq_global_chanel.start_consuming()
         except AMQPChannelError as why:
+            time.sleep(3)
+            print(why)
+        except AMQPConnectionError as why:
             time.sleep(3)
             print(why)
 

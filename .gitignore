@@ -5,3 +5,4 @@
 /tests/.pytest_cache/
 /tests/I.jpg
 /dashboard/frontend/
+devices_db.json
