@@ -99,7 +99,7 @@ class MQTTClientWrapper:
         with self.lock:
             self.result_events[event_key] = result_event
 
-        self.publish_command(sn_device=command.sn_device, payload=command.result_json())
+        self.publish_command(sn_device=command.sn_device, payload=command.payload)
         self.result_events[event_key].event.wait(timeout=timeout)
         result = result_event.result
 

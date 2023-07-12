@@ -1,11 +1,49 @@
-from fastapi import UploadFile
+import json
+
+from starlette.datastructures import UploadFile
 
 import config
 from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage, ExceptionNoResponseReceived
 from config import TIMEOUT_MQTT_RESPONSE, FIRMWARE_URL, TEST_FIRMWARE
+from log import logger
 from services import device_command as person_service
-from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig
+from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
+    CommandGetPerson
 from services.devices import device_service
+
+
+def is_answer_has_error(command, answer):
+    if answer is None:
+        logger.error(
+            f'\n![+]ERROR Not receive answer from MQTT '
+            f'\n Command={command.payload}'
+        )
+        return True
+
+    if command.type not in [CommandGetPerson.type]:
+
+        if isinstance(answer["operations"]["result"], list):
+            for operation in answer["operations"]["result"]:
+                if operation["code"] < 0:
+                    logger.error(
+                        f'\n![+]ERROR Some operations'
+                        f'\n Answer= ${json.dumps(answer)}'
+                        f'\n Command={command.payload}'
+                        f'\n ERROR Operation={operation}'
+                    )
+                    return True
+
+        if isinstance(answer["operations"]["result"], dict):
+            if answer["operations"]["result"]["code"] < 0:
+                logger.error(
+                    f'\n![+]ERROR Some operations'
+                    f'\n Answer= ${json.dumps(answer)}'
+                    f'\n Command={command.payload}'
+                    f'\n ERROR operation={answer["operations"]["result"]}'
+                )
+                return True
+
+    return False
 
 
 def create_or_update(sn_device, id_person, firstName, lastName, photo,
@@ -13,7 +51,7 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo,
     import base64
     if photo and isinstance(photo, UploadFile):
         photo = base64.b64encode(photo.file.read()).decode("utf-8")
-
+    print(photo)
     person_json = person_service.create_person_json(
         id=id_person,
         firstName=firstName,
@@ -39,7 +77,8 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo,
 
     return {
         "answer": answer,
-        "command": command.result_json()
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
     }
 
 
@@ -54,8 +93,9 @@ def get_all_person(sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
         answer = None
 
     return {
-        "command": command.result_json(),
+        "command": command.payload,
         "answer": answer,
+        "has_error": is_answer_has_error(command, answer)
     }
 
 
@@ -71,8 +111,9 @@ def get_person(id_person, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
         answer = None
 
     return {
-        "command": command.result_json(),
+        "command": command.payload,
         "answer": answer,
+        "has_error": is_answer_has_error(command, answer)
     }
 
 
@@ -98,7 +139,8 @@ def delete_person(sn_device: str, id: int = None, timeout=config.TIMEOUT_MQTT_RE
 
     return {
         "answer": answer,
-        "command": command.result_json()
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
     }
 
 
@@ -123,7 +165,8 @@ def control_action(action, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
 
     return {
         "answer": answer,
-        "command": command.result_json()
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
     }
 
 
@@ -133,13 +176,16 @@ def update_config(payload, sn_device, timeout=TIMEOUT_MQTT_RESPONSE):
 
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
-        device_service.add_meta_update_conf(sn_device, answer.get('operations'))
     except ExceptionOnPublishMQTTMessage:
         answer = None
     except ExceptionNoResponseReceived:
         answer = None
 
+    if answer:
+        device_service.update_meta_update_conf(sn_device, answer.get('operations'))
+
     return {
         "answer": answer,
-        "command": command.result_json()
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
     }

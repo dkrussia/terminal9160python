@@ -16,6 +16,7 @@ def command_thread_handler(type_command, sn_device, payload, reply_to):
     5. user_delete +
     """
     t1 = datetime.now()
+    result = None
 
     if type_command == 'user_update_biophoto':
         photo = payload.get('picture', "")
@@ -43,10 +44,25 @@ def command_thread_handler(type_command, sn_device, payload, reply_to):
     if type_command == 'user_delete':
         result = mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
 
-    rmq_send_reply_to(
-        reply_to=reply_to,
-        data={"result": 'Successful', 'Return': "0"}
-    )
+    error_result = {"result": 'Error', 'Return': "-1"}
+    success_result = {"result": 'Successful', 'Return': "0"}
+
+    if not result:
+        rmq_send_reply_to(
+            reply_to=reply_to,
+            data=error_result
+        )
+    elif result["has_error"]:
+        rmq_send_reply_to(
+            reply_to=reply_to,
+            data=error_result
+        )
+    else:
+        rmq_send_reply_to(
+            reply_to=reply_to,
+            data=success_result
+        )
+
     t2 = datetime.now()
     print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
 
