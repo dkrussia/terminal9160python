@@ -1,3 +1,4 @@
+import config
 import threading
 import uvicorn
 from fastapi import FastAPI, Request
@@ -23,6 +24,7 @@ from config import (
 from base.endpoints import device_router, person_router, device_push_router
 from base.mqtt_client import mqtt_client
 from base.rmq_client import rmq_start_consume
+from services import mock as mock_service
 
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
@@ -91,11 +93,13 @@ def index():
 # и затем уже отправлять снова.
 # Если надо загрузить много персон сразу, то делаем это пачками по 100 человек.
 
-mqtt_client.start_receiving()
-
-# TODO: Device Discovery
-
 if __name__ == '__main__':
+
+    if config.MOCK_DEVICE:
+        mock_service.handle_commands_from_mock_devices()
+        threading.Thread(target=mock_service.mock_ping_to_mock_devices).start()
+
+    mqtt_client.start_receiving()
     threading.Thread(target=rmq_start_consume).start()
     uvicorn.run(
         app=app,
