@@ -1,0 +1,2 @@
+emqx start
+rabbitmq-server
