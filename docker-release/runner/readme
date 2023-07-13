@@ -68,6 +68,7 @@ Runner.exe
 
     Кнопка [Стоп]
     Останавливает все запущенные контейнеры
+
         * Активна если есть запущенные контейнеры findstr image-version-container
           Поиск "docker ps | findstr image-version-container".
 
