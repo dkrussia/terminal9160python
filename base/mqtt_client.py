@@ -6,6 +6,7 @@ import json
 
 import config
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
+from log import logger
 from services.devices import device_service
 from base.rmq_client import rmq_publish_message
 
@@ -14,7 +15,7 @@ class ExceptionOnPublishMQTTMessage(Exception):
     pass
 
 
-class ExceptionNoResponseReceived(Exception):
+class ExceptionNoResponseMQTTReceived(Exception):
     pass
 
 
@@ -89,6 +90,7 @@ class MQTTClientWrapper:
         print(result, _)
         if result != mqtt.MQTT_ERR_SUCCESS:
             print("--MQTT ERROR PUBLISH COMMAND--")
+            logger.error(f'MQTT ERROR PUBLISH COMMAND, {payload}')
             raise ExceptionOnPublishMQTTMessage()
         print("--MQTT SUCCESS PUBLISH COMMAND--")
 
@@ -107,7 +109,8 @@ class MQTTClientWrapper:
             del self.result_events[event_key]
 
         if result is None:
-            raise ExceptionNoResponseReceived
+            logger.error('MQTT NO RESPONSE BY TIMEOUT')
+            raise ExceptionNoResponseMQTTReceived
         return result
 
     def start_receiving(self):

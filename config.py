@@ -1,11 +1,11 @@
 import os
 
-SERVER_HOST = "192.168.1.66"
+SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8080
 
 BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-CORS = ['http://192.168.1.68:9090']
+CORS = ['*']
 
 DEVICE_JSON_DATA_FILE = f"{BASE_DIR}/devices_db.json"
 
