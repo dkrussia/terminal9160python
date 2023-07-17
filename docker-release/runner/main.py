@@ -6,6 +6,7 @@ client = docker.from_env()
 
 global text_container
 global info
+global input_host
 
 
 def set_text_info(text):
@@ -60,7 +61,17 @@ def start_container_by_image_name(image_name, button):
             client.containers.create(
                 image_name,
                 name=container_name,
-                ports={'15672/tcp': 15672, '18083/tcp': 18083}
+                ports={
+                    '15672/tcp': 15672,
+                    '5672/tcp': 5672,
+                    '18083/tcp': 18083,
+                    '1883/tcp': 1883,
+                    '8080/tcp': 8080,
+                },
+                environment={
+                    'HOST': dpg.get_value(input_host),
+                    'TZ': 'Europe/Moscow',
+                }
             )
             set_text_info(f"Контейнер {container_name} создан")
 
@@ -119,9 +130,12 @@ with dpg.window(label="Example Window", width=600, height=600):
         dpg.add_text(docker_version)
     else:
         dpg.add_text("DOCKER VERSION undefined", color=(255, 160, 122))
+
     text_container = dpg.add_text(docker_version)
     text_info = dpg.add_text("Wait for a acton")
     combo_version = dpg.add_combo(docker_images, label="Choose version", width=200)
+    input_host = dpg.add_input_text(label="HOST IP ADDRESS")
+
     dpg.add_button(label="Start", callback=start_container, user_data=combo_version, enabled=True, )
     dpg.add_button(label="Stop", callback=stop_container, user_data=combo_version, enabled=True)
 

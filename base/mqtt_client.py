@@ -6,7 +6,7 @@ import json
 
 import config
 from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
-from log import logger
+from base.log import logger
 from services.devices import device_service
 from base.rmq_client import rmq_publish_message
 

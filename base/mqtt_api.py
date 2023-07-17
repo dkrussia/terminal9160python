@@ -6,7 +6,7 @@ import config
 from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage, \
     ExceptionNoResponseMQTTReceived
 from config import TIMEOUT_MQTT_RESPONSE, FIRMWARE_URL, TEST_FIRMWARE
-from log import logger
+from base.log import logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
     CommandGetPerson

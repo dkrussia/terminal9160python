@@ -9,6 +9,11 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
+from base.endpoints import device_router, person_router, device_push_router
+from base.mqtt_client import mqtt_client
+from base.rmq_client import rmq_start_consume
+from services import mock as mock_service
+
 from config import (
     BASE_URL,
     BASE_DIR,
@@ -21,10 +26,7 @@ from config import (
     FIRMWARE_DIR,
     CORS
 )
-from base.endpoints import device_router, person_router, device_push_router
-from base.mqtt_client import mqtt_client
-from base.rmq_client import rmq_start_consume
-from services import mock as mock_service
+
 
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
@@ -94,11 +96,14 @@ def index():
 # Если надо загрузить много персон сразу, то делаем это пачками по 100 человек.
 
 if __name__ == '__main__':
+    # TODO: Добавить timezone
+    # TODO: Разделить конфиги
+    # TODO: Настроить интерфейс
 
-    if config.MOCK_DEVICE:
-        mock_service.handle_commands_from_mock_devices()
-        threading.Thread(target=mock_service.mock_ping_to_mock_devices).start()
-
+    # if config.MOCK_DEVICE:
+    #     mock_service.handle_commands_from_mock_devices()
+    #     threading.Thread(target=mock_service.mock_ping_to_mock_devices).start()
+    #
     mqtt_client.start_receiving()
     threading.Thread(target=rmq_start_consume).start()
     uvicorn.run(

@@ -9,6 +9,14 @@ RUN apt update && apt install -y \
 RUN wget https://www.emqx.com/en/downloads/broker/5.1.0/emqx-5.1.0-ubuntu22.04-amd64.deb
 RUN apt install ./emqx-5.1.0-ubuntu22.04-amd64.deb
 
-ADD init.sh /init.sh
+RUN apt install -y python3-pip
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+ADD docker-release/init.sh /init.sh
 RUN chmod +x /init.sh
+
 CMD ["/init.sh"]

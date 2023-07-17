@@ -2,3 +2,6 @@ fastapi==0.95.1
 pytest==7.3.1
 amqpstorm==2.10.6
 Faker==18.9.0
+uvicorn==0.22.0
+paho-mqtt==1.6.1
+python-multipart

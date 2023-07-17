@@ -1,6 +1,6 @@
 import os
 
-SERVER_HOST = "127.0.0.1"
+SERVER_HOST = "0.0.0.0"
 SERVER_PORT = 8080
 
 BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
@@ -18,15 +18,17 @@ FIRMWARE_PATH = "/firmware"
 FIRMWARE_URL = f"{BASE_URL}{FIRMWARE_PATH}"
 TEST_FIRMWARE = 'HR-FaceAC-L01.04.13-DM08.tar.gz'
 
-RMQ_HOST = "151.248.125.126"
-RMQ_USER = "admin"
-RMQ_PASSWORD = "Dormakaba2020"
+RMQ_HOST = "localhost"
+RMQ_USER = "guest"
+RMQ_PASSWORD = "guest"
 RMQ_PORT = 5672
 
-MQTT_HOST = SERVER_HOST
-MQTT_PORT = 8086
+# Для отправки в терминал
+MQTT_HOST_FOR_TERMINAL = os.getenv('HOST') or SERVER_HOST
+MQTT_HOST = "localhost"
+MQTT_PORT = 1883
 MQTT_USER = "admin"
-MQTT_PASSWORD = "admin123"
+MQTT_PASSWORD = "public"
 
 TIMEOUT_MQTT_RESPONSE = 8
 
@@ -43,3 +45,4 @@ MAX_WORKERS_MCI_COMMAND = 8
 
 with open(os.path.join(BASE_DIR, 'tests', 'base64photo.txt'), 'r') as f:
     TEST_MY_PHOTO = f.read()
+

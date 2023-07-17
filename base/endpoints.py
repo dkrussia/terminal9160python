@@ -6,7 +6,8 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 from base.schema import PersonCreate, UpdateConfig
-from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT, TEST_SN_DEVICE, BASE_DIR
+from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST_FOR_TERMINAL, MQTT_PORT, TEST_SN_DEVICE, \
+    BASE_DIR
 from base import mqtt_api
 from base.rmq_client import rmq_publish_message
 from services.device_command import ControlAction
@@ -121,17 +122,17 @@ async def device_login(request: Request):
     TERMINAL отдает данные сюда в формате:
     Example request payload:
     {
-        'base_routerVersionCode': 10415,
-        'base_routerVersionName': '1.4.15C_DBG',
-        'devLanguage': 'english',
-        'devName': 'YGKJ202107TR08EL0007',
-        'devSn': 'YGKJ202107TR08EL0007',
-        'loginName': 'admin',
-        'model': '9160-K5',
-        'networkIp': '192.168.1.100',
-        'networkType': 1,
-        'onlineStatus': 0,
-        'romVersion': ''
+        "base_routerVersionCode": 10415,
+        "base_routerVersionName": "1.4.15C_DBG",
+        "devLanguage": "english",
+        "devName": "YGKJ202107TR08EL0007",
+        "devSn": "YGKJ202107TR08EL0007",
+        "loginName": "admin",
+        "model": "9160-K5",
+        "networkIp": "192.168.1.100",
+        "networkType": 1,
+        "onlineStatus": 0,
+        "romVersion": ""
     }
     """
     await print_request(request)
@@ -140,17 +141,19 @@ async def device_login(request: Request):
     sn_device = payload["devSn"]
     device_service.add_ip_address(sn_device, request.client.host)
 
-    return {
+    r = {
         "code": 0,
         "data": {
             "mqttUserName": MQTT_USER,
             "mqttPassword": MQTT_PASSWORD,
-            "mqttUrl": f"tcp://{MQTT_HOST}:{MQTT_PORT}",
+            "mqttUrl": f"tcp://{MQTT_HOST_FOR_TERMINAL}:{MQTT_PORT}",
             "token": "token",
         },
         "desc": "123",
         "success": True
     }
+    print(r)
+    return r
 
 
 @device_push_router.post("/updateConfig")
@@ -163,7 +166,7 @@ async def dconfig(request: Request):
 
     sn_device = d["devSn"]
     device_service.add_ip_address(sn_device, request.client.host)
-    device_service.add_meta_update_conf(sn_device, d)
+    device_service.update_meta_update_conf(sn_device, d)
     return {}
 
 
