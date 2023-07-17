@@ -1,3 +1,9 @@
+Build Image
+
+cd docker-release
+docker build . -t terminal9160
+--------------------------------
+
 Для установки интеграции требуется
 
 Установить Docker для Windows
@@ -24,6 +30,8 @@ Runner.exe
 ------------------------------------------
 
 2. Запускам Runner.exe
+
+    Проверка, что Docker установлен в системе
 
     ---------------
     image-version

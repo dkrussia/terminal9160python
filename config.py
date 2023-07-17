@@ -7,13 +7,13 @@ BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 CORS = ['*']
 
-DEVICE_JSON_DATA_FILE = f"{BASE_DIR}/devices_db.json"
+DEVICE_JSON_DATA_FILE = os.path.join(BASE_DIR, 'devices_db.json')
 
-PHOTO_DIR = f"{BASE_DIR}/photo"
+PHOTO_DIR = os.path.join(BASE_DIR, 'photo')
 PHOTO_PATH = "/photo"
 PHOTO_URL = f"{BASE_URL}{PHOTO_PATH}"
 
-FIRMWARE_DIR = f"{BASE_DIR}/firmware"
+FIRMWARE_DIR = os.path.join(BASE_DIR, 'firmware')
 FIRMWARE_PATH = "/firmware"
 FIRMWARE_URL = f"{BASE_URL}{FIRMWARE_PATH}"
 TEST_FIRMWARE = 'HR-FaceAC-L01.04.13-DM08.tar.gz'
@@ -41,5 +41,5 @@ MOCK_DEVICE_ERROR_TIMEOUT = range(1, 2)
 
 MAX_WORKERS_MCI_COMMAND = 8
 
-with open(f'{BASE_DIR}/tests/base64photo.txt', 'r') as f:
+with open(os.path.join(BASE_DIR, 'tests', 'base64photo.txt'), 'r') as f:
     TEST_MY_PHOTO = f.read()

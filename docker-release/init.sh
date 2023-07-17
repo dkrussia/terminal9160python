@@ -1,2 +1,2 @@
 emqx start
-rabbitmq-server
+rabbitmq-server -detached
