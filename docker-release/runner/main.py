@@ -7,6 +7,7 @@ client = docker.from_env()
 global text_container
 global info
 global input_host
+global combo_version
 
 
 def set_text_info(text):
@@ -34,9 +35,16 @@ def any_container_is_running():
     containers = client.containers.list(all=True)
 
     # Проверяем, запущен ли хотя бы один контейнер с именем, содержащим подстроку
-    matching_containers = [container.name for container in containers if
-                           'terminal9160' in container.name and container.status == "running"]
-    dpg.set_value(text_container, matching_containers)
+    matching_containers = [container for container in containers if
+                           'terminal9160' in container.name
+                           and container.status == "running"]
+
+    if matching_containers:
+        c = matching_containers[0]
+        dpg.set_value(text_container, c.name)
+        dpg.set_value(combo_version, c.attrs['Config']['Image'])
+        dpg.set_value(input_host, c.attrs['Config']['Env'][0].split("=")[-1])
+
     return matching_containers
 
 
@@ -107,14 +115,18 @@ def start_container(sender, app_data, user_data):
 
 def stop_container(sender, app_data, user_data):
     image_name = dpg.get_value(user_data)
+
     if not image_name:
         return
+
     container_name = image_name.replace(':', '') + '-container'
     container = client.containers.get(container_name)
+
     if container.status == "running":
         set_text_info(f'Останавливаю контейнер {container_name}...')
         container.stop()
         set_text_info(f'Остановился контейнер {container_name}')
+
     any_container_is_running()
 
 
