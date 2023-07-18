@@ -25,7 +25,7 @@ def get_docker_images():
     return images
 
 
-def any_container_is_running():
+def check_container_is_running():
     # Получаем список всех контейнеров
     containers = client.containers.list(all=True)
 
@@ -82,7 +82,7 @@ def start_container_by_image_name(image_name, button):
             set_proces_info(f"Ошибка создания контейнера: {e}")
             return
 
-    if any_container_is_running():
+    if check_container_is_running():
         return
 
     container = client.containers.get(container_name)
@@ -91,7 +91,7 @@ def start_container_by_image_name(image_name, button):
 
     set_proces_info(f"Запуск контейнера {container_name}...")
     container.start()
-    any_container_is_running()
+    check_container_is_running()
     set_proces_info(f"Контейнера {container_name} запущен")
 
 
@@ -103,7 +103,7 @@ def start_container(sender, app_data, user_data):
     image_name = dpg.get_value('combo_version')
     if not image_name:
         return
-    if any_container_is_running():
+    if check_container_is_running():
         return
     start_container_by_image_name(image_name, button=sender)
 
@@ -123,7 +123,7 @@ def stop_container(sender, app_data, user_data):
         dpg.set_value('container_started', "")
         set_proces_info(f'Остановился контейнер {container_name}')
 
-    any_container_is_running()
+    check_container_is_running()
 
 
 docker_version = docker_is_installed()
@@ -147,7 +147,7 @@ with dpg.window(label="Example Window", width=600, height=600):
     dpg.add_button(label="Start", callback=start_container, enabled=True, )
     dpg.add_button(label="Stop", callback=stop_container, enabled=True)
 
-any_container_is_running()
+check_container_is_running()
 
 dpg.show_viewport()
 dpg.start_dearpygui()
