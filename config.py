@@ -1,9 +1,13 @@
 import os
 
+HOST = os.getenv('HOST')
+
 SERVER_HOST = "0.0.0.0"
 SERVER_PORT = 8080
 
-BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
+#
+BASE_URL = f"http://{HOST or SERVER_HOST}:{SERVER_PORT}"
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 CORS = ['*']
 
@@ -24,7 +28,9 @@ RMQ_PASSWORD = "guest"
 RMQ_PORT = 5672
 
 # Для отправки в терминал
-MQTT_HOST_FOR_TERMINAL = os.getenv('HOST') or SERVER_HOST
+MQTT_HOST_FOR_TERMINAL = HOST or SERVER_HOST
+
+# Для сервера
 MQTT_HOST = "localhost"
 MQTT_PORT = 1883
 MQTT_USER = "admin"
@@ -45,4 +51,3 @@ MAX_WORKERS_MCI_COMMAND = 8
 
 with open(os.path.join(BASE_DIR, 'tests', 'base64photo.txt'), 'r') as f:
     TEST_MY_PHOTO = f.read()
-
