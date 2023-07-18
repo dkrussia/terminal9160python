@@ -4,14 +4,9 @@ from docker.errors import APIError
 
 client = docker.from_env()
 
-global text_container
-global info
-global input_host
-global combo_version
 
-
-def set_text_info(text):
-    dpg.set_value(text_info, text)
+def set_proces_info(text):
+    dpg.set_value('proces_info', text)
 
 
 def docker_is_installed():
@@ -41,9 +36,9 @@ def any_container_is_running():
 
     if matching_containers:
         c = matching_containers[0]
-        dpg.set_value(text_container, c.name)
-        dpg.set_value(combo_version, c.attrs['Config']['Image'])
-        dpg.set_value(input_host, c.attrs['Config']['Env'][0].split("=")[-1])
+        dpg.set_value('container_started', c.name)
+        dpg.set_value('combo_version', c.attrs['Config']['Image'])
+        dpg.set_value('input_host', c.attrs['Config']['Env'][0].split("=")[-1])
 
     return matching_containers
 
@@ -57,9 +52,9 @@ def start_container_by_image_name(image_name, button):
 
     # Выводим результат
     if container_exists:
-        set_text_info(f"Контейнер для образа {image_name} существует")
+        set_proces_info(f"Контейнер для образа {image_name} существует")
     else:
-        set_text_info(f"Контейнер для образа {image_name} не  существует")
+        set_proces_info(f"Контейнер для образа {image_name} не  существует")
 
     container_name = image_name.replace(':', '') + '-container'
 
@@ -77,14 +72,14 @@ def start_container_by_image_name(image_name, button):
                     '8080/tcp': 8080,
                 },
                 environment={
-                    'HOST': dpg.get_value(input_host),
+                    'HOST': dpg.get_value('input_host'),
                     'TZ': 'Europe/Moscow',
                 }
             )
-            set_text_info(f"Контейнер {container_name} создан")
+            set_proces_info(f"Контейнер {container_name} создан")
 
         except APIError as e:
-            set_text_info(f"Ошибка создания контейнера: {e}")
+            set_proces_info(f"Ошибка создания контейнера: {e}")
             return
 
     if any_container_is_running():
@@ -94,10 +89,10 @@ def start_container_by_image_name(image_name, button):
     if container.status == "running":
         return
 
-    set_text_info(f"Запуск контейнера {container_name}...")
+    set_proces_info(f"Запуск контейнера {container_name}...")
     container.start()
     any_container_is_running()
-    set_text_info(f"Контейнера {container_name} запущен")
+    set_proces_info(f"Контейнера {container_name} запущен")
 
 
 def stop_container_by_image_name():
@@ -105,7 +100,7 @@ def stop_container_by_image_name():
 
 
 def start_container(sender, app_data, user_data):
-    image_name = dpg.get_value(user_data)
+    image_name = dpg.get_value('combo_version')
     if not image_name:
         return
     if any_container_is_running():
@@ -114,7 +109,7 @@ def start_container(sender, app_data, user_data):
 
 
 def stop_container(sender, app_data, user_data):
-    image_name = dpg.get_value(user_data)
+    image_name = dpg.get_value('combo_version')
 
     if not image_name:
         return
@@ -123,9 +118,10 @@ def stop_container(sender, app_data, user_data):
     container = client.containers.get(container_name)
 
     if container.status == "running":
-        set_text_info(f'Останавливаю контейнер {container_name}...')
+        set_proces_info(f'Останавливаю контейнер {container_name}...')
         container.stop()
-        set_text_info(f'Остановился контейнер {container_name}')
+        dpg.set_value('container_started', "")
+        set_proces_info(f'Остановился контейнер {container_name}')
 
     any_container_is_running()
 
@@ -143,15 +139,16 @@ with dpg.window(label="Example Window", width=600, height=600):
     else:
         dpg.add_text("DOCKER VERSION undefined", color=(255, 160, 122))
 
-    text_container = dpg.add_text(docker_version)
-    text_info = dpg.add_text("Wait for a acton")
-    combo_version = dpg.add_combo(docker_images, label="Choose version", width=200)
-    input_host = dpg.add_input_text(label="HOST IP ADDRESS")
+    dpg.add_text("Not container started", tag='container_started')
+    dpg.add_text("Wait for a action", tag="proces_info")
+    dpg.add_combo(docker_images, label="Choose version", width=200, tag='combo_version')
+    dpg.add_input_text(label="HOST IP ADDRESS", tag='input_host')
 
-    dpg.add_button(label="Start", callback=start_container, user_data=combo_version, enabled=True, )
-    dpg.add_button(label="Stop", callback=stop_container, user_data=combo_version, enabled=True)
+    dpg.add_button(label="Start", callback=start_container, enabled=True, )
+    dpg.add_button(label="Stop", callback=stop_container, enabled=True)
 
 any_container_is_running()
+
 dpg.show_viewport()
 dpg.start_dearpygui()
 dpg.destroy_context()
