@@ -7,3 +7,7 @@
 /dashboard/frontend/
 devices_db.json
 *.log
+docker-release/runner/build/
+docker-release/runner/dist/
+docker-release/runner/main.spec
+docker-release/runner/main_exe.spec

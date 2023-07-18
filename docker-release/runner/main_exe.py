@@ -9,6 +9,10 @@ def set_proces_info(text):
     dpg.set_value('proces_info', text)
 
 
+def get_container_name_by_image(image_name: str):
+    return image_name.split(':')[-1] + '-container'
+
+
 def docker_is_installed():
     return client.version()["Platform"]["Name"]
 
@@ -56,7 +60,7 @@ def start_container_by_image_name(image_name, button):
     else:
         set_proces_info(f"Container {image_name} not found")
 
-    container_name = image_name.replace(':', '') + '-container'
+    container_name = get_container_name_by_image(image_name)
 
     if not container_exists:
         try:
@@ -114,7 +118,7 @@ def stop_container(sender, app_data, user_data):
     if not image_name:
         return
 
-    container_name = image_name.replace(':', '') + '-container'
+    container_name = get_container_name_by_image(image_name)
     container = client.containers.get(container_name)
 
     if container.status == "running":
@@ -130,10 +134,10 @@ docker_version = docker_is_installed()
 docker_images = get_docker_images()
 
 dpg.create_context()
-dpg.create_viewport(width=600, height=600)
+dpg.create_viewport(width=600, height=600, title='Terminal9040')
 dpg.setup_dearpygui()
 
-with dpg.window(label="Example Window", width=600, height=600):
+with dpg.window(label="", width=600, height=600):
     if docker_version:
         dpg.add_text(docker_version)
     else:
@@ -142,7 +146,7 @@ with dpg.window(label="Example Window", width=600, height=600):
     dpg.add_text("Not container started", tag='container_started')
     dpg.add_text("Wait for a action", tag="proces_info")
     dpg.add_combo(docker_images, label="Choose version", width=200, tag='combo_version')
-    dpg.add_input_text(label="HOST IP ADDRESS", tag='input_host')
+    dpg.add_input_text(label="HOST IP ADDRESS", width=200, tag='input_host')
 
     dpg.add_button(label="Start", callback=start_container, enabled=True, )
     dpg.add_button(label="Stop", callback=stop_container, enabled=True)
