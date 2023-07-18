@@ -3,6 +3,8 @@ import dearpygui.dearpygui as dpg
 from docker.errors import APIError
 
 client = docker.from_env()
+image_search_string = '9160'
+container_search_string = '-9160-container'
 
 
 def set_proces_info(text):
@@ -10,7 +12,7 @@ def set_proces_info(text):
 
 
 def get_container_name_by_image(image_name: str):
-    return image_name.split(':')[-1] + '-container'
+    return image_name.split(':')[-1] + container_search_string
 
 
 def docker_is_installed():
@@ -21,7 +23,7 @@ def get_docker_images():
     images = []
     docker_images = client.images.list()
     matching_images = [image for image in docker_images if
-                       any('terminal9160' in tag for tag in image.tags)]
+                       any(image_search_string in tag for tag in image.tags)]
     for image in matching_images:
         for tag in image.tags:
             images.append(tag)
@@ -35,7 +37,7 @@ def check_container_is_running():
 
     # Проверяем, запущен ли хотя бы один контейнер с именем, содержащим подстроку
     matching_containers = [container for container in containers if
-                           'terminal9160' in container.name
+                           container_search_string in container.name
                            and container.status == "running"]
 
     if matching_containers:
