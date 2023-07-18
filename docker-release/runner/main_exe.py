@@ -52,9 +52,9 @@ def start_container_by_image_name(image_name, button):
 
     # Выводим результат
     if container_exists:
-        set_proces_info(f"Контейнер для образа {image_name} существует")
+        set_proces_info(f"Container {image_name} found")
     else:
-        set_proces_info(f"Контейнер для образа {image_name} не  существует")
+        set_proces_info(f"Container {image_name} not found")
 
     container_name = image_name.replace(':', '') + '-container'
 
@@ -76,10 +76,10 @@ def start_container_by_image_name(image_name, button):
                     'TZ': 'Europe/Moscow',
                 }
             )
-            set_proces_info(f"Контейнер {container_name} создан")
+            set_proces_info(f"Container {container_name} created")
 
         except APIError as e:
-            set_proces_info(f"Ошибка создания контейнера: {e}")
+            set_proces_info(f"Error create container: {e}")
             return
 
     if check_container_is_running():
@@ -89,10 +89,10 @@ def start_container_by_image_name(image_name, button):
     if container.status == "running":
         return
 
-    set_proces_info(f"Запуск контейнера {container_name}...")
+    set_proces_info(f"Start container {container_name}...")
     container.start()
     check_container_is_running()
-    set_proces_info(f"Контейнера {container_name} запущен")
+    set_proces_info(f"Container {container_name} started")
 
 
 def stop_container_by_image_name():
@@ -118,10 +118,10 @@ def stop_container(sender, app_data, user_data):
     container = client.containers.get(container_name)
 
     if container.status == "running":
-        set_proces_info(f'Останавливаю контейнер {container_name}...')
+        set_proces_info(f'Stopping container {container_name}...')
         container.stop()
         dpg.set_value('container_started', "")
-        set_proces_info(f'Остановился контейнер {container_name}')
+        set_proces_info(f'Stopped container {container_name}')
 
     check_container_is_running()
 
