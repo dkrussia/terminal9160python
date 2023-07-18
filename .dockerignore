@@ -2,3 +2,7 @@ venv/
 docs/
 photo/*
 test/
+.git/
+.gitignore
+devices_db.json
+Dockerfile
