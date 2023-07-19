@@ -166,13 +166,13 @@ with dpg.window(label="", width=600, height=600):
                   tag='combo_version',
                   default_value=docker_images[0] if docker_images[0] else '')
     dpg.add_input_text(label="HOST IP ADDRESS", width=200, tag='input_host')
-    dpg.add_combo(['Asia/Dubai', 'Europe/Moscow'],
+    dpg.add_combo(['Asia/Riyadh', 'Asia/Dubai', 'Europe/Moscow'],
                   callback=on_select_images,
                   label="Choose version", width=200,
                   tag='combo_timezone',
                   default_value='Europe/Moscow')
-    dpg.add_button(label="Start", callback=start_container, tag='button_start',)
-    dpg.add_button(label="Stop", callback=stop_container, tag='button_stop',)
+    dpg.add_button(label="Start", callback=start_container, tag='button_start', )
+    dpg.add_button(label="Stop", callback=stop_container, tag='button_stop', )
 
 check_container_is_running()
 
