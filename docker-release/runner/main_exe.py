@@ -31,10 +31,13 @@ def get_docker_images():
     return images
 
 
+def on_select_images():
+    dpg.enable_item('button_start')
+
+
 def check_container_is_running():
     # Получаем список всех контейнеров
     containers = client.containers.list(all=True)
-
     # Проверяем, запущен ли хотя бы один контейнер с именем, содержащим подстроку
     matching_containers = [container for container in containers if
                            container_search_string in container.name
@@ -45,6 +48,7 @@ def check_container_is_running():
         dpg.set_value('container_started', c.name)
         dpg.set_value('combo_version', c.attrs['Config']['Image'])
         dpg.set_value('input_host', c.attrs['Config']['Env'][0].split("=")[-1])
+        dpg.enable_item('button_stop')
 
     return matching_containers
 
@@ -70,16 +74,17 @@ def start_container_by_image_name(image_name, button):
             client.containers.create(
                 image_name,
                 name=container_name,
+                # контейнер_порт / tcp: хост_порт
                 ports={
                     '15672/tcp': 15672,
                     '5672/tcp': 5672,
                     '18083/tcp': 18083,
                     '1883/tcp': 1883,
-                    '8080/tcp': 8080,
+                    '8080/tcp': 8888,
                 },
                 environment={
                     'HOST': dpg.get_value('input_host'),
-                    'TZ': 'Europe/Moscow',
+                    'TZ': dpg.get_value('combo_timezone'),
                 }
             )
             set_proces_info(f"Container {container_name} created")
@@ -122,12 +127,14 @@ def stop_container(sender, app_data, user_data):
 
     container_name = get_container_name_by_image(image_name)
     container = client.containers.get(container_name)
+    # docker.errors.NotFound
 
     if container.status == "running":
         set_proces_info(f'Stopping container {container_name}...')
         container.stop()
         dpg.set_value('container_started', "")
         set_proces_info(f'Stopped container {container_name}')
+        dpg.enable_item('button_start')
 
     check_container_is_running()
 
@@ -139,6 +146,12 @@ dpg.create_context()
 dpg.create_viewport(width=600, height=600, title='Terminal9040')
 dpg.setup_dearpygui()
 
+with dpg.theme() as disabled_theme:
+    with dpg.theme_component(dpg.mvButton, enabled_state=False):
+        dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 0, 0])
+
+dpg.bind_theme(disabled_theme)
+
 with dpg.window(label="", width=600, height=600):
     if docker_version:
         dpg.add_text(docker_version)
@@ -147,11 +160,19 @@ with dpg.window(label="", width=600, height=600):
 
     dpg.add_text("Not container started", tag='container_started')
     dpg.add_text("Wait for a action", tag="proces_info")
-    dpg.add_combo(docker_images, label="Choose version", width=200, tag='combo_version')
+    dpg.add_combo(docker_images,
+                  callback=on_select_images,
+                  label="Choose version", width=200,
+                  tag='combo_version',
+                  default_value=docker_images[0] if docker_images[0] else '')
     dpg.add_input_text(label="HOST IP ADDRESS", width=200, tag='input_host')
-
-    dpg.add_button(label="Start", callback=start_container, enabled=True, )
-    dpg.add_button(label="Stop", callback=stop_container, enabled=True)
+    dpg.add_combo(['Asia/Dubai', 'Europe/Moscow'],
+                  callback=on_select_images,
+                  label="Choose version", width=200,
+                  tag='combo_timezone',
+                  default_value='Europe/Moscow')
+    dpg.add_button(label="Start", callback=start_container, tag='button_start',)
+    dpg.add_button(label="Stop", callback=stop_container, tag='button_stop',)
 
 check_container_is_running()
 

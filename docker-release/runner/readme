@@ -26,7 +26,7 @@ docker build . -t terminal9160
 ------------------------------------------
 Runner.exe
 На платформе dearpygui + pyconsole
-Сборка командой "pyinstaller .\main_exe.py --noconsole --onefile --windowed --icon=favicon.ico"
+Сборка командой "pyinstaller .\main_exe.py --name Manage9160 --noconsole --onefile --windowed --icon=favicon.ico"
 ------------------------------------------
 
 2. Запускам Runner.exe
