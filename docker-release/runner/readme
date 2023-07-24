@@ -1,7 +1,7 @@
 *
 *   Build Image
 *   docker build . -t terminal9160
-*   docker tag terminal9160-v1:latest kuznetsovsergey/9160:v1
+*   docker tag terminal9160:latest kuznetsovsergey/9160:v1
 *   docker push kuznetsovsergey/9160:v1
 
 Если rabbit запускается не режиме demon, проверить Line Separator в файла init.sh
