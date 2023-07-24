@@ -27,7 +27,6 @@ from config import (
     CORS
 )
 
-
 print("BASE URL: ", BASE_URL)
 print("BASE DIR: ", BASE_DIR)
 print("PHOTO URL: ", PHOTO_URL)
@@ -35,6 +34,12 @@ print("PHOTO DIR: ", PHOTO_DIR)
 print("PHOTO_PATH: ", PHOTO_PATH)
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
 app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
@@ -42,13 +47,6 @@ app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
 app.include_router(person_router, tags=['Управление персонами'])
 app.include_router(device_router, tags=['M API for Device'])
 app.include_router(device_push_router, tags=['Push API Device'])
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 def parse_pydantic_validation_error(errors):
