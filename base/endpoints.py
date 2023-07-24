@@ -6,8 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 from base.schema import PersonCreate, UpdateConfig
-from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST_FOR_TERMINAL, MQTT_PORT, TEST_SN_DEVICE, \
-    BASE_DIR
+from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST_FOR_TERMINAL, MQTT_PORT, BASE_DIR
 from base import mqtt_api
 from base.rmq_client import rmq_publish_message
 from services.device_command import ControlAction
@@ -49,7 +48,7 @@ def checker(person_payload: str = Form(...)):
 
 @person_router.get("/{id}", description="Получение пользователя по ID")
 @person_router.get("", description="Получение всех пользователей")
-def get_person(sn_device: str = TEST_SN_DEVICE, id: Optional[int] = ""):
+def get_person(sn_device: str, id: Optional[int] = ""):
     if not id:
         resp = mqtt_api.get_all_person(sn_device=sn_device)
         if resp.get('answer'):
@@ -61,13 +60,13 @@ def get_person(sn_device: str = TEST_SN_DEVICE, id: Optional[int] = ""):
 
 @person_router.delete("/{id}", description="Удаление пользователя по ID")
 @person_router.delete("", description="Удаление всех пользователей")
-def delete_person(sn_device: str = TEST_SN_DEVICE, id: int = None):
+def delete_person(sn_device: str, id: int = None):
     return mqtt_api.delete_person(sn_device=sn_device, id=id)
 
 
 @person_router.post("/self", description="Добавить себя")
 def add_self_person(
-        sn_device: str = TEST_SN_DEVICE,
+        sn_device: str,
 ):
     with open(f'{BASE_DIR}/tests/base64photo.txt', 'r') as f:
         p = f.read()
@@ -83,7 +82,7 @@ def add_self_person(
 @person_router.post("/{id}", description="Создание или обновление пользователя по ID")
 @person_router.post("/create", description="Создание или обновление нового пользователя")
 async def person_create_or_update(
-        sn_device: str = TEST_SN_DEVICE,
+        sn_device: str,
         id: int = 0,
         person_payload: PersonCreate = Depends(),
         photo: Optional[UploadFile] = File(None),
@@ -225,7 +224,7 @@ async def pass_face(request: Request):
 @device_router.post("/control/{action}", )
 async def send_control_action(
         action: ControlAction,
-        sn_device: str = TEST_SN_DEVICE,
+        sn_device: str,
 ):
     """
     Отправить действие на терминал: \n
@@ -238,7 +237,7 @@ async def send_control_action(
 
 
 @device_router.post("/config", )
-async def update_config(device_config: UpdateConfig, sn_device: str = TEST_SN_DEVICE, ):
+async def update_config(device_config: UpdateConfig, sn_device: str, ):
     """
     Обновить настройки конфигурации на терминале
     adminPassword	String	Device login password\n
@@ -267,10 +266,10 @@ async def update_config(device_config: UpdateConfig, sn_device: str = TEST_SN_DE
 
 
 @device_router.post("/to_observed", )
-async def add_to_observed(sn_device: str = TEST_SN_DEVICE, ):
+async def add_to_observed(sn_device: str, ):
     return device_service.add_device_to_observed(sn_device)
 
 
 @device_router.post("/unobserved", )
-async def unobserved(sn_device: str = TEST_SN_DEVICE, ):
+async def unobserved(sn_device: str, ):
     return device_service.remove_device_from_observed(sn_device)
