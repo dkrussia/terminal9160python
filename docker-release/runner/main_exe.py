@@ -121,7 +121,7 @@ def start_container_by_image_name(image_name, button):
                     '5672/tcp': 5672,
                     '18083/tcp': 18083,
                     '1883/tcp': 1883,
-                    '8080/tcp': 8888,
+                    '8888/tcp': 8888,
                 },
                 environment=DokerEnv.env
             )

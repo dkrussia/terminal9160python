@@ -3,7 +3,7 @@ import os
 HOST = os.getenv('HOST')
 
 SERVER_HOST = "0.0.0.0"
-SERVER_PORT = 8080
+SERVER_PORT = 8888
 
 #
 BASE_URL = f"http://{HOST or SERVER_HOST}:{SERVER_PORT}"
