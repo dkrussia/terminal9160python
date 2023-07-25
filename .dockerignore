@@ -6,3 +6,4 @@ test/
 .gitignore
 devices_db.json
 Dockerfile
+dashboard/frontend/
