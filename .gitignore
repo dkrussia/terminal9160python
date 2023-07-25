@@ -4,7 +4,7 @@
 *.ini
 /tests/.pytest_cache/
 /tests/I.jpg
-/dashboard/frontend/
+frontend/
 devices_db.json
 *.log
 docker-release/runner/build/

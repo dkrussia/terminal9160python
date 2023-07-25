@@ -1,6 +1,6 @@
 import os
 
-HOST = os.getenv('HOST')
+HOST = "192.168.1.66"
 
 SERVER_HOST = "0.0.0.0"
 SERVER_PORT = 8888
@@ -14,6 +14,10 @@ CORS = ['*']
 DEVICE_JSON_DATA_FILE = os.path.join(BASE_DIR, 'devices_db.json')
 
 PHOTO_DIR = os.path.join(BASE_DIR, 'photo')
+if not PHOTO_DIR:
+    os.makedirs(PHOTO_DIR)
+    print(f"The directory {PHOTO_DIR} is created!")
+
 PHOTO_PATH = "/photo"
 PHOTO_URL = f"{BASE_URL}{PHOTO_PATH}"
 
@@ -22,9 +26,9 @@ FIRMWARE_PATH = "/firmware"
 FIRMWARE_URL = f"{BASE_URL}{FIRMWARE_PATH}"
 TEST_FIRMWARE = 'HR-FaceAC-L01.04.13-DM08.tar.gz'
 
-RMQ_HOST = "localhost"
-RMQ_USER = "guest"
-RMQ_PASSWORD = "guest"
+RMQ_HOST = "151.248.125.126"
+RMQ_USER = "admin"
+RMQ_PASSWORD = "Dormakaba2020"
 RMQ_PORT = 5672
 
 # Для отправки в терминал
@@ -32,9 +36,9 @@ MQTT_HOST_FOR_TERMINAL = HOST or SERVER_HOST
 
 # Для сервера
 MQTT_HOST = "localhost"
-MQTT_PORT = 1883
+MQTT_PORT = 8086
 MQTT_USER = "admin"
-MQTT_PASSWORD = "public"
+MQTT_PASSWORD = "admin123"
 
 TIMEOUT_MQTT_RESPONSE = 8
 
