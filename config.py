@@ -1,6 +1,6 @@
 import os
 
-HOST = "192.168.1.66"
+HOST = "192.168.76.153"
 
 SERVER_HOST = "0.0.0.0"
 SERVER_PORT = 8888
