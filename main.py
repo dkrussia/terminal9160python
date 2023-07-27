@@ -1,3 +1,5 @@
+import os
+
 import config
 import threading
 import uvicorn
@@ -75,6 +77,10 @@ app.mount(
     name='static',
 )
 
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse(os.path.join(BASE_DIR, 'dashboard', 'favicon.ico'))
 
 # Маршрут для отображения SPA-приложения на префиксном пути
 @app.get('/dashboard/{path:path}', response_class=HTMLResponse)
