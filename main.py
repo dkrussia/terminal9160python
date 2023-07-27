@@ -82,6 +82,7 @@ app.mount(
 async def favicon():
     return FileResponse(os.path.join(BASE_DIR, 'dashboard', 'favicon.ico'))
 
+
 # Маршрут для отображения SPA-приложения на префиксном пути
 @app.get('/dashboard/{path:path}', response_class=HTMLResponse)
 def dashboard_index(path: str):
@@ -100,14 +101,10 @@ def index():
 # Если надо загрузить много персон сразу, то делаем это пачками по 100 человек.
 
 if __name__ == '__main__':
-    # TODO: Добавить timezone
-    # TODO: Разделить конфиги
-    # TODO: Настроить интерфейс
+    if config.MOCK_DEVICE:
+        mock_service.handle_commands_from_mock_devices()
+        threading.Thread(target=mock_service.mock_ping_to_mock_devices).start()
 
-    # if config.MOCK_DEVICE:
-    #     mock_service.handle_commands_from_mock_devices()
-    #     threading.Thread(target=mock_service.mock_ping_to_mock_devices).start()
-    #
     mqtt_client.start_receiving()
     threading.Thread(target=rmq_start_consume).start()
     uvicorn.run(

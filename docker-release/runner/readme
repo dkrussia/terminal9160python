@@ -1,5 +1,9 @@
 *
-*   Build Image
+*
+*
+        Build Image Production
+        kuznetsovsergey/Dormakaba2020
+
 *   docker build . -t terminal9160
 *   docker tag terminal9160:latest kuznetsovsergey/9160:v1
 *   docker push kuznetsovsergey/9160:v1
