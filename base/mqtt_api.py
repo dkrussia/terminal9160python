@@ -16,7 +16,7 @@ from services.devices import device_service
 def is_answer_has_error(command, answer):
     if answer is None:
         logger.error(
-            f'\n![+]ERROR Not receive answer from MQTT '
+            f' ![+]ERROR Not receive answer from MQTT '
             f'\n Command={command.payload}'
         )
         return True
@@ -31,7 +31,7 @@ def is_answer_has_error(command, answer):
             for operation in answer["operations"]["result"]:
                 if operation["code"] < 0:
                     logger.error(
-                        f'\n![+]ERROR Some operations'
+                        f' ![+]ERROR Some operations'
                         f'\n Answer= ${json.dumps(answer)}'
                         f'\n Command={command.payload}'
                         f'\n ERROR Operation={operation}'
@@ -41,7 +41,7 @@ def is_answer_has_error(command, answer):
         if isinstance(answer["operations"]["result"], dict):
             if answer["operations"]["result"]["code"] < 0:
                 logger.error(
-                    f'\n![+]ERROR Some operations'
+                    f' ![+]ERROR Some operations'
                     f'\n Answer= ${json.dumps(answer)}'
                     f'\n Command={command.payload}'
                     f'\n ERROR operation={answer["operations"]["result"]}'

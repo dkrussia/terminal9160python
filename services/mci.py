@@ -33,6 +33,7 @@ def command_thread_handler(type_command, sn_device, payload, reply_to):
         for user in payload:
             photo = user.get('picture', "")
             if photo:
+                # TODO: Сделать Сумму результатов + ID персон которые с ошибкой.
                 result = mqtt_api.create_or_update(
                     sn_device=sn_device,
                     id_person=int(user["id"]),
