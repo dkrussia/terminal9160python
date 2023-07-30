@@ -66,7 +66,7 @@ def mock_ping_to_mock_devices():
                 routing_key=p_q_name,
                 exchange="",
                 properties=prop,
-                body=json.dumps({'sn': f'MCI_Test_{p_mock_sn}'})
+                body=json.dumps({'sn': f'MCI_Test_{p_mock_sn}'}),
             )
             print(f"[*] Ping run p_q_name {p_mock_sn}")
         time.sleep(20)

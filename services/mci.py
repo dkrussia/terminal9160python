@@ -33,7 +33,6 @@ def command_thread_handler(type_command, sn_device, payload, reply_to):
         for user in payload:
             photo = user.get('picture', "")
             if photo:
-
                 # TODO: Сделать Сумму результатов + ID персон которые с ошибкой.
                 #  commands = [create_command, *update_commands]
 
@@ -90,3 +89,6 @@ def callback_on_get_mci_command(message):
                     sn_device=sn_device,
                     payload=payload,
                     reply_to=reply_to)
+
+    # TODO: Добавить подтверждение о принятии сообщения
+    # channel.basic_ack(delivery_tag=method.delivery_tag)
