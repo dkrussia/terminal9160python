@@ -28,6 +28,9 @@ class Devices:
     devices_meta = {}
     devices_observed = []
 
+    # TODO: Хранить списки ids person которые присутствуют на
+    #  Терминале, что бы не делать person is_exist
+
     def __new__(cls):
         d = cls.read_from_json()
         cls.devices_meta = d.get('meta', {})
