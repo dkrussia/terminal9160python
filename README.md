@@ -1,4 +1,6 @@
-*Swagger UI Доступен по пути: `/docs`*
+*Swagger UI Доступен по пути: `/docs`*  
+  
+
 *Терминал 9160 подписывается на следующее топики*
 
 `/_dispatch/_get_state/[device_sn]`      
@@ -9,7 +11,6 @@
 
 `/_report/state`  
 `/_report/received`
-  
 -----------------------
 **Пример рабочего потока данных Matrix-Terminal:**  
   
