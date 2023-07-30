@@ -92,7 +92,7 @@ def rmq_send_reply_to(reply_to, data):
 def rmq_subscribe_on_mci_command(sn_device, func):
     queue = f'commands_{sn_device}'
     rmq_global_chanel.queue.declare(queue)
-    rmq_global_chanel.basic.consume(func, queue)
+    rmq_global_chanel.basic.consume(func, queue, no_ack=True)
 
 
 def rmq_start_consume():

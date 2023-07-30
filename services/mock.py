@@ -76,4 +76,4 @@ def handle_commands_from_mock_devices():
     for mock_sn in range(1, config.MOCK_DEVICE_AMOUNT):
         q_name = f'commands_MCI_Test_{mock_sn}'
         rmq_global_chanel.queue.declare(q_name)
-        rmq_global_chanel.basic.consume(mock_callback_on_get_mci_command, q_name)
+        rmq_global_chanel.basic.consume(mock_callback_on_get_mci_command, q_name, no_ack=True)
