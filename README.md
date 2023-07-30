@@ -25,20 +25,56 @@ _______________________
 *EMQX, RABBIT in Docker*  
 
 `docker run -d --name emqx -p 8086:1883 -p 8085:18083 emqx/emqx:latest`    
-`docker run -p 15672:15672 -p 5672:5672 rabbitmq:3.10.7-management`  
+`docker run -p 15672:15672 -p 5672:5672 rabbitmq:3.10.7-management`
+
+
+        Build Image Production
+        kuznetsovsergey/Dormakaba2020
+
+* docker build . -t terminal9160
+* docker tag terminal9160:latest kuznetsovsergey/9160:v1
+* docker push kuznetsovsergey/9160:v1
+
+!!! Если rabbit не запускается в demon, проверить Line Separator в файла init.sh
+
 _______________________
+**Launcher exe for Windows**
+Launcher9160.exe  
+На платформе dearpygui + pyconsole  
+Сборка командой  
+`pyinstaller .\main_exe.py --name Launcher9160 --noconsole --onefile --windowed --icon=favicon.ico`
 
-RabbitMQ `3.11.8`      
+**Установка**  
+Устанавливаем Docker.
+
+    Заходим в учетную запись Docker, с правами только на чтение.
+    Нажимаем Pull на доступной версии Image.
+
+    Если интернета нету на компьютере тогда:
+    Загрузить файл образа в ручную по ссылке
+    Передать в Runner по кнопочке [Добавить образ]
+
+    docker save -o имя_архива.tar имя_образа:тег
+    docker save -o myimage.tar myimage:latest
+    docker load -i имя_архива.tar
+
+
+-----------------------
+
+RabbitMQ == `3.11.8`    
+Erlang == `25.2.2`   
+EMQX == `5.0.24`      
+TERMINAL Firmware == `1.4.15C_DBG`
+
 `rabbitmq-plugins enable rabbitmq_management`  
-`rabbitmq-plugins enable rabbitmq_mqtt`  
-Erlang `25.2.2`   
-EMQX `5.0.24`      
-TERMINAL appVersionName': `1.4.15C_DBG`
+`rabbitmq-plugins enable rabbitmq_mqtt` *NOT WORKING WITH RABBIT MQTT! 
 
-!При назначении Server IP возможно требуется сделать Factory Reset
 
 ------------------------
 *Заметки*  
+
+!При назначении/изменении Server IP возможно требуется сделать Restart Terminal
+
 `[update_person/create] userName = firstName + lastName`  
 `???MQTT команда update_user создает персону`  
 
