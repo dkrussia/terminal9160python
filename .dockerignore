@@ -7,3 +7,4 @@ test/
 devices_db.json
 Dockerfile
 frontend/
+.idea/
