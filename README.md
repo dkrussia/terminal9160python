@@ -11,6 +11,7 @@
 
 `/_report/state`  
 `/_report/received`
+  
 -----------------------
 **Пример рабочего потока данных Matrix-Terminal:**  
   
@@ -39,9 +40,11 @@ _______________________
 !!! Если rabbit не запускается в demon, проверить Line Separator в файла init.sh
 
 _______________________
-**Launcher exe for Windows**
-Launcher9160.exe  
-На платформе dearpygui + pyconsole  
+**Launcher exe for Windows(Launcher9160.exe)**  
+  
+GUI(dearpygui)  
+To exe (pyconsole)  
+  
 Сборка командой  
 `pyinstaller .\main_exe.py --name Launcher9160 --noconsole --onefile --windowed --icon=favicon.ico`
 
