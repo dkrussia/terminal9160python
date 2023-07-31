@@ -3,15 +3,12 @@
 
 import json
 import random
+import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 import config
-from base.rmq_client import rmq_global_chanel, rmq_send_reply_to
-
-
-executor = ThreadPoolExecutor(max_workers=config.MAX_WORKERS_MCI_COMMAND)
+from base.rmq_client import rmq_global_chanel, rmq_send_reply_to, MyChannel
 
 
 def mock_command_thread_handler(type_command, sn_device, payload, reply_to):
@@ -42,11 +39,11 @@ def mock_callback_on_get_mci_command(message):
     payload = None
     sn_device = message.method["routing_key"].split("_")[-1]
 
-    executor.submit(mock_command_thread_handler,
-                    type_command=type_command,
-                    sn_device=sn_device,
-                    payload=payload,
-                    reply_to=reply_to)
+    mock_command_thread_handler(
+        type_command=None,
+        sn_device=sn_device,
+        payload=payload,
+        reply_to=reply_to)
 
 
 def mock_ping_to_mock_devices():
@@ -72,8 +69,16 @@ def mock_ping_to_mock_devices():
         time.sleep(20)
 
 
+def consume_mock_commands_rmq_message(q_name):
+    with MyChannel() as chanel:
+        chanel.queue.declare(q_name)
+        chanel.basic.consume(mock_callback_on_get_mci_command, q_name, no_ack=True)
+        chanel.start_consuming()
+
+
 def handle_commands_from_mock_devices():
     for mock_sn in range(1, config.MOCK_DEVICE_AMOUNT):
         q_name = f'commands_MCI_Test_{mock_sn}'
-        rmq_global_chanel.queue.declare(q_name)
-        rmq_global_chanel.basic.consume(mock_callback_on_get_mci_command, q_name, no_ack=True)
+        print(mock_sn)
+        thread = threading.Thread(target=consume_mock_commands_rmq_message, args=(q_name,))
+        thread.start()
