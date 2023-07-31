@@ -179,8 +179,9 @@ docker_version = docker_is_installed()
 docker_images = get_docker_images()
 
 dpg.create_context()
-dpg.create_viewport(width=600, height=600, title='Launcher9160')
+dpg.create_viewport(width=400, height=400, title='Launcher9160', resizable=False,)
 dpg.setup_dearpygui()
+dpg.set_viewport_small_icon("favicon.ico")
 
 with dpg.theme() as disabled_theme:
     with dpg.theme_component(dpg.mvButton, enabled_state=False):
@@ -188,7 +189,7 @@ with dpg.theme() as disabled_theme:
 
 dpg.bind_theme(disabled_theme)
 
-with dpg.window(label="", width=600, height=600):
+with dpg.window(label="", width=400, height=400):
     if docker_version:
         dpg.add_text(docker_version)
     else:
