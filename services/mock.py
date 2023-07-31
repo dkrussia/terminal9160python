@@ -79,6 +79,5 @@ def consume_mock_commands_rmq_message(q_name):
 def handle_commands_from_mock_devices():
     for mock_sn in range(1, config.MOCK_DEVICE_AMOUNT):
         q_name = f'commands_MCI_Test_{mock_sn}'
-        print(mock_sn)
         thread = threading.Thread(target=consume_mock_commands_rmq_message, args=(q_name,))
         thread.start()
