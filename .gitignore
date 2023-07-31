@@ -7,8 +7,5 @@
 frontend/
 devices_db.json
 *.log
-docker-release/runner/build/
-docker-release/runner/dist/
-docker-release/runner/main.spec
-docker-release/runner/main_exe.spec
-docker-release/runner/env.json
+docker-release/launcher/Launcher9160.exe
+docker-release/launcher/env.json

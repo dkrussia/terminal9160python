@@ -8,3 +8,4 @@ devices_db.json
 Dockerfile
 frontend/
 .idea/
+docker-release/launcher/

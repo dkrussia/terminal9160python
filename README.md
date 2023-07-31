@@ -46,7 +46,7 @@ GUI(dearpygui)
 To exe (pyconsole)  
   
 Сборка командой  
-`pyinstaller .\main_exe.py --name Launcher9160 --noconsole --onefile --windowed --icon=favicon.ico`
+`pyinstaller .\main_exe.py --name=Launcher9160 --noconsole --onefile --windowed --icon=favicon.ico`
 
 **Установка**  
 Устанавливаем Docker.
