@@ -179,7 +179,7 @@ docker_version = docker_is_installed()
 docker_images = get_docker_images()
 
 dpg.create_context()
-dpg.create_viewport(width=600, height=600, title='Terminal9040')
+dpg.create_viewport(width=600, height=600, title='Launcher9160')
 dpg.setup_dearpygui()
 
 with dpg.theme() as disabled_theme:
