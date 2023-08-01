@@ -9,3 +9,6 @@ devices_db.json
 *.log
 docker-release/launcher/Launcher9160.exe
 docker-release/launcher/env.json
+.env.docker
+.env.local
+__pycache__/

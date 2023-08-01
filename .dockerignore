@@ -9,3 +9,4 @@ Dockerfile
 frontend/
 .idea/
 docker-release/launcher/
+.env.local

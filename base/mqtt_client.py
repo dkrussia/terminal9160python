@@ -5,7 +5,7 @@ import paho.mqtt.client as mqtt
 import json
 
 import config
-from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST, MQTT_PORT
+from config import s as settings
 from base.log import logger
 from services.devices import device_service
 from base.rmq_client import rmq_publish_message
@@ -21,8 +21,8 @@ class ExceptionNoResponseMQTTReceived(Exception):
 
 def get_mqtt_client():
     client = mqtt.Client("terminal_mqtt")
-    client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
-    client.connect(MQTT_HOST, MQTT_PORT, 60)
+    client.username_pw_set(settings.MQTT_USER, settings.MQTT_PASSWORD)
+    client.connect(settings.MQTT_HOST, settings.MQTT_PORT, 60)
     return client
 
 
@@ -94,7 +94,7 @@ class MQTTClientWrapper:
             raise ExceptionOnPublishMQTTMessage()
         print("--MQTT SUCCESS PUBLISH COMMAND--")
 
-    def send_command_and_wait_result(self, command, timeout=config.TIMEOUT_MQTT_RESPONSE):
+    def send_command_and_wait_result(self, command, timeout=settings.TIMEOUT_MQTT_RESPONSE):
         result_event = ResultEvent()
         event_key = f'command_{command.id_command}_{command.sn_device}'
 

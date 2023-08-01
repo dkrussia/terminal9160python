@@ -5,12 +5,7 @@ import amqpstorm
 from amqpstorm import AMQPChannelError, AMQPConnectionError
 from base.utils import catch_exceptions
 
-from config import (
-    RMQ_HOST,
-    RMQ_USER,
-    RMQ_PASSWORD,
-    RMQ_PORT
-)
+from config import s as settings
 
 logger = logging.getLogger('rmq_log')
 logger.setLevel(logging.INFO)
@@ -27,10 +22,10 @@ def create_connection():
         attempts += 1
         try:
             connection = amqpstorm.Connection(
-                hostname=RMQ_HOST,
-                username=RMQ_USER,
-                password=RMQ_PASSWORD,
-                port=RMQ_PORT,
+                hostname=settings.RMQ_HOST,
+                username=settings.RMQ_USER,
+                password=settings.RMQ_PASSWORD,
+                port=settings.RMQ_PORT,
             )
             break
         except amqpstorm.AMQPError as why:

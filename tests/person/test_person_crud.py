@@ -1,6 +1,7 @@
 from starlette.testclient import TestClient
-from config import TEST_ID_PERSON
 from main import app
+
+TEST_ID_PERSON = 999
 
 
 def test_100_request_mqtt():

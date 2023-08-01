@@ -3,7 +3,6 @@ import json
 import docker
 import dearpygui.dearpygui as dpg
 from docker.errors import APIError
-from docker.models.containers import Container
 
 client = docker.from_env()
 image_search_string = '9160'
@@ -21,7 +20,7 @@ class DokerEnv:
                 return DokerEnv.env
         except FileNotFoundError:
             DokerEnv.env = {
-                "HOST": "127.0.0.1",
+                "HOST_FOR_TERMINAL": "127.0.0.1",
                 "TZ": "Europe/Moscow",
             }
             DokerEnv.write_env(DokerEnv.env)
@@ -84,7 +83,7 @@ def check_container_is_running():
         dpg.set_value('container_started', c.name)
         dpg.set_value('combo_version', c.attrs['Config']['Image'])
         dpg.set_value('combo_timezone', DokerEnv.env["TZ"])
-        dpg.set_value('input_host', DokerEnv.env["HOST"])
+        dpg.set_value('input_host', DokerEnv.env["HOST_FOR_TERMINAL"])
         dpg.enable_item('button_stop')
 
     return matching_containers
@@ -94,7 +93,7 @@ def start_container_by_image_name(image_name, button):
     # Получаем список всех контейнеров
     container_name = get_container_name_by_image(image_name)
     environment = {
-        'HOST': dpg.get_value('input_host'),
+        'HOST_FOR_TERMINAL': dpg.get_value('input_host'),
         'TZ': dpg.get_value('combo_timezone'),
     }
     try:
@@ -202,10 +201,10 @@ with dpg.window(label="", width=400, height=400):
                   label="Choose version", width=200,
                   tag='combo_version',
                   default_value=docker_images[0] if docker_images[0] else '')
-    dpg.add_input_text(label="HOST IP ADDRESS",
+    dpg.add_input_text(label="HOST_FOR_TERMINAL IP ADDRESS",
                        width=200,
                        tag='input_host',
-                       default_value=DokerEnv.env["HOST"])
+                       default_value=DokerEnv.env["HOST_FOR_TERMINAL"])
     dpg.add_combo(['Asia/Riyadh', 'Asia/Dubai', 'Europe/Moscow'],
                   callback=on_select_images,
                   label="Choose TimeZone", width=200,

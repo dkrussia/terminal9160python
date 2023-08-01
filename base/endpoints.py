@@ -6,7 +6,8 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 from base.schema import PersonCreate, UpdateConfig
-from config import MQTT_USER, MQTT_PASSWORD, MQTT_HOST_FOR_TERMINAL, MQTT_PORT, BASE_DIR
+from config import BASE_DIR
+from config import s as settings
 from base import mqtt_api
 from base.rmq_client import rmq_publish_message
 from services.device_command import ControlAction
@@ -143,9 +144,9 @@ async def device_login(request: Request):
     r = {
         "code": 0,
         "data": {
-            "mqttUserName": MQTT_USER,
-            "mqttPassword": MQTT_PASSWORD,
-            "mqttUrl": f"tcp://{MQTT_HOST_FOR_TERMINAL}:{MQTT_PORT}",
+            "mqttUserName": settings.MQTT_USER,
+            "mqttPassword": settings.MQTT_PASSWORD,
+            "mqttUrl": f"tcp://{settings.HOST_FOR_TERMINAL}:{settings.MQTT_PORT_FOR_TERMINAL}",
             "token": "token",
         },
         "desc": "123",

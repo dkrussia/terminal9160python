@@ -1,7 +1,8 @@
 import base64
 import os
 
-from config import PHOTO_DIR, PHOTO_URL
+from config import PHOTO_DIR
+from config import s as settings
 
 
 class PersonPhoto:
@@ -22,4 +23,4 @@ class PersonPhoto:
 
     @staticmethod
     def get_photo_url(person_id):
-        return f"{PHOTO_URL}/{person_id}.jpg"
+        return f"{settings.PHOTO_URL}/{person_id}.jpg"

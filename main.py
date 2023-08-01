@@ -1,6 +1,5 @@
 import os
 
-import config
 import threading
 import uvicorn
 from fastapi import FastAPI, Request
@@ -17,23 +16,14 @@ from base.rmq_client import rmq_start_consume
 from services import mock as mock_service
 
 from config import (
-    BASE_URL,
     BASE_DIR,
-    PHOTO_URL,
     PHOTO_DIR,
     PHOTO_PATH,
-    SERVER_PORT,
-    SERVER_HOST,
     FIRMWARE_PATH,
     FIRMWARE_DIR,
     CORS
 )
-
-print("BASE URL: ", BASE_URL)
-print("BASE DIR: ", BASE_DIR)
-print("PHOTO URL: ", PHOTO_URL)
-print("PHOTO DIR: ", PHOTO_DIR)
-print("PHOTO_PATH: ", PHOTO_PATH)
+from config import s as settings
 
 app = FastAPI()
 app.add_middleware(
@@ -99,9 +89,8 @@ def index():
 # При добавлении персон в терминал, надо дождаться результата выполнения
 # и затем уже отправлять снова.
 # Если надо загрузить много персон сразу, то делаем это пачками по 100 человек.
-
 if __name__ == '__main__':
-    if config.MOCK_DEVICE:
+    if settings.MOCK_DEVICE:
         mock_service.handle_commands_from_mock_devices()
         threading.Thread(target=mock_service.mock_ping_to_mock_devices).start()
 
@@ -109,6 +98,6 @@ if __name__ == '__main__':
     threading.Thread(target=rmq_start_consume).start()
     uvicorn.run(
         app=app,
-        port=SERVER_PORT,
-        host=SERVER_HOST,
+        port=settings.SERVER_PORT,
+        host=settings.SERVER_HOST,
     )

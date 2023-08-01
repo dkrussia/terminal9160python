@@ -5,7 +5,7 @@ from starlette.datastructures import UploadFile
 import config
 from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage, \
     ExceptionNoResponseMQTTReceived
-from config import TIMEOUT_MQTT_RESPONSE, FIRMWARE_URL, TEST_FIRMWARE
+from config import s as settings
 from base.log import logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
@@ -52,7 +52,7 @@ def is_answer_has_error(command, answer):
 
 
 def create_or_update(sn_device, id_person, firstName, lastName, photo,
-        timeout=TIMEOUT_MQTT_RESPONSE):
+        timeout=settings.TIMEOUT_MQTT_RESPONSE):
     import base64
     if photo and isinstance(photo, UploadFile):
         photo = base64.b64encode(photo.file.read()).decode("utf-8")
@@ -87,7 +87,7 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo,
     }
 
 
-def get_all_person(sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
+def get_all_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = person_service.CommandGetPerson(sn_device=sn_device)
     command.search_person("")
     try:
@@ -104,7 +104,7 @@ def get_all_person(sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
     }
 
 
-def get_person(id_person, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
+def get_person(id_person, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = person_service.CommandGetPerson(sn_device=sn_device)
     command.search_person(id_person)
 
@@ -122,7 +122,7 @@ def get_person(id_person, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
     }
 
 
-def delete_person(sn_device: str, id: int = None, timeout=config.TIMEOUT_MQTT_RESPONSE):
+def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     # TODO: Удалять фото также
     command = person_service.CommandDeletePerson(sn_device=sn_device)
 
@@ -149,7 +149,7 @@ def delete_person(sn_device: str, id: int = None, timeout=config.TIMEOUT_MQTT_RE
     }
 
 
-def control_action(action, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
+def control_action(action, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = CommandControlTerminal(sn_device=sn_device)
 
     if action == ControlAction.RESTART_SYSTEM:
@@ -159,7 +159,7 @@ def control_action(action, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
     if action == ControlAction.DOOR_OPEN:
         command.open_door()
     if action == ControlAction.UPDATE_SOFTWARE:
-        command.update_software(firmware_url=f'{FIRMWARE_URL}/{TEST_FIRMWARE}')
+        command.update_software(firmware_url=f'{settings.FIRMWARE_URL}/{settings.FIRMWARE_FILE}')
 
     try:
         answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
@@ -175,7 +175,7 @@ def control_action(action, sn_device, timeout=config.TIMEOUT_MQTT_RESPONSE):
     }
 
 
-def update_config(payload, sn_device, timeout=TIMEOUT_MQTT_RESPONSE):
+def update_config(payload, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = CommandUpdateConfig(sn_device=sn_device)
     command.update_config(payload)
 
