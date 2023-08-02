@@ -9,7 +9,7 @@ from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
-
+from config import s
 from base.endpoints import device_router, person_router, device_push_router
 from base.mqtt_client import mqtt_client
 from base.rmq_client import rmq_start_consume
@@ -89,6 +89,14 @@ def index():
 # При добавлении персон в терминал, надо дождаться результата выполнения
 # и затем уже отправлять снова.
 # Если надо загрузить много персон сразу, то делаем это пачками по 100 человек.
+print("BASE DIR: ", BASE_DIR)
+print("PHOTO URL: ", s.PHOTO_URL)
+print("PHOTO DIR: ", PHOTO_DIR)
+print("PHOTO_PATH: ", PHOTO_PATH)
+print("MQTT_PORT_FOR_TERMINAL: ", s.MQTT_PORT_FOR_TERMINAL)
+print("HOST_FOR_TERMINAL: ", s.HOST_FOR_TERMINAL)
+print("PORT_FOR_TERMINAL: ", s.PORT_FOR_TERMINAL)
+
 if __name__ == '__main__':
     if settings.MOCK_DEVICE:
         mock_service.handle_commands_from_mock_devices()

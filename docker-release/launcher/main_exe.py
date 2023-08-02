@@ -20,8 +20,8 @@ class DokerEnv:
                 return DokerEnv.env
         except FileNotFoundError:
             DokerEnv.env = {
-                "HOST_FOR_TERMINAL": "127.0.0.1",
-                "TZ": "Europe/Moscow",
+                'HOST_FOR_TERMINAL': '127.0.0.1',
+                'TZ': 'Europe/Moscow',
             }
             DokerEnv.write_env(DokerEnv.env)
 
@@ -34,6 +34,7 @@ class DokerEnv:
     @staticmethod
     def env_changed(d):
         changed = json.dumps(d, sort_keys=True) != json.dumps(DokerEnv.env, sort_keys=True)
+        print(changed, d, DokerEnv.env)
         if changed:
             DokerEnv.write_env(d)
         return changed
@@ -96,15 +97,16 @@ def start_container_by_image_name(image_name, button):
         'HOST_FOR_TERMINAL': dpg.get_value('input_host'),
         'TZ': dpg.get_value('combo_timezone'),
     }
+
     try:
         container = client.containers.get(container_name)
         if DokerEnv.env_changed(environment):
             container.remove()
-            DokerEnv.write_env(environment)
             container = None
-            print('remove!')
     except docker.errors.NotFound:
         container = None
+
+    DokerEnv.write_env(environment)
 
     if not container:
         set_proces_info(f"Container {image_name} not found")
