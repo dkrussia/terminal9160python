@@ -2,7 +2,6 @@ import json
 
 from starlette.datastructures import UploadFile
 
-import config
 from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage, \
     ExceptionNoResponseMQTTReceived
 from config import s as settings
@@ -11,6 +10,13 @@ from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
     CommandGetPerson
 from services.devices import device_service
+
+FAILURE_CODES_REASON = {
+    -2: 'Open photo failure',
+    -3: 'Already in face library',
+    -4: 'Insert database failure',
+    -6: 'Extract feature value failure'
+}
 
 
 def is_answer_has_error(command, answer):
@@ -28,6 +34,7 @@ def is_answer_has_error(command, answer):
     ]:
 
         if isinstance(answer["operations"]["result"], list):
+            # Собрать все ошибки по каждой операции
             for operation in answer["operations"]["result"]:
                 if operation["code"] < 0:
                     logger.error(
@@ -35,6 +42,7 @@ def is_answer_has_error(command, answer):
                         f'\n Answer= ${json.dumps(answer)}'
                         f'\n Command={command.payload}'
                         f'\n ERROR Operation={operation}'
+                        f'\n Details = {FAILURE_CODES_REASON.get(operation["code"], "Not details")}'
                     )
                     return True
 
@@ -45,6 +53,7 @@ def is_answer_has_error(command, answer):
                     f'\n Answer= ${json.dumps(answer)}'
                     f'\n Command={command.payload}'
                     f'\n ERROR operation={answer["operations"]["result"]}'
+                    f'\n Details = {FAILURE_CODES_REASON.get(answer["operations"]["result"]["code"], "Not details")} '
                 )
                 return True
 
