@@ -1,12 +1,18 @@
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from base import mqtt_api
-from base.rmq_client import rmq_send_reply_to
+from base.rmq_client import rmq_send_reply_to, MyChannel
+from base.utils import catch_exceptions
 
-from config import MAX_WORKERS_MCI_COMMAND
+
+def consume_commands_rmq_message(q_name):
+    with MyChannel() as chanel:
+        chanel.queue.declare(q_name)
+        chanel.basic.consume(command_rmq_handler, q_name, no_ack=True)
+        chanel.start_consuming()
 
 
-def command_thread_handler(type_command, sn_device, payload, reply_to):
+@catch_exceptions
+def command_rmq_handler(message):
     """
     Типы команд
     1. user_update_biophoto -
@@ -15,6 +21,11 @@ def command_thread_handler(type_command, sn_device, payload, reply_to):
     4. multiuser_update -
     5. user_delete +
     """
+    type_command = message.properties['headers'].get('command_type')
+    reply_to = message.properties.get('reply_to')
+    payload = message.json()
+    sn_device = message.method["routing_key"].split("_")[-1]
+
     t1 = datetime.now()
     result = None
 
@@ -73,22 +84,3 @@ def command_thread_handler(type_command, sn_device, payload, reply_to):
     # type_command == 'multiuser_update' or
     # if type_command == 'user_update_biophoto':
     # if type_command == 'multiuser_update_biophoto':
-
-
-executor = ThreadPoolExecutor(max_workers=MAX_WORKERS_MCI_COMMAND)
-
-
-def callback_on_get_mci_command(message):
-    type_command = message.properties['headers'].get('command_type')
-    reply_to = message.properties.get('reply_to')
-    payload = message.json()
-    sn_device = message.method["routing_key"].split("_")[-1]
-
-    executor.submit(command_thread_handler,
-                    type_command=type_command,
-                    sn_device=sn_device,
-                    payload=payload,
-                    reply_to=reply_to)
-
-    # TODO: Добавить подтверждение о принятии сообщения
-    # channel.basic_ack(delivery_tag=method.delivery_tag)

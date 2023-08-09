@@ -2,12 +2,10 @@
 Модуль хранит данные об устройствах
 """
 import json
+import threading
 from datetime import datetime
-
-from base import mqtt_api
-from base.rmq_client import rmq_subscribe_on_mci_command
 from config import DEVICE_JSON_DATA_FILE
-from services.mci import callback_on_get_mci_command
+from services.mci import consume_commands_rmq_message
 
 
 class Devices:
@@ -71,8 +69,16 @@ class Devices:
     @classmethod
     def add_device(cls, sn_device):
         if sn_device not in cls.devices:
+            print(33)
             cls.devices.add(sn_device)
-            rmq_subscribe_on_mci_command(sn_device, callback_on_get_mci_command)
+            if f'Tread_{sn_device}' not in list(map(lambda x: x.name, threading.enumerate())):
+                thread = threading.Thread(
+                    target=consume_commands_rmq_message,
+                    args=(f'commands_{sn_device}',),
+                    name=f'Tread_{sn_device}'
+                )
+                print(123)
+                thread.start()
 
     @classmethod
     def add_ip_address(cls, sn_device, ip):

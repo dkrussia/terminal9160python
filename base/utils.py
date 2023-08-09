@@ -1,8 +1,6 @@
 import functools
-import logging
 
-logger = logging.getLogger('catch_exception')
-logger.setLevel(logging.INFO)
+from base.log import logger
 
 
 def catch_exceptions(cancel_on_failure=False):
