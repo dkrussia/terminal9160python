@@ -1,7 +1,5 @@
 import asyncio
 import os
-
-import threading
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder

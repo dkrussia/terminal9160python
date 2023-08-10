@@ -8,9 +8,6 @@ from base.log import logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
     CommandGetPerson
-from services.devices import device_service
-
-mqtt_client = None
 
 FAILURE_CODES_REASON = {
     -2: 'Open photo failure',
@@ -195,9 +192,6 @@ def update_config(payload, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
         answer = None
     except ExceptionNoResponseMQTTReceived:
         answer = None
-
-    if answer:
-        device_service.update_meta_update_conf(sn_device, answer.get('operations'))
 
     return {
         "answer": answer,

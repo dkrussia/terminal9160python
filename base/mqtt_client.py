@@ -1,14 +1,10 @@
 import ast
-from datetime import datetime
-from pprint import pprint
 import threading
 
 import aiomqtt as aiomqtt
-import paho.mqtt.client as mqtt
 import json
 
 from config import s as settings
-from base.log import logger
 from services.devices import device_service
 from base.rmq_client import rabbit_mq
 

@@ -110,7 +110,9 @@ def all_devices_registered():
         if sn_device in device_service.devices_meta.keys() \
                 and 'config' not in device_service.devices_meta[sn_device].keys():
             # Вызвать это для получения конфига с сервера с пустой нагрузкой
-            mqtt_api.update_config({}, sn_device=sn_device)
+            r = mqtt_api.update_config({}, sn_device=sn_device)
+            if r["answer"]:
+                device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
     return {
         'meta': device_service.devices_meta,
         'observed': device_service.devices_observed
@@ -263,7 +265,10 @@ async def update_config(device_config: UpdateConfig, sn_device: str, ):
     cardNumDecimal	Bool	Decimal card number\n
     cardNumReverse	Bool	Reverse sequence card number\n
     """
-    return mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
+    r = mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
+    if r["answer"]:
+        device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
+    return r
 
 
 @device_router.post("/to_observed", )
