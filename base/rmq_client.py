@@ -1,8 +1,6 @@
 import json
 import logging
-import time
-import amqpstorm
-from amqpstorm import AMQPChannelError, AMQPConnectionError
+from aio_pika import connect_robust, Message
 from base.utils import catch_exceptions
 
 from config import s as settings
@@ -11,31 +9,48 @@ logger = logging.getLogger('rmq_log')
 logger.setLevel(logging.INFO)
 
 
-# TODO: обработка случая когда RabbitMQ включен\выключен
+async def process_rabbitmq_message(queue_name, message: Message):
+    print(f"Received from queue {queue_name}: {message.body.decode()}")
+    # Здесь вы можете обработать сообщение из RabbitMQ
+
+
+class RabbitMQHandler:
+    def __init__(self, amqp_url):
+        self.amqp_url = amqp_url
+        self.connection = None
+
+    async def start(self):
+        self.connection = await connect_robust(self.amqp_url)
+
+    async def stop(self):
+        if self.connection:
+            await self.connection.close()
+
+    async def publish_message(self, q_name, message):
+        channel = await self.connection.channel()
+        queue = await channel.declare_queue(q_name, auto_delete=True)
+        await channel.default_exchange.publish(
+            Message(message.encode(), content_type='application/json'),
+            routing_key=queue.name,
+        )
+
+    async def start_queue_listener(self, queue_name, ):
+        channel = await self.connection.channel()
+        queue = await channel.declare_queue(queue_name)
+        await queue.consume(lambda msg: process_rabbitmq_message(queue_name, msg))
+
+
+rabbit_mq = RabbitMQHandler("amqp://guest:guest@127.0.0.1/", )
+
+
+# async def start_queue_listener(self, queue_name):
+#     channel = await self.connection.channel()
+#     queue = await channel.declare_queue(queue_name)
+#     await queue.consume(lambda msg: p
 
 
 def create_connection():
-    attempts = 0
-    connection = None
-    max_retries = 3
-    while True:
-        attempts += 1
-        try:
-            connection = amqpstorm.Connection(
-                hostname=settings.RMQ_HOST,
-                username=settings.RMQ_USER,
-                password=settings.RMQ_PASSWORD,
-                port=settings.RMQ_PORT,
-            )
-            break
-        except amqpstorm.AMQPError as why:
-            logger.error(why)
-            if max_retries and attempts > max_retries:
-                break
-            time.sleep(1)
-        except KeyboardInterrupt:
-            break
-    return connection
+    pass
 
 
 class MyChannel(object):
@@ -91,18 +106,10 @@ def rmq_subscribe_on_mci_command(sn_device, func):
 
 
 def rmq_start_consume():
-    while True:
-        try:
-            # Проверить chanel и сделать reconnect при необходимости
-            # chanel.is_open
-            rmq_global_chanel.start_consuming()
-        except AMQPChannelError as why:
-            time.sleep(3)
-            print(why)
-        except AMQPConnectionError as why:
-            time.sleep(3)
-            print(why)
+    # Проверить chanel и сделать reconnect при необходимости
+    # chanel.is_open
+    rmq_global_chanel.start_consuming()
 
 
-rmq_connect = create_connection()
-rmq_global_chanel = rmq_connect.channel()
+rmq_connect = None
+rmq_global_chanel = None

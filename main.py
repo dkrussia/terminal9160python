@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import threading
@@ -11,9 +12,11 @@ from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 from config import s
 from base.endpoints import device_router, person_router, device_push_router
-from base.mqtt_client import mqtt_client
-from base.rmq_client import rmq_start_consume
+from base.mqtt_client import mqtt_consumer
+from base.rmq_client import rmq_start_consume, rabbit_mq
 from services import mock as mock_service
+
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from config import (
     BASE_DIR,
@@ -97,13 +100,13 @@ print("MQTT_PORT_FOR_TERMINAL: ", s.MQTT_PORT_FOR_TERMINAL)
 print("HOST_FOR_TERMINAL: ", s.HOST_FOR_TERMINAL)
 print("PORT_FOR_TERMINAL: ", s.PORT_FOR_TERMINAL)
 
-if __name__ == '__main__':
-    if settings.MOCK_DEVICE:
-        mock_service.handle_commands_from_mock_devices()
-        threading.Thread(target=mock_service.mock_ping_to_mock_devices).start()
 
-    mqtt_client.start_receiving()
-    threading.Thread(target=rmq_start_consume).start()
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(mqtt_consumer())
+    await rabbit_mq.start()
+
+if __name__ == '__main__':
     uvicorn.run(
         app=app,
         port=settings.SERVER_PORT,

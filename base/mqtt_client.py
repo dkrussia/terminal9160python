@@ -1,6 +1,9 @@
+import ast
 from datetime import datetime
 from pprint import pprint
 import threading
+
+import aiomqtt as aiomqtt
 import paho.mqtt.client as mqtt
 import json
 
@@ -8,7 +11,7 @@ import config
 from config import s as settings
 from base.log import logger
 from services.devices import device_service
-from base.rmq_client import rmq_publish_message
+from base.rmq_client import rmq_publish_message, rabbit_mq
 
 
 class ExceptionOnPublishMQTTMessage(Exception):
@@ -19,35 +22,34 @@ class ExceptionNoResponseMQTTReceived(Exception):
     pass
 
 
-def get_mqtt_client():
-    client = mqtt.Client("terminal_mqtt")
-    client.username_pw_set(settings.MQTT_USER, settings.MQTT_PASSWORD)
-    client.connect(settings.MQTT_HOST, settings.MQTT_PORT, 60)
-    return client
-
-
 class ResultEvent(object):
     def __init__(self):
         self.event = threading.Event()
         self.result = None
 
 
+async def mqtt_consumer():
+    async with aiomqtt.Client("localhost",
+                              port=settings.MQTT_PORT,
+                              username=settings.MQTT_USER,
+                              password=settings.MQTT_PASSWORD) as client:
+        async with client.messages() as messages:
+            await client.subscribe("/_report/state")
+            await client.subscribe("/_report/received")
+            async for message in messages:
+                if message.topic.matches("/_report/state"):
+                    payload_json = ast.literal_eval(message.payload.decode('utf-8'))
+                    await rabbit_mq.publish_message(f'ping_{payload_json["sn"]}',
+                                                    json.dumps({'sn': payload_json["sn"]}))
+
+                    # device_service.add_device(message.payload["sn"])
+                    # device_service.add_meta_on_state(payload=message.payload)
+
+                if message.topic.matches("/_report/received"):
+                    print(f"[/_report/received] {message.payload}")
+
+
 class MQTTClientWrapper:
-    def __init__(self):
-        self.client = get_mqtt_client()
-        self.result_events = {}
-        self.lock = threading.Lock()
-        self.is_receiving = False
-
-        self.client.on_message = self._on_message
-        self.client.on_connect = self._on_connect
-        self.client.user_data_set((self.result_events, self.lock))
-
-    def _on_connect(self, client, userdata, flags, rc):
-        print("Подключено: " + str(rc))
-        client.subscribe("/_report/state")
-        client.subscribe("/_report/received")
-
     def _on_message(self, client, userdata, msg):
         topic = msg.topic
         payload = msg.payload.decode("utf-8")
@@ -59,18 +61,6 @@ class MQTTClientWrapper:
         print(f'GOT MESSAGE ON {topic}')
         pprint(payload_json)
         print('*' * 16)
-
-        if topic == "/_report/state":
-            # Отправляем пинг устройства в очередь
-            rmq_publish_message(
-                queue=f'ping_{payload_json["sn"]}',
-                exchange="",
-                data={'sn': f'{payload_json["sn"]}'}
-            )
-            # Добавляем устройство
-            device_service.add_device(payload_json["sn"])
-            device_service.add_meta_on_state(payload=payload_json)
-            return
 
         event_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
         with lock:
