@@ -2,14 +2,15 @@ import json
 
 from starlette.datastructures import UploadFile
 
-from base.mqtt_client import mqtt_client, ExceptionOnPublishMQTTMessage, \
-    ExceptionNoResponseMQTTReceived
+from base.mqtt_client import ExceptionOnPublishMQTTMessage, ExceptionNoResponseMQTTReceived
 from config import s as settings
 from base.log import logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
     CommandGetPerson
 from services.devices import device_service
+
+mqtt_client = None
 
 FAILURE_CODES_REASON = {
     -2: 'Open photo failure',

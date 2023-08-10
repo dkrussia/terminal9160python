@@ -3,11 +3,8 @@
 """
 import json
 from datetime import datetime
-
-from base import mqtt_api
-from base.rmq_client import rmq_subscribe_on_mci_command
+from base.rmq_client import rabbit_mq
 from config import DEVICE_JSON_DATA_FILE
-from services.mci import callback_on_get_mci_command
 
 
 class Devices:
@@ -69,10 +66,12 @@ class Devices:
             return {}
 
     @classmethod
-    def add_device(cls, sn_device):
+    async def add_device(cls, sn_device):
+        cls.add_meta_on_state({"sn": sn_device})
+
         if sn_device not in cls.devices:
             cls.devices.add(sn_device)
-            rmq_subscribe_on_mci_command(sn_device, callback_on_get_mci_command)
+            await rabbit_mq.start_queue_listener(f'commands_{sn_device}')
 
     @classmethod
     def add_ip_address(cls, sn_device, ip):

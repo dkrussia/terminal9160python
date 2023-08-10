@@ -5,11 +5,12 @@ from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPExc
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
+
+from base.rmq_client import rabbit_mq
 from base.schema import PersonCreate, UpdateConfig
 from config import BASE_DIR
 from config import s as settings
 from base import mqtt_api
-from base.rmq_client import rmq_publish_message
 from services.device_command import ControlAction
 from services.devices import device_service
 
@@ -209,15 +210,14 @@ async def pass_face(request: Request):
 
     if id_user > 0:
         #
-        rmq_publish_message(
-            data={
+        await rabbit_mq.publish_message(
+            q_name=f'events_{sn_device}',
+            message={
                 'sn': f'events_{sn_device}',
                 'time': passDateTime,
                 'status': '1',
                 "pin": str(id_user),
-            },
-            queue=f'events_{sn_device}',
-            exchange=""
+            }
         )
     return {}
 

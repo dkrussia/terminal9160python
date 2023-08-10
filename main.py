@@ -13,10 +13,8 @@ from starlette.staticfiles import StaticFiles
 from config import s
 from base.endpoints import device_router, person_router, device_push_router
 from base.mqtt_client import mqtt_consumer
-from base.rmq_client import rmq_start_consume, rabbit_mq
-from services import mock as mock_service
+from base.rmq_client import rabbit_mq
 
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from config import (
     BASE_DIR,
@@ -24,9 +22,11 @@ from config import (
     PHOTO_PATH,
     FIRMWARE_PATH,
     FIRMWARE_DIR,
-    CORS
+    CORS,
+    s as settings
 )
-from config import s as settings
+
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 app = FastAPI()
 app.add_middleware(
@@ -105,6 +105,7 @@ print("PORT_FOR_TERMINAL: ", s.PORT_FOR_TERMINAL)
 async def startup_event():
     asyncio.create_task(mqtt_consumer())
     await rabbit_mq.start()
+
 
 if __name__ == '__main__':
     uvicorn.run(
