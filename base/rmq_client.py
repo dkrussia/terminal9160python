@@ -95,6 +95,7 @@ class RabbitMQClient:
     async def publish_message(self, q_name, message, reply_to=None):
         channel = await self.connection.channel()
         if reply_to:
+            # TODO: ADD routing_key=queue_rpc!!!
             await channel.default_exchange.publish(
                 Message(message.encode(), content_type='application/json'),
                 reply_to=reply_to,
