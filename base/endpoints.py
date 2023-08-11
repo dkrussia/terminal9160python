@@ -139,7 +139,7 @@ async def device_login(request: Request):
 
     payload = await request.json()
     sn_device = payload["devSn"]
-    device_service.add_ip_address(sn_device, request.client.host)
+    device_service.add_ip_address(sn_device, payload.get("networkIp", ""))
 
     r = {
         "code": 0,
