@@ -103,8 +103,9 @@ class RabbitMQClient:
     async def publish_message(self, q_name, message, reply_to=None):
         channel = await self.connection.channel()
         if reply_to:
-            await channel.default_exchange.publish(
-                Message(message.encode(), content_type='application/json'),
+            # TODO: need test
+            await channel.publish(
+                Message(message.encode(), reply_to=reply_to, content_type='application/json'),
                 routing_key=reply_to
             )
             return
