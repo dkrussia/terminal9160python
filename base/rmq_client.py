@@ -3,9 +3,10 @@ import json
 import logging
 from datetime import datetime
 
-from aio_pika import connect_robust, Message
+from aio_pika import connect_robust, IncomingMessage, Message
 
-# from base import mqtt_api
+from base import mqtt_api
+from config import s as settings
 
 logger = logging.getLogger('rmq_log')
 logger.setLevel(logging.INFO)
@@ -14,7 +15,7 @@ logger.setLevel(logging.INFO)
 # {"id": 1, "firstName": "Sergey1", "lastName": "Kuz1", "picture": "1"}
 # [{"id": 1, "firstName": "Sergey2", "lastName": "Kuz2", "picture": ""}]
 
-async def command_rmq_handler(queue_name, message: Message):
+async def command_rmq_handler(queue_name, message: IncomingMessage):
     """
     Типы команд
     1. user_update_biophoto -
@@ -23,65 +24,63 @@ async def command_rmq_handler(queue_name, message: Message):
     4. multiuser_update -
     5. user_delete +
     """
-    type_command = message.headers.get("type_command")
-    reply_to = message.reply_to
-    payload = ast.literal_eval(message.body.decode('utf-8'))
-    print(payload, type_command)
+    async with message.process():
+        type_command = message.headers.get("type_command")
+        reply_to = message.reply_to
+        payload = ast.literal_eval(message.body.decode('utf-8'))
+        print(payload, type_command)
 
-    sn_device = queue_name.split("_")[-1]
+        sn_device = queue_name.split("_")[-1]
 
-    t1 = datetime.now()
-    result = None
+        t1 = datetime.now()
+        result = None
 
-    if type_command == 'user_update_biophoto':
-        photo = payload.get('picture', "")
-        print(1232)
-        if photo:
-            print(1235)
-            result = mqtt_api.create_or_update(
-                sn_device=sn_device,
-                id_person=int(payload["id"]),
-                firstName=payload["firstName"],
-                lastName=payload["lastName"],
-                photo=photo,
-            )
-
-    if type_command == 'multiuser_update_biophoto':
-        for user in payload:
-            photo = user.get('picture', "")
+        if type_command == 'user_update_biophoto':
+            photo = payload.get('picture', "")
             if photo:
-                # TODO: Сделать Сумму результатов + ID персон которые с ошибкой.
-                #  commands = [create_command, *update_commands]
-
-                result = mqtt_api.create_or_update(
+                result = await mqtt_api.create_or_update(
                     sn_device=sn_device,
-                    id_person=int(user["id"]),
-                    firstName=user["firstName"],
-                    lastName=user["lastName"],
+                    id_person=int(payload["id"]),
+                    firstName=payload["firstName"],
+                    lastName=payload["lastName"],
                     photo=photo,
                 )
 
-    if type_command == 'user_delete':
-        result = mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
+        if type_command == 'multiuser_update_biophoto':
+            for user in payload:
+                photo = user.get('picture', "")
+                if photo:
+                    # TODO: Сделать Сумму результатов + ID персон которые с ошибкой.
+                    #  commands = [create_command, *update_commands]
 
-    error_result = {"result": 'Error', 'Return': "-1"}
-    success_result = {"result": 'Successful', 'Return': "0"}
+                    result = await mqtt_api.create_or_update(
+                        sn_device=sn_device,
+                        id_person=int(user["id"]),
+                        firstName=user["firstName"],
+                        lastName=user["lastName"],
+                        photo=photo,
+                    )
 
-    if not result or result["has_error"]:
-        await rabbit_mq.publish_message(
-            q_name=None,
-            reply_to=reply_to,
-            message=json.dumps(error_result)
-        )
-    else:
-        await rabbit_mq.publish_message(
-            q_name=queue_name,
-            reply_to=reply_to,
-            message=json.dumps(success_result)
-        )
-    t2 = datetime.now()
-    print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
+        if type_command == 'user_delete':
+            result = await mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
 
+        error_result = {"result": 'Error', 'Return': "-1"}
+        success_result = {"result": 'Successful', 'Return': "0"}
+
+        if not result or result["has_error"]:
+            await rabbit_mq.publish_message(
+                q_name=None,
+                reply_to=reply_to,
+                message=json.dumps(error_result)
+            )
+        else:
+            await rabbit_mq.publish_message(
+                q_name=queue_name,
+                reply_to=reply_to,
+                message=json.dumps(success_result)
+            )
+        t2 = datetime.now()
+        print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
     # type_command == 'user_update' or
     # type_command == 'multiuser_update' or
     # if type_command == 'user_update_biophoto':
@@ -100,7 +99,8 @@ class RabbitMQClient:
         if self.connection:
             await self.connection.close()
 
-    async def publish_message(self, q_name, message, reply_to=None):
+    async def publish_message(self, q_name, message, reply_to=None, ):
+        # add timeout expired for ping queue
         channel = await self.connection.channel()
         if reply_to:
             # TODO: need test
@@ -121,4 +121,5 @@ class RabbitMQClient:
         await queue.consume(lambda msg: command_rmq_handler(queue_name, msg))
 
 
-rabbit_mq = RabbitMQClient("amqp://guest:guest@127.0.0.1/", )
+rabbit_mq = RabbitMQClient(
+    f"amqp://{settings.RMQ_USER}:{settings.RMQ_PASSWORD}@{settings.RMQ_HOST}:{settings.RMQ_PORT}/")

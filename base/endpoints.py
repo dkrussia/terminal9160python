@@ -50,29 +50,29 @@ def checker(person_payload: str = Form(...)):
 
 @person_router.get("/{id}", description="Получение пользователя по ID")
 @person_router.get("", description="Получение всех пользователей")
-def get_person(sn_device: str, id: Optional[int] = ""):
+async def get_person(sn_device: str, id: Optional[int] = ""):
     if not id:
-        resp = mqtt_api.get_all_person(sn_device=sn_device)
+        resp = await mqtt_api.get_all_person(sn_device=sn_device)
         if resp.get('answer'):
             for person in resp["answer"]["operations"]["users"]:
                 person.update({"faceUrl": PersonPhoto.get_photo_url(person["id"])})
         return resp
-    return mqtt_api.get_person(id_person=id, sn_device=sn_device)
+    return await mqtt_api.get_person(id_person=id, sn_device=sn_device)
 
 
 @person_router.delete("/{id}", description="Удаление пользователя по ID")
 @person_router.delete("", description="Удаление всех пользователей")
-def delete_person(sn_device: str, id: int = None):
-    return mqtt_api.delete_person(sn_device=sn_device, id=id)
+async def delete_person(sn_device: str, id: int = None):
+    return await mqtt_api.delete_person(sn_device=sn_device, id=id)
 
 
 @person_router.post("/self", description="Добавить себя")
-def add_self_person(
+async def add_self_person(
         sn_device: str,
 ):
     with open(f'{BASE_DIR}/tests/base64photo.txt', 'r') as f:
         p = f.read()
-    return mqtt_api.create_or_update(
+    return await mqtt_api.create_or_update(
         sn_device=sn_device,
         id_person=999,
         firstName="Сергей",
@@ -95,7 +95,7 @@ async def person_create_or_update(
     Таймаут ожидания указан в конфиге {TIMEOUT_MQTT_RESPONSE}.
     Фотография не обязательна.
     """
-    return mqtt_api.create_or_update(
+    return await mqtt_api.create_or_update(
         sn_device=sn_device,
         id_person=id,
         firstName=person_payload.firstName,
@@ -105,12 +105,12 @@ async def person_create_or_update(
 
 
 @device_router.get('/all')
-def all_devices_registered():
+async def all_devices_registered():
     for sn_device in device_service.devices:
         if sn_device in device_service.devices_meta.keys() \
                 and 'config' not in device_service.devices_meta[sn_device].keys():
             # Вызвать это для получения конфига с сервера с пустой нагрузкой
-            r = mqtt_api.update_config({}, sn_device=sn_device)
+            r = await mqtt_api.update_config({}, sn_device=sn_device)
             if r["answer"]:
                 device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
     return {
@@ -142,7 +142,7 @@ async def device_login(request: Request):
 
     payload = await request.json()
     sn_device = payload["devSn"]
-    device_service.add_ip_address(sn_device, request.client.host)
+    device_service.add_ip_address(sn_device, payload["networkIp"])
 
     r = {
         "code": 0,
@@ -236,7 +236,7 @@ async def send_control_action(
     DOOR_OPEN = 4 \n
     UPDATE_SOFTWARE = 5 \n
     """
-    return mqtt_api.control_action(action, sn_device=sn_device)
+    return await mqtt_api.control_action(action, sn_device=sn_device)
 
 
 @device_router.post("/config", )
@@ -265,7 +265,7 @@ async def update_config(device_config: UpdateConfig, sn_device: str, ):
     cardNumDecimal	Bool	Decimal card number\n
     cardNumReverse	Bool	Reverse sequence card number\n
     """
-    r = mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
+    r = await mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
     if r["answer"]:
         device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
     return r

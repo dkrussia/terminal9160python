@@ -1,8 +1,12 @@
 import json
-
+import asyncio
+from asyncio import Future
+from datetime import datetime
+from pprint import pprint
+from typing import Dict
+import aiomqtt
 from starlette.datastructures import UploadFile
 
-from base.mqtt_client import ExceptionOnPublishMQTTMessage, ExceptionNoResponseMQTTReceived
 from config import s as settings
 from base.log import logger
 from services import device_command as person_service
@@ -15,6 +19,39 @@ FAILURE_CODES_REASON = {
     -4: 'Insert database failure',
     -6: 'Extract feature value failure'
 }
+
+futures: Dict[str, asyncio.Future] = {}
+
+
+async def publish_command_and_wait_result(command, timeout):
+    async with aiomqtt.Client(hostname=settings.MQTT_HOST,
+                              port=settings.MQTT_PORT,
+                              username=settings.MQTT_USER,
+                              password=settings.MQTT_PASSWORD) as client:
+        feature_key = f'command_{command.id_command}_{command.sn_device}'
+
+        # ADD
+        # except ExceptionOnPublishMQTTMessage:
+        # except ExceptionNoResponseMQTTReceived
+        print('***', datetime.now().strftime('%H:%M:%S'), '***')
+        print("-----PUBLISH COMMAND TO MQTT------")
+        print(f"---TO SN_DEVICE: {command.sn_device}--")
+        print("-----       PAYLOAD      ------")
+        pprint(command.payload)
+        print("-----       PAYLOAD      ------")
+
+        await client.publish(f"/_dispatch/command/{command.sn_device}",
+                             payload=json.dumps(command.payload))
+
+        future: Future = asyncio.get_running_loop().create_future()
+        futures[feature_key] = future
+
+        try:
+            await asyncio.wait_for(future, timeout=timeout)
+            return future.result()
+        except asyncio.TimeoutError as e:
+            futures.pop(feature_key, None)
+            return None
 
 
 def is_answer_has_error(command, answer):
@@ -58,12 +95,12 @@ def is_answer_has_error(command, answer):
     return False
 
 
-def create_or_update(sn_device, id_person, firstName, lastName, photo,
+async def create_or_update(sn_device, id_person, firstName, lastName, photo,
         timeout=settings.TIMEOUT_MQTT_RESPONSE):
     import base64
     if photo and isinstance(photo, UploadFile):
         photo = base64.b64encode(photo.file.read()).decode("utf-8")
-    print(photo)
+
     person_json = person_service.create_person_json(
         id=id_person,
         firstName=firstName,
@@ -71,7 +108,7 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo,
         face_str=photo
     )
 
-    person_response = get_person(id_person=id_person, sn_device=sn_device)
+    person_response = await get_person(id_person=id_person, sn_device=sn_device)
 
     if person_response["answer"]["operations"]["executeStatus"] == 2:
         command = person_service.CommandCreatePerson(sn_device=sn_device)
@@ -81,10 +118,8 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo,
         command.update_person(person_json)
 
     try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
-    except ExceptionOnPublishMQTTMessage:
-        answer = None
-    except ExceptionNoResponseMQTTReceived:
+        answer = publish_command_and_wait_result(command, timeout=timeout)
+    except Exception:
         answer = None
 
     return {
@@ -94,15 +129,10 @@ def create_or_update(sn_device, id_person, firstName, lastName, photo,
     }
 
 
-def get_all_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def get_all_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = person_service.CommandGetPerson(sn_device=sn_device)
     command.search_person("")
-    try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
-    except ExceptionOnPublishMQTTMessage:
-        answer = None
-    except ExceptionNoResponseMQTTReceived:
-        answer = None
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     return {
         "command": command.payload,
@@ -111,16 +141,10 @@ def get_all_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     }
 
 
-def get_person(id_person, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def get_person(id_person, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = person_service.CommandGetPerson(sn_device=sn_device)
     command.search_person(id_person)
-
-    try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
-    except ExceptionOnPublishMQTTMessage:
-        answer = None
-    except ExceptionNoResponseMQTTReceived:
-        answer = None
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     return {
         "command": command.payload,
@@ -129,12 +153,12 @@ def get_person(id_person, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     }
 
 
-def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     # TODO: Удалять фото также
     command = person_service.CommandDeletePerson(sn_device=sn_device)
 
     if not id:
-        all_users_response = get_all_person(sn_device)
+        all_users_response = await get_all_person(sn_device)
         if all_users_response['answer']:
             # Надо ли обрабатывать этот случай?
             for user in all_users_response['answer']['operations']['users']:
@@ -142,12 +166,7 @@ def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT_MQTT_
     else:
         command.delete_person(id)
 
-    try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
-    except ExceptionOnPublishMQTTMessage:
-        answer = None
-    except ExceptionNoResponseMQTTReceived:
-        answer = None
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     return {
         "answer": answer,
@@ -156,7 +175,7 @@ def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT_MQTT_
     }
 
 
-def control_action(action, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def control_action(action, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = CommandControlTerminal(sn_device=sn_device)
 
     if action == ControlAction.RESTART_SYSTEM:
@@ -168,12 +187,7 @@ def control_action(action, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     if action == ControlAction.UPDATE_SOFTWARE:
         command.update_software(firmware_url=f'{settings.FIRMWARE_URL}/{settings.FIRMWARE_FILE}')
 
-    try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
-    except ExceptionOnPublishMQTTMessage:
-        answer = None
-    except ExceptionNoResponseMQTTReceived:
-        answer = None
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     return {
         "answer": answer,
@@ -182,16 +196,10 @@ def control_action(action, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     }
 
 
-def update_config(payload, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def update_config(payload, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = CommandUpdateConfig(sn_device=sn_device)
     command.update_config(payload)
-
-    try:
-        answer = mqtt_client.send_command_and_wait_result(command, timeout=timeout)
-    except ExceptionOnPublishMQTTMessage:
-        answer = None
-    except ExceptionNoResponseMQTTReceived:
-        answer = None
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     return {
         "answer": answer,
