@@ -103,14 +103,19 @@ class RabbitMQClient:
         channel = await self.connection.channel()
         if reply_to:
             # TODO: need test
-            await channel.publish(
+            await channel.default_exchange.publish(
                 Message(message.encode(), reply_to=reply_to, content_type='application/json'),
                 routing_key=reply_to
             )
             return
-        queue = await channel.declare_queue(q_name)
+
+        arguments = {}
+        if q_name and 'ping' in q_name:
+            arguments = {'x-message-ttl': 30 * 1000}
+        queue = await channel.declare_queue(q_name, arguments=arguments)
+
         await channel.default_exchange.publish(
-            Message(message.encode(), content_type='application/json'),
+            Message(message.encode(), content_type='application/json', ),
             routing_key=queue.name,
         )
 
