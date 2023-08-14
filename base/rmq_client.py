@@ -1,4 +1,3 @@
-import ast
 import json
 import logging
 from datetime import datetime
@@ -27,7 +26,7 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
     async with message.process():
         type_command = message.headers.get("type_command")
         reply_to = message.reply_to
-        payload = ast.literal_eval(message.body.decode('utf-8'))
+        payload = json.loads(message.body.decode('utf-8'))
         print(payload, type_command)
 
         sn_device = queue_name.split("_")[-1]
