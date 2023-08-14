@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from pprint import pprint
 from typing import Optional
@@ -52,6 +53,10 @@ def checker(person_payload: str = Form(...)):
 @person_router.get("", description="Получение всех пользователей")
 async def get_person(sn_device: str, id: Optional[int] = ""):
     if not id:
+        r = await mqtt_api.update_config({}, sn_device=sn_device)
+        if r["answer"]:
+            device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
+
         resp = await mqtt_api.get_all_person(sn_device=sn_device)
         if resp.get('answer'):
             for person in resp["answer"]["operations"]["users"]:
@@ -214,12 +219,12 @@ async def pass_face(request: Request):
         #
         await rabbit_mq.publish_message(
             q_name=f'events_{sn_device}',
-            message={
+            message=json.dumps({
                 'sn': f'events_{sn_device}',
                 'time': passDateTime,
                 'status': '1',
                 "pin": str(id_user),
-            }
+            })
         )
     return {}
 
