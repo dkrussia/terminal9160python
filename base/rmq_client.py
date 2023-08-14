@@ -24,7 +24,7 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
     5. user_delete +
     """
     async with message.process():
-        type_command = message.headers.get("type_command")
+        type_command = message.headers.get("command_type")
         reply_to = message.reply_to
         payload = json.loads(message.body.decode('utf-8'))
         print(payload, type_command)
