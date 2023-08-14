@@ -54,3 +54,8 @@ async def handle_commands_from_mock_devices():
         await channel.set_qos(prefetch_count=1)
         queue = await channel.declare_queue(queue_name)
         await queue.consume(lambda msg: mock_commands_handler(queue_name, msg))
+
+
+async def mock_run():
+    await handle_commands_from_mock_devices()
+    await mock_ping_to_mock_devices()

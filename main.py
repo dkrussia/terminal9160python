@@ -15,7 +15,6 @@ from base.endpoints import device_router, person_router, device_push_router
 from base.mqtt_client import mqtt_consumer
 from base.rmq_client import rabbit_mq
 
-
 from config import (
     BASE_DIR,
     PHOTO_DIR,
@@ -25,9 +24,11 @@ from config import (
     CORS,
     s as settings
 )
+from services.mock import mock_run
 
 if sys.platform.lower() == "win32" or os.name.lower() == "nt":
     from asyncio import set_event_loop_policy, WindowsSelectorEventLoopPolicy
+
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
 app = FastAPI()
@@ -105,9 +106,13 @@ print("PORT_FOR_TERMINAL: ", s.PORT_FOR_TERMINAL)
 
 @app.on_event("startup")
 async def startup_event():
-    asyncio.create_task(mqtt_consumer())
     await rabbit_mq.start()
 
+    if s.MOCK_DEVICE:
+        asyncio.create_task(mock_run())
+        return
+
+    asyncio.create_task(mqtt_consumer())
 
 if __name__ == '__main__':
     uvicorn.run(

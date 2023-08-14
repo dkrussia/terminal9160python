@@ -100,24 +100,23 @@ class RabbitMQClient:
 
     async def publish_message(self, q_name, message, reply_to=None, ):
         # add timeout expired for ping queue
-        channel = await self.connection.channel()
-        if reply_to:
-            # TODO: need test
+        async with self.connection.channel() as channel:
+            if reply_to:
+                await channel.default_exchange.publish(
+                    Message(message.encode(), reply_to=reply_to, content_type='application/json'),
+                    routing_key=reply_to
+                )
+                return
+
+            arguments = {}
+            if q_name and 'ping' in q_name:
+                arguments = {'x-message-ttl': 30 * 1000}
+            queue = await channel.declare_queue(q_name, arguments=arguments)
+
             await channel.default_exchange.publish(
-                Message(message.encode(), reply_to=reply_to, content_type='application/json'),
-                routing_key=reply_to
+                Message(message.encode(), content_type='application/json', ),
+                routing_key=queue.name,
             )
-            return
-
-        arguments = {}
-        if q_name and 'ping' in q_name:
-            arguments = {'x-message-ttl': 30 * 1000}
-        queue = await channel.declare_queue(q_name, arguments=arguments)
-
-        await channel.default_exchange.publish(
-            Message(message.encode(), content_type='application/json', ),
-            routing_key=queue.name,
-        )
 
     async def start_queue_listener(self, queue_name, ):
         channel = await self.connection.channel()
