@@ -3,5 +3,5 @@ pytest==7.3.1
 aio-pika==9.2.1
 Faker==18.9.0
 uvicorn==0.22.0
-paho-mqtt==1.6.1
+aiomqtt==1.1.0
 python-multipart
