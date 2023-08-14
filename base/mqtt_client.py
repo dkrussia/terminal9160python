@@ -28,9 +28,10 @@ async def mqtt_consumer():
             await client.subscribe("/_report/state")
             await client.subscribe("/_report/received")
             async for message in messages:
+                payload_json = ast.literal_eval(message.payload.decode('utf-8'))
+
                 if message.topic.matches("/_report/state"):
                     print(f"[/_report/state] {message.payload}")
-                    payload_json = ast.literal_eval(message.payload.decode('utf-8'))
                     await rabbit_mq.publish_message(f'ping_{payload_json["sn"]}',
                                                     json.dumps({'sn': payload_json["sn"]}))
                     await device_service.add_device(payload_json)
@@ -42,7 +43,6 @@ async def mqtt_consumer():
                     pprint(payload_json)
                     print('*' * 16)
 
-                    payload_json = ast.literal_eval(message.payload.decode('utf-8'))
                     feature_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
                     result_future = futures.pop(feature_key, None)
                     if result_future:

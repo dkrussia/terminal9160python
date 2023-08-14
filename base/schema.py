@@ -21,8 +21,8 @@ class DeviceControl(BaseModel):
 
 class UpdateConfig(BaseModel):
     adminPassword: str = None
-    brightness: Optional[int] = Field(ge=1, le=100)
-    deviceVolume: Optional[int] = Field(ge=0, le=100)
+    brightness: Optional[int] = Field(ge=1, le=100, default=None)
+    deviceVolume: Optional[int] = Field(ge=0, le=100, default=None)
     featureThreshold: int = None
     living: Literal[1, 0] = None
     recogizeInterval: int = None
