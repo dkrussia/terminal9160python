@@ -1,4 +1,3 @@
-import ast
 from datetime import datetime
 from pprint import pprint
 
@@ -11,13 +10,20 @@ from services.devices import device_service
 from base.rmq_client import rabbit_mq
 
 
-class ExceptionOnPublishMQTTMessage(Exception):
-    pass
-
-
-class ExceptionNoResponseMQTTReceived(Exception):
-    pass
-
+# RECONNECT EXAMPLE
+# async def main():
+#     client = aiomqtt.Client("test.mosquitto.org")
+#     interval = 5  # Seconds
+#     while True:
+#         try:
+#             async with client:
+#                 async with client.messages() as messages:
+#                     await client.subscribe("humidity/#")
+#                     async for message in messages:
+#                         print(message.payload)
+#         except aiomqtt.MqttError:
+#             print(f"Connection lost; Reconnecting in {interval} seconds ...")
+#             await asyncio.sleep(interval)
 
 async def mqtt_consumer():
     async with aiomqtt.Client(hostname=settings.MQTT_HOST,
