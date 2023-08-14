@@ -117,10 +117,7 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo,
         command = person_service.CommandUpdatePerson(sn_device=sn_device)
         command.update_person(person_json)
 
-    try:
-        answer = await publish_command_and_wait_result(command, timeout=timeout)
-    except Exception:
-        answer = None
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     return {
         "answer": answer,
