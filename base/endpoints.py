@@ -173,7 +173,7 @@ async def dconfig(request: Request):
     d = await request.json()
 
     sn_device = d["devSn"]
-    device_service.add_ip_address(sn_device, request.client.host)
+    # device_service.add_ip_address(sn_device, request.client.host)
     device_service.update_meta_update_conf(sn_device, d)
     return {}
 
@@ -214,7 +214,7 @@ async def pass_face(request: Request):
         payload['passageTime'], '%Y-%m-%d %H:%M:%S'
     ).strftime('%Y-%m-%dT%H:%M:%S')
 
-    device_service.add_ip_address(sn_device, request.client.host)
+    # device_service.add_ip_address(sn_device, request.client.host)
 
     if id_user > 0:
         #

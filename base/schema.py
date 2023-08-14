@@ -26,7 +26,7 @@ class UpdateConfig(BaseModel):
     featureThreshold: int = None
     living: Literal[1, 0] = None
     recogizeInterval: int = None
-    minSize : int = None
+    minSize: int = None
     temperature: Literal[1, 0] = None
     playVoice: bool = None
     lowPower: bool = None
@@ -44,6 +44,8 @@ class UpdateConfig(BaseModel):
     passScene: bool = None
     passHeadPhoto: bool = None
     recordStranger: bool = None
-    fillLight: Literal[0,1,2] = None
+    fillLight: Literal[0, 1, 2] = None
     recordLimitTime: int = None
     recordLimitNumber: int = None
+    attendance: bool = None
+    attendanceBtn: bool = None

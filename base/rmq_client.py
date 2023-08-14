@@ -68,13 +68,13 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
 
         if not result or result["has_error"]:
             await rabbit_mq.publish_message(
-                q_name=queue_name,
+                q_name=reply_to,
                 reply_to=reply_to,
                 message=json.dumps(error_result)
             )
         else:
             await rabbit_mq.publish_message(
-                q_name=queue_name,
+                q_name=reply_to,
                 reply_to=reply_to,
                 message=json.dumps(success_result)
             )
