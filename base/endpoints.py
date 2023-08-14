@@ -209,6 +209,7 @@ async def pass_face(request: Request):
     payload = await request.json()
     sn_device = payload["devSn"]
     id_user = payload["devUserId"]
+    atType = payload.get('atType', 0)
     passDateTime = datetime.strptime(
         payload['passageTime'], '%Y-%m-%d %H:%M:%S'
     ).strftime('%Y-%m-%dT%H:%M:%S')
@@ -222,7 +223,7 @@ async def pass_face(request: Request):
             message=json.dumps({
                 'sn': f'events_{sn_device}',
                 'time': passDateTime,
-                'status': '1',
+                'status': str(atType),
                 "pin": str(id_user),
             })
         )
