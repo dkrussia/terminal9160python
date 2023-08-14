@@ -117,7 +117,7 @@ class RabbitMQClient:
 
     async def start_queue_listener(self, queue_name, ):
         channel = await self.connection.channel()
-        channel.set_qos(prefetch_count=1)
+        await channel.set_qos(prefetch_count=1)
         queue = await channel.declare_queue(queue_name)
         await queue.consume(lambda msg: command_rmq_handler(queue_name, msg))
 

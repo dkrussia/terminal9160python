@@ -66,8 +66,9 @@ class Devices:
             return {}
 
     @classmethod
-    async def add_device(cls, sn_device):
-        cls.add_meta_on_state({"sn": sn_device})
+    async def add_device(cls, payload):
+        sn_device = payload["sn"]
+        cls.add_meta_on_state(payload)
 
         if sn_device not in cls.devices:
             cls.devices.add(sn_device)
