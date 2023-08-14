@@ -1,84 +1,56 @@
 # MOCK обработчик commands_test_* для устройств-заглушек
 # MOCK обработчик ping_test_* для  устройств-заглушек
-
+import asyncio
 import json
 import random
-import threading
 import time
 from datetime import datetime
 
-import config
-from base.rmq_client import rmq_global_chanel, rmq_send_reply_to, MyChannel
+from aio_pika import IncomingMessage
+
+from base.rmq_client import rabbit_mq
+from config import s
 
 
-def mock_command_thread_handler(type_command, sn_device, payload, reply_to):
+async def mock_commands_handler(queue_name, message: IncomingMessage):
     t1 = datetime.now()
-    random_number = random.randint(0, 99)
+    async with message.process():
+        type_command = message.headers.get("command_type")
+        reply_to = message.reply_to
+        random_number = random.randint(0, 99)
 
-    if random_number < config.MOCK_DEVICE_SUCCESS_CHANCE:
-        time.sleep(random.choice(config.MOCK_DEVICE_SUCCESS_TIMEOUT))
-        rmq_send_reply_to(
-            reply_to=reply_to,
-            data={"result": 'Successful', 'Return': "0"}
-        )
+        if random_number < s.MOCK_DEVICE_SUCCESS_CHANCE:
+            await asyncio.sleep(random.choice(s.MOCK_DEVICE_SUCCESS_TIMEOUT))
+            await rabbit_mq.publish_message(
+                reply_to=reply_to,
+                data=json.dumps({"result": 'Successful', 'Return': "0"})
+            )
 
-    else:
-        time.sleep(random.choice(config.MOCK_DEVICE_ERROR_TIMEOUT))
-        rmq_send_reply_to(
-            reply_to=reply_to,
-            data={"result": 'Error', 'Return': "1"}
-        )
+        else:
+            await asyncio.sleep(random.choice(s.MOCK_DEVICE_ERROR_TIMEOUT))
+            await rabbit_mq.publish_message(
+                reply_to=reply_to,
+                data=json.dumps({"result": 'Error', 'Return': "1"})
+            )
 
     t2 = datetime.now()
-    print(f'MOCK Total Device ${sn_device}: {type_command}-{(t2 - t1).total_seconds()}')
+    print(f'MOCK Total Device ${queue_name}: {type_command}-{(t2 - t1).total_seconds()}')
 
 
-def mock_callback_on_get_mci_command(message):
-    type_command = message.properties['headers'].get('command_type')
-    reply_to = message.properties.get('reply_to')
-    payload = None
-    sn_device = message.method["routing_key"].split("_")[-1]
-
-    mock_command_thread_handler(
-        type_command=None,
-        sn_device=sn_device,
-        payload=payload,
-        reply_to=reply_to)
-
-
-def mock_ping_to_mock_devices():
+async def mock_ping_to_mock_devices():
     while True:
-        for p_mock_sn in range(1, config.MOCK_DEVICE_AMOUNT):
+        for p_mock_sn in range(1, s.MOCK_DEVICE_AMOUNT):
             p_q_name = f'ping_MCI_Test_{p_mock_sn}'
-            rmq_global_chanel.queue.declare(
-                p_q_name,
-                arguments={'x-message-ttl': 30 * 1000}
-            )
-            prop = {
-                'delivery_mode': 2,
-                'headers': None,
-                'content_type': 'application/json'
-            }
-            rmq_global_chanel.basic.publish(
-                routing_key=p_q_name,
-                exchange="",
-                properties=prop,
-                body=json.dumps({'sn': f'MCI_Test_{p_mock_sn}'}),
-            )
+            await rabbit_mq.publish_message(q_name=p_q_name,
+                                            message=json.dumps({'sn': f'MCI_Test_{p_mock_sn}'}))
             print(f"[*] Ping run p_q_name {p_mock_sn}")
-        time.sleep(20)
+        await asyncio.sleep(20)
 
 
-def consume_mock_commands_rmq_message(q_name):
-    with MyChannel() as chanel:
-        chanel.queue.declare(q_name)
-        chanel.basic.consume(mock_callback_on_get_mci_command, q_name, no_ack=True)
-        chanel.start_consuming()
-
-
-def handle_commands_from_mock_devices():
-    for mock_sn in range(1, config.MOCK_DEVICE_AMOUNT):
-        q_name = f'commands_MCI_Test_{mock_sn}'
-        print(mock_sn)
-        thread = threading.Thread(target=consume_mock_commands_rmq_message, args=(q_name,))
-        thread.start()
+async def handle_commands_from_mock_devices():
+    for mock_sn in range(1, s.MOCK_DEVICE_AMOUNT):
+        channel = await rabbit_mq.connection.channel()
+        queue_name = f'commands_MCI_Test_{mock_sn}'
+        await channel.set_qos(prefetch_count=1)
+        queue = await channel.declare_queue(queue_name)
+        await queue.consume(lambda msg: mock_commands_handler(queue_name, msg))
