@@ -28,7 +28,7 @@ async def mqtt_consumer():
             await client.subscribe("/_report/state")
             await client.subscribe("/_report/received")
             async for message in messages:
-                payload_json = ast.literal_eval(message.payload.decode('utf-8'))
+                payload_json = json.loads(message.payload.decode('utf-8'))
 
                 if message.topic.matches("/_report/state"):
                     print(f"[/_report/state] {message.payload}")
