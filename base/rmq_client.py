@@ -108,7 +108,7 @@ class RabbitMQClient:
                 routing_key=reply_to
             )
             return
-        queue = await channel.declare_queue(q_name, auto_delete=True)
+        queue = await channel.declare_queue(q_name)
         await channel.default_exchange.publish(
             Message(message.encode(), content_type='application/json'),
             routing_key=queue.name,
