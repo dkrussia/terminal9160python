@@ -79,6 +79,7 @@ class Devices:
         d = cls.devices_meta.get(sn_device, {})
         d["ip"] = ip
         cls.devices_meta[sn_device] = d
+        cls.write_to_json()
 
     @classmethod
     def add_meta_on_login(cls):
@@ -91,6 +92,7 @@ class Devices:
             d["config"] = payload
             d["config_update_time"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
             cls.devices_meta[sn_device] = d
+            cls.write_to_json()
 
     @classmethod
     def add_meta_on_state(cls, payload):
@@ -99,6 +101,7 @@ class Devices:
         d["state"] = payload
         d["state_update_time"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         cls.devices_meta[sn_device] = d
+        cls.write_to_json()
 
     def get_all_devices(self):
         return self.devices
