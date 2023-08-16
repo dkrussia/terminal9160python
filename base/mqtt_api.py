@@ -45,13 +45,15 @@ async def publish_command_and_wait_result(command, timeout):
 
         future: Future = asyncio.get_running_loop().create_future()
         futures[feature_key] = future
-
+        print(futures)
         try:
             await asyncio.wait_for(future, timeout=timeout)
             return future.result()
         except asyncio.TimeoutError as e:
             futures.pop(feature_key, None)
-            return None
+            raise asyncio.TimeoutError
+        except Exception as e:
+            raise e
 
 
 def is_answer_has_error(command, answer):
@@ -108,7 +110,7 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo,
         face_str=photo
     )
 
-    person_response = await get_person(id_person=id_person, sn_device=sn_device)
+    person_response = await get_person(id_person=id_person, sn_device=sn_device, )
 
     if person_response["answer"]["operations"]["executeStatus"] == 2:
         command = person_service.CommandCreatePerson(sn_device=sn_device)
@@ -124,6 +126,44 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo,
         "command": command.payload,
         "has_error": is_answer_has_error(command, answer)
     }
+
+
+def test_photo():
+    with open('base64photo.txt', 'r') as f:
+        return f.read()
+
+
+async def batch_create_or_update(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    persons_result = await get_all_person(sn_device)
+    persons_terminal_ids = list(map(lambda user: int(user["id"]),
+                                    persons_result["answer"]["operations"]["users"]))
+    print(persons_terminal_ids)
+    command_create = person_service.CommandCreatePerson(sn_device=sn_device)
+    commands_update = []
+    for person in persons:
+        person_json = person_service.create_person_json(
+            id=int(person["id"]),
+            firstName=person["firstName"],
+            lastName=person["lastName"],
+            face_str=test_photo()
+        )
+        if person["id"] not in persons_terminal_ids:
+            print('add_person here')
+            command_create.add_person(person_json)
+        else:
+            command_update = person_service.CommandUpdatePerson(sn_device=sn_device)
+            command_update.update_person(person_json)
+            commands_update.append(command_update)
+    print(command_create.payload)
+    all_commands = [command_create, *commands_update]
+    print(all_commands)
+    all_commands_tasks = [
+        asyncio.create_task(publish_command_and_wait_result(command, timeout=timeout)) for command
+        in all_commands]
+
+    result_tasks = await asyncio.wait(all_commands_tasks)
+    for done_task in result_tasks:
+        print(done_task)
 
 
 async def get_all_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):

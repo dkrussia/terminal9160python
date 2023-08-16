@@ -2,7 +2,7 @@
 Создание json-команд для терминалов 9160
 Которые будут отправлены в MQTT[commands_$sn_device]
 """
-
+import random
 from datetime import datetime
 from typing import Optional
 from enum import Enum
@@ -80,7 +80,8 @@ class BaseCommand:
     def __init__(self, sn_device: str, id_command: Optional[int] = None):
         if not id_command:
             # 1685446768.340883 -> 340883
-            id_command = int(str(datetime.now().timestamp()).split('.')[1])
+            id_command = int(str(datetime.now().timestamp()).split('.')[1]) + random.randint(1,
+                                                                                             100000000)
 
         self.sn_device = sn_device
         self.id_command = id_command

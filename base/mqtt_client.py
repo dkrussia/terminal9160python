@@ -41,8 +41,10 @@ async def mqtt_consumer():
 
                             feature_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
                             result_future = futures.pop(feature_key, None)
+
                             if result_future:
                                 result_future.set_result(payload_json)
+
         except aiomqtt.MqttError:
             print(f"MQTT Connection lost; Reconnecting in {interval} seconds ...")
             await asyncio.sleep(interval)
