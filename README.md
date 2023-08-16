@@ -36,7 +36,10 @@ _______________________
 * docker build . -t terminal9160
 * docker tag terminal9160:latest kuznetsovsergey/9160:v1
 * docker push kuznetsovsergey/9160:v1
-
+*
+* docker save -o mynginx1.tar nginx |  Export to FILE  
+* docker load < mynginx1.tar        |  Import from file   
+  
 !!! Если rabbit не запускается в demon, проверить Line Separator в файла init.sh
 
 _______________________
