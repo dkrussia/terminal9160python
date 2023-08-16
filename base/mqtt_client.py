@@ -5,26 +5,12 @@ from pprint import pprint
 import aiomqtt as aiomqtt
 import json
 
+from base.log import logger
 from base.mqtt_api import futures
 from config import s as settings
 from services.devices import device_service
 from base.rmq_client import rabbit_mq
 
-
-# RECONNECT EXAMPLE
-# async def main():
-#     client = aiomqtt.Client("test.mosquitto.org")
-#     interval = 5  # Seconds
-#     while True:
-#         try:
-#             async with client:
-#                 async with client.messages() as messages:
-#                     await client.subscribe("humidity/#")
-#                     async for message in messages:
-#                         print(message.payload)
-#         except aiomqtt.MqttError:
-#             print(f"Connection lost; Reconnecting in {interval} seconds ...")
-#             await asyncio.sleep(interval)
 
 async def mqtt_consumer():
     interval = 5  # Seconds
@@ -46,17 +32,19 @@ async def mqtt_consumer():
                                                             json.dumps({'sn': payload_json["sn"]}))
                             await device_service.add_device(payload_json)
 
-                if message.topic.matches("/_report/received"):
-                    print(f"[/_report/received] {message.payload}")
-                    print('\n')
-                    print('***', datetime.now().strftime('%H:%M:%S'), '***')
-                    pprint(payload_json)
-                    print('*' * 16)
+                        if message.topic.matches("/_report/received"):
+                            print(f"[/_report/received] {message.payload}")
+                            print('\n')
+                            print('***', datetime.now().strftime('%H:%M:%S'), '***')
+                            pprint(payload_json)
+                            print('*' * 16)
 
-                    feature_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
-                    result_future = futures.pop(feature_key, None)
-                    if result_future:
-                        result_future.set_result(payload_json)
+                            feature_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
+                            result_future = futures.pop(feature_key, None)
+                            if result_future:
+                                result_future.set_result(payload_json)
         except aiomqtt.MqttError:
             print(f"MQTT Connection lost; Reconnecting in {interval} seconds ...")
             await asyncio.sleep(interval)
+        except Exception as e:
+            logger.error(e, exc_info=1)

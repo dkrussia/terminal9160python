@@ -10,8 +10,3 @@ file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 
 logger.addHandler(file_handler)
-
-logger.debug('Это отладочное сообщение')
-logger.info('Это информационное сообщение')
-logger.warning('Это предупреждающее сообщение')
-logger.error('Это сообщение об ошибке')
