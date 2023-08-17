@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from pprint import pprint
-from typing import Optional
+from typing import Optional, Literal
 from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
@@ -120,7 +120,8 @@ async def all_devices_registered():
                 device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
     return {
         'meta': device_service.devices_meta,
-        'observed': device_service.devices_observed
+        'observed': device_service.devices_observed,
+        'function_arrive': device_service.devices_function_arrive
     }
 
 
@@ -214,7 +215,10 @@ async def pass_face(request: Request):
         payload['passageTime'], '%Y-%m-%d %H:%M:%S'
     ).strftime('%Y-%m-%dT%H:%M:%S')
 
-    # device_service.add_ip_address(sn_device, request.client.host)
+    if device_service.is_access_mode(sn_device):
+        atType = 3
+        if sn_device in device_service.devices_function_arrive:
+            atType = 2
 
     if id_user > 0:
         #
@@ -285,3 +289,8 @@ async def add_to_observed(sn_device: str, ):
 @device_router.post("/unobserved", )
 async def unobserved(sn_device: str, ):
     return device_service.remove_device_from_observed(sn_device)
+
+
+@device_router.post("/access_control", )
+async def access_mode_set_function(sn_device: str, function: Literal["arrive", "depart"]):
+    return device_service.set_function(sn_device, function)

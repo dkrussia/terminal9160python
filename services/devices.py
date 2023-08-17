@@ -3,6 +3,8 @@
 """
 import json
 from datetime import datetime
+from typing import Literal
+
 from base.rmq_client import rabbit_mq
 from config import DEVICE_JSON_DATA_FILE
 
@@ -24,6 +26,7 @@ class Devices:
     devices = set()
     devices_meta = {}
     devices_observed = []
+    devices_function_arrive = []
 
     # TODO: Хранить списки ids person которые присутствуют на
     #  Терминале, что бы не делать person is_exist
@@ -32,6 +35,7 @@ class Devices:
         d = cls.read_from_json()
         cls.devices_meta = d.get('meta', {})
         cls.devices_observed = d.get('observed', [])
+        cls.devices_function_arrive = d.get('function_arrive', [])
         return object.__new__(cls)
 
     @classmethod
@@ -52,7 +56,8 @@ class Devices:
     def write_to_json(cls):
         d = {
             'meta': cls.devices_meta,
-            'observed': list(cls.devices_observed)
+            'observed': list(cls.devices_observed),
+            'function_arrive': list(cls.devices_function_arrive)
         }
         with open(DEVICE_JSON_DATA_FILE, 'w') as f:
             json.dump(d, f)
@@ -105,6 +110,28 @@ class Devices:
 
     def get_all_devices(self):
         return self.devices
+
+    @classmethod
+    def is_access_mode(cls, sn_device):
+        return cls.devices_meta[sn_device]["config"]["attendance"] is False
+
+    @classmethod
+    def set_function(cls, sn_device, function: Literal["arrive", "depart"]):
+        if not cls.is_access_mode(sn_device):
+            return
+
+        if function == "arrive":
+            cls.devices_function_arrive.append(sn_device)
+
+        if function == "depart":
+            try:
+                cls.devices_function_arrive.remove(sn_device)
+            except ValueError:
+                pass
+
+        cls.devices_function_arrive = list(set(cls.devices_function_arrive))
+
+        cls.write_to_json()
 
 
 device_service = Devices()
