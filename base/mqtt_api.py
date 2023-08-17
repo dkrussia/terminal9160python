@@ -45,7 +45,6 @@ async def publish_command_and_wait_result(command, timeout):
 
         future: Future = asyncio.get_running_loop().create_future()
         futures[feature_key] = future
-        print(futures)
         try:
             await asyncio.wait_for(future, timeout=timeout)
             return future.result()
@@ -155,14 +154,16 @@ async def batch_create_or_update(sn_device, persons, timeout=settings.TIMEOUT_MQ
             command_update.update_person(person_json)
             commands_update.append(command_update)
     print(command_create.payload)
+
     all_commands = [command_create, *commands_update]
     print(all_commands)
     all_commands_tasks = [
         asyncio.create_task(publish_command_and_wait_result(command, timeout=timeout)) for command
         in all_commands]
 
-    result_tasks = await asyncio.wait(all_commands_tasks)
-    for done_task in result_tasks:
+    done_tasks, pending = await asyncio.wait(all_commands_tasks)
+    errors = []
+    for done_task in done_tasks:
         print(done_task)
 
 
