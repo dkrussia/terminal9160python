@@ -10,3 +10,4 @@ frontend/
 .idea/
 docker-release/launcher/
 .env.local
+packages/

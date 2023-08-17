@@ -12,3 +12,4 @@ docker-release/launcher/env.json
 .env.docker
 .env.local
 __pycache__/
+packages/
