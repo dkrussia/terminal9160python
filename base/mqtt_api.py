@@ -149,6 +149,7 @@ def test_photo():
 
 
 async def process_batch(sn_device, persons, all_person_ids, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    print(f'batch {len(persons)}')
     command_create = person_service.CommandCreatePerson(sn_device=sn_device)
     all_commands = []
 
@@ -188,7 +189,7 @@ async def process_batch(sn_device, persons, all_person_ids, timeout=settings.TIM
 
 async def batch_create_or_update(
         sn_device,
-        persons, batch_size=5,
+        persons, batch_size=2,
         timeout=settings.TIMEOUT_MQTT_RESPONSE
 ):
     persons_result = await get_all_person(sn_device)
@@ -198,7 +199,6 @@ async def batch_create_or_update(
     errors = []
     for i in range(0, len(persons), batch_size):
         batch = persons[i:i + batch_size]
-        print(batch)
         task = asyncio.create_task(process_batch(sn_device, batch, all_person_ids, timeout))
         errors += await task
 
