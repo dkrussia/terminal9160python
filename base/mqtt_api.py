@@ -48,10 +48,11 @@ async def publish_command_and_wait_result(command, timeout):
             await asyncio.wait_for(future, timeout=timeout)
             return future.result()
         except asyncio.TimeoutError as e:
-            futures.pop(command.key_id, None)
-            raise asyncio.TimeoutError
+            return None
         except Exception as e:
-            raise e
+            return None
+        finally:
+            futures.pop(command.key_id, None)
 
 
 def is_answer_has_error(command, answer):
@@ -143,11 +144,6 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo,
     }
 
 
-def test_photo():
-    with open('base64photo.txt', 'r') as f:
-        return f.read()
-
-
 async def process_batch(sn_device, persons, all_person_ids, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     print(f'batch {len(persons)}')
     command_create = person_service.CommandCreatePerson(sn_device=sn_device)
@@ -158,7 +154,7 @@ async def process_batch(sn_device, persons, all_person_ids, timeout=settings.TIM
             id=int(person["id"]),
             firstName=person["firstName"],
             lastName=person["lastName"],
-            face_str=test_photo()
+            face_str=person["picture"]
         )
 
         if person["id"] not in all_person_ids:
@@ -183,7 +179,6 @@ async def process_batch(sn_device, persons, all_person_ids, timeout=settings.TIM
     for done_task in done_tasks:
         command = map_commands_task[done_task.get_name()]
         errors += is_answer_has_error(command, done_task.result())
-        # if done_task.exception() is not None:
     return errors
 
 
@@ -193,6 +188,10 @@ async def batch_create_or_update(
         timeout=settings.TIMEOUT_MQTT_RESPONSE
 ):
     persons_result = await get_all_person(sn_device)
+
+    if persons_result["has_error"]:
+        return persons_result
+
     all_person_ids = list(map(lambda user: int(user["id"]),
                               persons_result["answer"]["operations"]["users"]))
 

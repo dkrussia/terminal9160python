@@ -46,13 +46,14 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
                 )
 
         if type_command == 'multiuser_update_biophoto':
+            payload = list(filter(lambda p: p.get('picture', None), payload))
             result = await mqtt_api.batch_create_or_update(sn_device=sn_device, persons=payload)
 
         if type_command == 'user_delete':
             result = await mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
 
-        error_result = {"result": 'Error', 'Return': "-1"}
-        success_result = {"result": 'Successful', 'Return': "0"}
+        error_result = {"result": 'Error', 'Return': "-1", 'details': result}
+        success_result = {"result": 'Successful', 'Return': "0", 'details': result}
 
         if not result or result["has_error"]:
             await rabbit_mq.publish_message(
