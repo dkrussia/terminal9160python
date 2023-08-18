@@ -93,6 +93,10 @@ class BaseCommand:
             "feedbackUrl": "",
         }
 
+    @property
+    def key_id(self):
+        return f'{self.id_command}_{self.sn_device}'
+
     def add_operation_in_list(self, data_json: dict):
         if not self.payload.get('operations', None):
             self.payload["operations"] = [data_json]

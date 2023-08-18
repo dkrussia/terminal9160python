@@ -39,7 +39,7 @@ async def mqtt_consumer():
                             pprint(payload_json)
                             print('*' * 16)
 
-                            feature_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
+                            feature_key = f'{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
                             result_future = futures.pop(feature_key, None)
 
                             if result_future:
