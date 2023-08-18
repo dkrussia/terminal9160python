@@ -62,7 +62,9 @@ def is_answer_has_error(command, answer):
             f'\n Command={command.payload}'
         )
         errors.append({
-            'reason': "ERROR Not receive answer from MQTT"
+            'reason': "ERROR Not receive answer from MQTT",
+            'details': 'See Python site logs',
+            'operations': 'Operations',
         })
         return errors
 
@@ -146,11 +148,7 @@ def test_photo():
         return f.read()
 
 
-async def batch_create_or_update(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPONSE):
-    persons_result = await get_all_person(sn_device)
-    persons_terminal_ids = list(map(lambda user: int(user["id"]),
-                                    persons_result["answer"]["operations"]["users"]))
-
+async def process_batch(sn_device, persons, all_person_ids, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command_create = person_service.CommandCreatePerson(sn_device=sn_device)
     all_commands = []
 
@@ -162,7 +160,7 @@ async def batch_create_or_update(sn_device, persons, timeout=settings.TIMEOUT_MQ
             face_str=test_photo()
         )
 
-        if person["id"] not in persons_terminal_ids:
+        if person["id"] not in all_person_ids:
             command_create.add_person(person_json)
         else:
             command_update = person_service.CommandUpdatePerson(sn_device=sn_device)
@@ -175,8 +173,8 @@ async def batch_create_or_update(sn_device, persons, timeout=settings.TIMEOUT_MQ
     map_commands_task = {c.key_id: c for c in all_commands}
 
     all_commands_tasks = [
-        asyncio.create_task(
-            publish_command_and_wait_result(command, timeout=timeout), name=command.key_id)
+        asyncio.create_task(publish_command_and_wait_result(command, timeout=timeout),
+                            name=command.key_id)
         for command in all_commands]
 
     done_tasks, _ = await asyncio.wait(all_commands_tasks)
@@ -185,23 +183,31 @@ async def batch_create_or_update(sn_device, persons, timeout=settings.TIMEOUT_MQ
         command = map_commands_task[done_task.get_name()]
         errors += is_answer_has_error(command, done_task.result())
         # if done_task.exception() is not None:
-    pprint(errors)
+    return errors
 
 
-#
-# for i in range(0, len(persons), batch_size):
-#     batch = persons[i:i+batch_size]
-#     task = asyncio.create_task(process_batch(batch))
-#     tasks.append(task)
-#
-# result_maps = await asyncio.gather(*tasks)
-#
-# # Combine the result maps from individual batches
-# combined_result_map = {}
-# for result_map in result_maps:
-#     combined_result_map.update(result_map)
-#
-# return combined_result_map
+async def batch_create_or_update(
+        sn_device,
+        persons, batch_size=5,
+        timeout=settings.TIMEOUT_MQTT_RESPONSE
+):
+    persons_result = await get_all_person(sn_device)
+    all_person_ids = list(map(lambda user: int(user["id"]),
+                              persons_result["answer"]["operations"]["users"]))
+
+    errors = []
+    for i in range(0, len(persons), batch_size):
+        batch = persons[i:i + batch_size]
+        print(batch)
+        task = asyncio.create_task(process_batch(sn_device, batch, all_person_ids, timeout))
+        errors += await task
+
+    return {
+        "command": persons,
+        "answer": "",
+        "has_error": errors
+    }
+
 
 async def get_all_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = person_service.CommandGetPerson(sn_device=sn_device)
