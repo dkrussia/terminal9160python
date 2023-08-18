@@ -144,9 +144,23 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo,
     }
 
 
-async def process_batch(sn_device, persons, all_person_ids, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def create_persons(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    command = person_service.CommandCreatePerson(sn_device=sn_device)
+
+    for person in persons:
+        person_json = person_service.create_person_json(
+            id=int(person["id"]),
+            firstName=person["firstName"],
+            lastName=person["lastName"],
+            face_str=person["picture"]
+        )
+        command.add_person(person_json)
+    result = await publish_command_and_wait_result(command, timeout=timeout)
+    return is_answer_has_error(command, result)
+
+
+async def process_batch(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     print(f'batch {len(persons)}')
-    command_create = person_service.CommandCreatePerson(sn_device=sn_device)
     all_commands = []
 
     for person in persons:
@@ -157,15 +171,9 @@ async def process_batch(sn_device, persons, all_person_ids, timeout=settings.TIM
             face_str=person["picture"]
         )
 
-        if person["id"] not in all_person_ids:
-            command_create.add_person(person_json)
-        else:
-            command_update = person_service.CommandUpdatePerson(sn_device=sn_device)
-            command_update.update_person(person_json)
-            all_commands.append(command_update)
-
-    if command_create.payload.get('operations'):
-        all_commands.append(command_create)
+        command_update = person_service.CommandUpdatePerson(sn_device=sn_device)
+        command_update.update_person(person_json)
+        all_commands.append(command_update)
 
     map_commands_task = {c.key_id: c for c in all_commands}
 
@@ -194,12 +202,29 @@ async def batch_create_or_update(
 
     all_person_ids = list(map(lambda user: int(user["id"]),
                               persons_result["answer"]["operations"]["users"]))
+    person_for_create = []
+    person_for_update = []
+
+    for p in persons:
+        if p["id"] in all_person_ids:
+            person_for_update.append(p)
+            continue
+        person_for_create.append(p)
 
     errors = []
-    for i in range(0, len(persons), batch_size):
+
+    if person_for_create:
+        person_create_result = await create_persons(sn_device, person_for_create)
+        errors += person_create_result
+
+    for i in range(0, len(person_for_update), batch_size):
         batch = persons[i:i + batch_size]
-        task = asyncio.create_task(process_batch(sn_device, batch, all_person_ids, timeout))
+        task = asyncio.create_task(process_batch(sn_device, batch, timeout))
         errors += await task
+
+    print(f'Batch create {len(person_for_create)}')
+    print(f'Batch update {len(person_for_update)}')
+    print(errors)
 
     return {
         "command": persons,

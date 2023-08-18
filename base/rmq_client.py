@@ -47,7 +47,9 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
 
         if type_command == 'multiuser_update_biophoto':
             payload = list(filter(lambda p: p.get('picture', None), payload))
-            result = await mqtt_api.batch_create_or_update(sn_device=sn_device, persons=payload)
+            result = await mqtt_api.batch_create_or_update(sn_device=sn_device,
+                                                           persons=payload,
+                                                           batch_size=settings.BATCH_UPDATE_SIZE)
 
         if type_command == 'user_delete':
             result = await mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
