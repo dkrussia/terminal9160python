@@ -55,12 +55,16 @@ async def publish_command_and_wait_result(command, timeout):
 
 
 def is_answer_has_error(command, answer):
+    errors = []
     if answer is None:
         logger.error(
             f' ![+]ERROR Not receive answer from MQTT '
             f'\n Command={command.payload}'
         )
-        return True
+        errors.append({
+            'reason': "ERROR Not receive answer from MQTT"
+        })
+        return errors
 
     if command.type not in [
         CommandGetPerson.type,
@@ -72,6 +76,11 @@ def is_answer_has_error(command, answer):
             # Собрать все ошибки по каждой операции
             for operation in answer["operations"]["result"]:
                 if operation["code"] < 0:
+                    errors.append({
+                        'reason': 'operation failed',
+                        'details': FAILURE_CODES_REASON.get(operation["code"], "Not details"),
+                        'operation': operation
+                    })
                     logger.error(
                         f' ![+]ERROR Some operations'
                         f'\n Answer= ${json.dumps(answer)}'
@@ -79,10 +88,16 @@ def is_answer_has_error(command, answer):
                         f'\n ERROR Operation={operation}'
                         f'\n Details = {FAILURE_CODES_REASON.get(operation["code"], "Not details")}'
                     )
-                    return True
+            return errors
 
         if isinstance(answer["operations"]["result"], dict):
             if answer["operations"]["result"]["code"] < 0:
+                errors.append({
+                    'reason': 'operation failed',
+                    'details': FAILURE_CODES_REASON.get(answer["operations"]["result"]["code"],
+                                                        "Not details"),
+                    'operation': {answer["operations"]}
+                })
                 logger.error(
                     f' ![+]ERROR Some operations'
                     f'\n Answer= ${json.dumps(answer)}'
@@ -90,9 +105,9 @@ def is_answer_has_error(command, answer):
                     f'\n ERROR operation={answer["operations"]["result"]}'
                     f'\n Details = {FAILURE_CODES_REASON.get(answer["operations"]["result"]["code"], "Not details")} '
                 )
-                return True
+            return errors
 
-    return False
+    return errors
 
 
 async def create_or_update(sn_device, id_person, firstName, lastName, photo,
@@ -165,15 +180,28 @@ async def batch_create_or_update(sn_device, persons, timeout=settings.TIMEOUT_MQ
         for command in all_commands]
 
     done_tasks, _ = await asyncio.wait(all_commands_tasks)
-
+    errors = []
     for done_task in done_tasks:
         command = map_commands_task[done_task.get_name()]
-        if done_task.exception() is not None:
-            print('error', )
-        else:
-            print('success', )
-        error = is_answer_has_error(command, done_task.result())
+        errors += is_answer_has_error(command, done_task.result())
+        # if done_task.exception() is not None:
+    pprint(errors)
 
+
+#
+# for i in range(0, len(persons), batch_size):
+#     batch = persons[i:i+batch_size]
+#     task = asyncio.create_task(process_batch(batch))
+#     tasks.append(task)
+#
+# result_maps = await asyncio.gather(*tasks)
+#
+# # Combine the result maps from individual batches
+# combined_result_map = {}
+# for result_map in result_maps:
+#     combined_result_map.update(result_map)
+#
+# return combined_result_map
 
 async def get_all_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = person_service.CommandGetPerson(sn_device=sn_device)
