@@ -27,7 +27,6 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
         type_command = message.headers.get("command_type")
         reply_to = message.reply_to
         payload = json.loads(message.body.decode('utf-8'))
-        print(payload, type_command)
 
         sn_device = queue_name.split("_")[-1]
 
@@ -54,6 +53,7 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
         if type_command == 'user_delete':
             result = await mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
 
+        result.pop("answer")
         error_result = {"result": 'Error', 'Return': "-1", 'details': result}
         success_result = {"result": 'Successful', 'Return': "0", 'details': result}
 

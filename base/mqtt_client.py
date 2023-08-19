@@ -36,7 +36,7 @@ async def mqtt_consumer():
                             print(f"[/_report/received] {message.payload}")
                             print('\n')
                             print('***', datetime.now().strftime('%H:%M:%S'), '***')
-                            pprint(payload_json)
+                            # pprint(payload_json)
                             print('*' * 16)
 
                             feature_key = f'{payload_json["operations"]["id"]}_{payload_json["devSn"]}'

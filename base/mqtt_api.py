@@ -206,7 +206,7 @@ async def batch_create_or_update(
     person_for_update = []
 
     for p in persons:
-        if p["id"] in all_person_ids:
+        if int(p["id"]) in all_person_ids:
             person_for_update.append(p)
             continue
         person_for_create.append(p)
@@ -221,7 +221,7 @@ async def batch_create_or_update(
         batch = persons[i:i + batch_size]
         task = asyncio.create_task(process_batch(sn_device, batch, timeout))
         errors += await task
-
+    print(all_person_ids, type(persons[0]["id"]))
     print(f'Batch create {len(person_for_create)}')
     print(f'Batch update {len(person_for_update)}')
     print(errors)
