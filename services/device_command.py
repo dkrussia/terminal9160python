@@ -50,6 +50,7 @@ def create_person_json(id: int, lastName: str = "", firstName: str = "", face_st
         "remark": "",
         "expiry": ""
     }
+    # "expiry": "2023-08-20 18:25:00,2023-08-20 19:06:00"
     if face_str:
         photo_url = person_photo_service.base64_to_file(person_id=id, photo_base64=face_str)
         d["faceUrl"] = photo_url
