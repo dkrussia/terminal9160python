@@ -36,7 +36,7 @@ async def publish_command_and_wait_result(command, timeout):
         print("-----PUBLISH COMMAND TO MQTT------")
         print(f"---TO SN_DEVICE: {command.sn_device}--")
         print("-----       PAYLOAD      ------")
-        pprint(command.payload)
+        # pprint(command.payload)
         print("-----       PAYLOAD      ------")
 
         await client.publish(f"/_dispatch/command/{command.sn_device}",
@@ -221,10 +221,8 @@ async def batch_create_or_update(
         batch = persons[i:i + batch_size]
         task = asyncio.create_task(process_batch(sn_device, batch, timeout))
         errors += await task
-    print(all_person_ids, type(persons[0]["id"]))
     print(f'Batch create {len(person_for_create)}')
     print(f'Batch update {len(person_for_update)}')
-    print(errors)
 
     return {
         "command": persons,

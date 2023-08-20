@@ -27,13 +27,13 @@ async def mqtt_consumer():
                         payload_json = json.loads(message.payload.decode('utf-8'))
 
                         if message.topic.matches("/_report/state"):
-                            print(f"[/_report/state] {message.payload}")
+                            # print(f"[/_report/state] {message.payload}")
                             await rabbit_mq.publish_message(f'ping_{payload_json["sn"]}',
                                                             json.dumps({'sn': payload_json["sn"]}))
                             await device_service.add_device(payload_json)
 
                         if message.topic.matches("/_report/received"):
-                            print(f"[/_report/received] {message.payload}")
+                            # print(f"[/_report/received] {message.payload}")
                             print('\n')
                             print('***', datetime.now().strftime('%H:%M:%S'), '***')
                             # pprint(payload_json)

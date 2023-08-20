@@ -68,13 +68,15 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
             await rabbit_mq.publish_message(
                 q_name=reply_to,
                 reply_to=reply_to,
-                message=json.dumps(error_result)
+                message=json.dumps(error_result),
+                correlation_id=message.correlation_id
             )
         else:
             await rabbit_mq.publish_message(
                 q_name=reply_to,
                 reply_to=reply_to,
-                message=json.dumps(success_result)
+                message=json.dumps(success_result),
+                correlation_id=message.correlation_id
             )
         t2 = datetime.now()
         print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
@@ -96,13 +98,17 @@ class RabbitMQClient:
         if self.connection:
             await self.connection.close()
 
-    async def publish_message(self, q_name, message, reply_to=None, ):
+    async def publish_message(self, q_name, message, reply_to=None, correlation_id=None):
         # add timeout expired for ping queue
         async with self.connection.channel() as channel:
             if reply_to:
                 await channel.default_exchange.publish(
-                    Message(message.encode(), reply_to=reply_to, content_type='application/json'),
-                    routing_key=reply_to
+                    Message(message.encode(),
+                            reply_to=reply_to,
+                            correlation_id=correlation_id,
+                            content_type='application/json'),
+                    routing_key=reply_to,
+
                 )
                 return
 
