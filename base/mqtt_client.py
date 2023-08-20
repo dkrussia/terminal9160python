@@ -27,22 +27,24 @@ async def mqtt_consumer():
                         payload_json = json.loads(message.payload.decode('utf-8'))
 
                         if message.topic.matches("/_report/state"):
-                            print(f"[/_report/state] {message.payload}")
+                            # print(f"[/_report/state] {message.payload}")
                             await rabbit_mq.publish_message(f'ping_{payload_json["sn"]}',
                                                             json.dumps({'sn': payload_json["sn"]}))
                             await device_service.add_device(payload_json)
 
                         if message.topic.matches("/_report/received"):
-                            print(f"[/_report/received] {message.payload}")
+                            # print(f"[/_report/received] {message.payload}")
                             print('\n')
                             print('***', datetime.now().strftime('%H:%M:%S'), '***')
-                            pprint(payload_json)
+                            # pprint(payload_json)
                             print('*' * 16)
 
-                            feature_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
+                            feature_key = f'{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
                             result_future = futures.pop(feature_key, None)
+
                             if result_future:
                                 result_future.set_result(payload_json)
+
         except aiomqtt.MqttError:
             print(f"MQTT Connection lost; Reconnecting in {interval} seconds ...")
             await asyncio.sleep(interval)

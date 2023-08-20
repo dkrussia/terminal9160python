@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     FIRMWARE_FILE = 'HR-FaceAC-L01.04.13-DM08.tar.gz'
 
     TIMEOUT_MQTT_RESPONSE: int = 8
+    BATCH_UPDATE_SIZE = 10
 
     MOCK_DEVICE = False
     MOCK_DEVICE_AMOUNT: int = 31

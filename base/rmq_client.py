@@ -27,7 +27,6 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
         type_command = message.headers.get("command_type")
         reply_to = message.reply_to
         payload = json.loads(message.body.decode('utf-8'))
-        print(payload, type_command)
 
         sn_device = queue_name.split("_")[-1]
 
@@ -46,37 +45,38 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
                 )
 
         if type_command == 'multiuser_update_biophoto':
-            for user in payload:
-                photo = user.get('picture', "")
-                if photo:
-                    # TODO: Сделать Сумму результатов + ID персон которые с ошибкой.
-                    #  commands = [create_command, *update_commands]
-
-                    result = await mqtt_api.create_or_update(
-                        sn_device=sn_device,
-                        id_person=int(user["id"]),
-                        firstName=user["firstName"],
-                        lastName=user["lastName"],
-                        photo=photo,
-                    )
+            payload = list(filter(lambda p: p.get('picture', None), payload))
+            result = await mqtt_api.batch_create_or_update(sn_device=sn_device,
+                                                           persons=payload,
+                                                           batch_size=settings.BATCH_UPDATE_SIZE)
 
         if type_command == 'user_delete':
             result = await mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
 
-        error_result = {"result": 'Error', 'Return': "-1"}
-        success_result = {"result": 'Successful', 'Return': "0"}
+        error_result = {
+            "result": 'Error',
+            'Return': "-1",
+            'details': result.get("has_error", None)
+        }
+        success_result = {
+            "result": 'Successful',
+            'Return': "0",
+            'details': result.get("has_error", None)
+        }
 
         if not result or result["has_error"]:
             await rabbit_mq.publish_message(
                 q_name=reply_to,
                 reply_to=reply_to,
-                message=json.dumps(error_result)
+                message=json.dumps(error_result),
+                correlation_id=message.correlation_id
             )
         else:
             await rabbit_mq.publish_message(
                 q_name=reply_to,
                 reply_to=reply_to,
-                message=json.dumps(success_result)
+                message=json.dumps(success_result),
+                correlation_id=message.correlation_id
             )
         t2 = datetime.now()
         print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
@@ -98,13 +98,17 @@ class RabbitMQClient:
         if self.connection:
             await self.connection.close()
 
-    async def publish_message(self, q_name, message, reply_to=None, ):
+    async def publish_message(self, q_name, message, reply_to=None, correlation_id=None):
         # add timeout expired for ping queue
         async with self.connection.channel() as channel:
             if reply_to:
                 await channel.default_exchange.publish(
-                    Message(message.encode(), reply_to=reply_to, content_type='application/json'),
-                    routing_key=reply_to
+                    Message(message.encode(),
+                            reply_to=reply_to,
+                            correlation_id=correlation_id,
+                            content_type='application/json'),
+                    routing_key=reply_to,
+
                 )
                 return
 
