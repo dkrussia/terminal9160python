@@ -23,14 +23,14 @@ async def mock_commands_handler(queue_name, message: IncomingMessage):
             await asyncio.sleep(random.choice(s.MOCK_DEVICE_SUCCESS_TIMEOUT))
             await rabbit_mq.publish_message(
                 reply_to=reply_to,
-                data=json.dumps({"result": 'Successful', 'Return': "0"})
+                message=json.dumps({"result": 'Successful', 'Return': "0"})
             )
 
         else:
             await asyncio.sleep(random.choice(s.MOCK_DEVICE_ERROR_TIMEOUT))
             await rabbit_mq.publish_message(
                 reply_to=reply_to,
-                data=json.dumps({"result": 'Error', 'Return': "1"})
+                message=json.dumps({"result": 'Error', 'Return': "1"})
             )
 
     t2 = datetime.now()
