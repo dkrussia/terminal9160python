@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
+from fastapi.openapi.docs import get_swagger_ui_html
 from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
@@ -31,7 +32,7 @@ if sys.platform.lower() == "win32" or os.name.lower() == "nt":
 
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
-app = FastAPI()
+app = FastAPI(docs_url=None)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS,
@@ -73,6 +74,23 @@ app.mount(
     name='static',
 )
 
+app.mount(
+    '/swagger',
+    StaticFiles(directory=f'{BASE_DIR}/dashboard/swagger', ),
+    name='swagger',
+)
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title="9160Terminal API",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_js_url="/swagger/5.4.2_swagger-ui-bundle.js",
+        swagger_css_url="/swagger/5.4.2_swagger-ui.css",
+    )
+
 
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
@@ -113,6 +131,7 @@ async def startup_event():
         return
 
     asyncio.create_task(mqtt_consumer())
+
 
 if __name__ == '__main__':
     uvicorn.run(
