@@ -35,10 +35,12 @@ _______________________
 
 * docker build . -t terminal9160
 * docker tag terminal9160:latest kuznetsovsergey/9160:v1
-* docker push kuznetsovsergey/9160:v1
-*
-* docker save -o mynginx1.tar nginx |  Export to FILE  
-* docker load < mynginx1.tar        |  Import from file   
+* docker push kuznetsovsergey/9160:v1  
+
+Импорт\Экспорт контейнера
+
+* docker save -o 9160-batch.tar terminal9160-async  |  Export to FILE  
+* docker load -i 9160-batch.tar                     |  Import from file   
   
 !!! Если rabbit не запускается в demon, проверить Line Separator в файла init.sh
 
@@ -53,6 +55,12 @@ To exe (pyconsole)
 
 **Установка**  
 Устанавливаем Docker.
+
+    Windows Enable Hyper-V using PowerShell  
+    Open a PowerShell console as Administrator.  
+    Run the following command PowerShell:  
+    
+    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
 
     Заходим в учетную запись Docker, с правами только на чтение.
     Нажимаем Pull на доступной версии Image.
@@ -109,10 +117,15 @@ __________________________________
 
 
 2. MCI_SERVICE слушает события в очереди => events_$device.      
-  `{sn: str, time:2000-01-01:21:00:00, status:str, pin: int,str}`  
-  sn: номер устройства.  
-  status = '1' (Успешный проход)   
-  pin === id_person (Идентификатор человека)
+  `{sn: str, time:2000-01-01:21:00:00, status:str, pin: int,str}`
+
+        status: 
+        IN: 2
+        OUT: 3
+        TRIP: 4 + REMARK
+    
+      sn: номер устройства.  
+      pin === id_person (Идентификатор человека)
   
 
 3. MCI_SERVICE слушает очередь Ping => events_$device.
