@@ -125,7 +125,7 @@ __________________________________
 
 
 2. MCI_SERVICE слушает события в очереди => events_$device.      
-   `{sn: str, time:2000-01-01:21:00:00, status:str, pin: int,str}`
+   `{sn: str, time:2000-01-01T21:00:00, status:str, pin: int,str}`
 
         status: 
         IN: 2
