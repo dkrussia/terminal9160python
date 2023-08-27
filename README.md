@@ -96,7 +96,10 @@ set ENV Variables
 `EMQX_LOG_DIR=`  
 `EMQX_ETC_DIR=`  
 `.../bin/emqx install` 
+Запуск emqx локально в Docker  
+`docker run -d --name emqx -p 1883:1883 18083:18083 emqx/emqx:5.1.1`  
   
+
 Set ENV windows variables:  
   
 RABBIRMQ_BASE  
@@ -105,6 +108,9 @@ RABBIRMQ_LOG_BASE
 `rabbitmq-service.bat remove`  
 `rabbitmq-service.bat install`  
 `rabbitmq-plugins enable rabbitmq_management`    
+  
+Запуск rabbitmq локально в Docker  
+`docker run -p 5672:5672 -p 15672:15672 --name rabbitmq rabbitmq:3.11.19-management`  
 
 ------------------------
 *Заметки*
