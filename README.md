@@ -91,9 +91,12 @@ Erlang == `25.2.2`
 EMQX == `5.0.24`      
 TERMINAL Firmware == `1.4.15C_DBG`
 
-EMQX install service:  
+EMQX install service:    
+set ENV Variables   
+`EMQX_LOG_DIR=`  
+`EMQX_ETC_DIR=`  
 `.../bin/emqx install` 
-
+  
 Set ENV windows variables:  
   
 RABBIRMQ_BASE  
