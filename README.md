@@ -78,6 +78,9 @@ To exe (pyconsole)
     docker save -o имя_архива.tar имя_образа:тег
     docker save -o myimage.tar myimage:latest
     docker load -i имя_архива.tar
+   
+    Скопировать фронтенд в контейнер
+    docker cp .\dist\ latest-9160-container:/app/dashboard/dist
 
 -----------------------
   
