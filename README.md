@@ -61,7 +61,13 @@ To exe (pyconsole)
     Run the following command PowerShell:  
     
     Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+    
+    https://www.coretechnologies.com/products/AlwaysUp/Apps/StartDockerDaemonAsAWindowsService.html
+    https://learn.microsoft.com/ru-ru/virtualization/windowscontainers/manage-docker/configure-docker-daemon
 
+    Run this command to install the Docker Daemon service:
+      dockerd --register-service
+    
     Заходим в учетную запись Docker, с правами только на чтение.
     Нажимаем Pull на доступной версии Image.
 
@@ -74,6 +80,11 @@ To exe (pyconsole)
     docker load -i имя_архива.tar
 
 -----------------------
+  
+PIP Скачать библиотеки в папку packages  
+`pip download  -r .\requirements.txt  -d . \packages\` 
+`pip install -r requirements.txt --no-index --find-links .\packages\`
+  
 
 RabbitMQ == `3.11.8`    
 Erlang == `25.2.2`   
