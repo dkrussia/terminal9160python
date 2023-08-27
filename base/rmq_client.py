@@ -1,108 +1,136 @@
 import json
 import logging
-import time
-import amqpstorm
-from amqpstorm import AMQPChannelError, AMQPConnectionError
-from base.utils import catch_exceptions
+from datetime import datetime
 
+from aio_pika import connect_robust, IncomingMessage, Message
+
+from base import mqtt_api
 from config import s as settings
 
 logger = logging.getLogger('rmq_log')
 logger.setLevel(logging.INFO)
 
 
-# TODO: обработка случая когда RabbitMQ включен\выключен
+# {"id": 1, "firstName": "Sergey1", "lastName": "Kuz1", "picture": "1"}
+# [{"id": 1, "firstName": "Sergey2", "lastName": "Kuz2", "picture": ""}]
 
+async def command_rmq_handler(queue_name, message: IncomingMessage):
+    """
+    Типы команд
+    1. user_update_biophoto -
+    2. user_update -
+    3. multiuser_update_biophoto +
+    4. multiuser_update -
+    5. user_delete +
+    """
+    async with message.process():
+        type_command = message.headers.get("command_type")
+        reply_to = message.reply_to
+        payload = json.loads(message.body.decode('utf-8'))
 
-def create_connection():
-    attempts = 0
-    connection = None
-    max_retries = 3
-    while True:
-        attempts += 1
-        try:
-            connection = amqpstorm.Connection(
-                hostname=settings.RMQ_HOST,
-                username=settings.RMQ_USER,
-                password=settings.RMQ_PASSWORD,
-                port=settings.RMQ_PORT,
-            )
-            break
-        except amqpstorm.AMQPError as why:
-            logger.error(why)
-            if max_retries and attempts > max_retries:
-                break
-            time.sleep(1)
-        except KeyboardInterrupt:
-            break
-    return connection
+        sn_device = queue_name.split("_")[-1]
 
+        t1 = datetime.now()
+        result = None
 
-class MyChannel(object):
-    def __init__(self):
-        self.connection = create_connection()
+        if type_command == 'user_update_biophoto':
+            photo = payload.get('picture', "")
+            if photo:
+                result = await mqtt_api.create_or_update(
+                    sn_device=sn_device,
+                    id_person=int(payload["id"]),
+                    firstName=payload["firstName"],
+                    lastName=payload["lastName"],
+                    photo=photo,
+                )
 
-    def __enter__(self):
-        return self.connection.channel()
+        if type_command == 'multiuser_update_biophoto':
+            payload = list(filter(lambda p: p.get('picture', None), payload))
+            result = await mqtt_api.batch_create_or_update(sn_device=sn_device,
+                                                           persons=payload,
+                                                           batch_size=settings.BATCH_UPDATE_SIZE)
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        if self.connection:
-            self.connection.close()
+        if type_command == 'user_delete':
+            result = await mqtt_api.delete_person(sn_device=sn_device, id=int(payload["id"]))
 
+        if type_command == 'multiuser_delete':
+            result = await mqtt_api.delete_person(sn_device=sn_device)
 
-@catch_exceptions(cancel_on_failure=False)
-def rmq_publish_message(queue, exchange, data, headers=None):
-    ttl = 30
-    arguments = {'x-message-ttl': ttl * 1000} if 'ping' in queue else {}
-
-    with MyChannel() as channel:
-        if queue:
-            channel.queue.declare(queue, arguments=arguments)
-        prop = {
-            'delivery_mode': 2,
-            'headers': headers,
-            'content_type': 'application/json'
+        error_result = {
+            "result": 'Error',
+            'Return': "-1",
+            'details': result.get("has_error", None)
         }
-        channel.basic.publish(
-            routing_key=queue,
-            exchange=exchange,
-            body=json.dumps(data),
-            properties=prop,
-        )
+        success_result = {
+            "result": 'Successful',
+            'Return': "0",
+            'details': result.get("has_error", None)
+        }
+
+        if not result or result["has_error"]:
+            await rabbit_mq.publish_message(
+                q_name=reply_to,
+                reply_to=reply_to,
+                message=json.dumps(error_result),
+                correlation_id=message.correlation_id
+            )
+        else:
+            await rabbit_mq.publish_message(
+                q_name=reply_to,
+                reply_to=reply_to,
+                message=json.dumps(success_result),
+                correlation_id=message.correlation_id
+            )
+        t2 = datetime.now()
+        print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
+    # type_command == 'user_update' or
+    # type_command == 'multiuser_update' or
+    # if type_command == 'user_update_biophoto':
+    # if type_command == 'multiuser_update_biophoto':
 
 
-@catch_exceptions(cancel_on_failure=False)
-def rmq_send_reply_to(reply_to, data):
-    with MyChannel() as channel:
-        logger.info(f'Ответ на {reply_to} отправлен.')
-        channel.basic.publish(
-            routing_key=reply_to,
-            body=json.dumps(data),
-            properties={
-                'content_type': 'application/json'
-            },
-        )
+class RabbitMQClient:
+    def __init__(self, amqp_url):
+        self.amqp_url = amqp_url
+        self.connection = None
+
+    async def start(self):
+        self.connection = await connect_robust(self.amqp_url)
+
+    async def stop(self):
+        if self.connection:
+            await self.connection.close()
+
+    async def publish_message(self, q_name, message, reply_to=None, correlation_id=None):
+        # add timeout expired for ping queue
+        async with self.connection.channel() as channel:
+            if reply_to:
+                await channel.default_exchange.publish(
+                    Message(message.encode(),
+                            reply_to=reply_to,
+                            correlation_id=correlation_id,
+                            content_type='application/json'),
+                    routing_key=reply_to,
+
+                )
+                return
+
+            arguments = {}
+            if q_name and 'ping' in q_name:
+                arguments = {'x-message-ttl': 30 * 1000}
+            queue = await channel.declare_queue(q_name, arguments=arguments)
+
+            await channel.default_exchange.publish(
+                Message(message.encode(), content_type='application/json', ),
+                routing_key=queue.name,
+            )
+
+    async def start_queue_listener(self, queue_name, ):
+        channel = await self.connection.channel()
+        await channel.set_qos(prefetch_count=1)
+        queue = await channel.declare_queue(queue_name)
+        await queue.consume(lambda msg: command_rmq_handler(queue_name, msg))
 
 
-def rmq_subscribe_on_mci_command(sn_device, func):
-    queue = f'commands_{sn_device}'
-    rmq_global_chanel.queue.declare(queue)
-    rmq_global_chanel.basic.consume(func, queue, no_ack=True)
-
-
-def rmq_start_consume():
-    while True:
-        try:
-            # Проверить chanel и сделать reconnect при необходимости
-            # chanel.is_open
-            rmq_global_chanel.start_consuming()
-        except AMQPChannelError as why:
-            time.sleep(3)
-            print(why)
-        except AMQPConnectionError as why:
-            time.sleep(3)
-            print(why)
-
-
-rmq_connect = create_connection()
-rmq_global_chanel = rmq_connect.channel()
+rabbit_mq = RabbitMQClient(
+    f"amqp://{settings.RMQ_USER}:{settings.RMQ_PASSWORD}@{settings.RMQ_HOST}:{settings.RMQ_PORT}/")

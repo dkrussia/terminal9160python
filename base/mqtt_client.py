@@ -1,131 +1,52 @@
+import asyncio
 from datetime import datetime
 from pprint import pprint
-import threading
-import paho.mqtt.client as mqtt
+
+import aiomqtt as aiomqtt
 import json
 
-import config
-from config import s as settings
 from base.log import logger
+from base.mqtt_api import futures
+from config import s as settings
 from services.devices import device_service
-from base.rmq_client import rmq_publish_message
+from base.rmq_client import rabbit_mq
 
 
-class ExceptionOnPublishMQTTMessage(Exception):
-    pass
+async def mqtt_consumer():
+    interval = 5  # Seconds
+    while True:
+        try:
+            async with aiomqtt.Client(hostname=settings.MQTT_HOST,
+                                      port=settings.MQTT_PORT,
+                                      username=settings.MQTT_USER,
+                                      password=settings.MQTT_PASSWORD) as client:
+                async with client.messages() as messages:
+                    await client.subscribe("/_report/state")
+                    await client.subscribe("/_report/received")
+                    async for message in messages:
+                        payload_json = json.loads(message.payload.decode('utf-8'))
 
+                        if message.topic.matches("/_report/state"):
+                            # print(f"[/_report/state] {message.payload}")
+                            await rabbit_mq.publish_message(f'ping_{payload_json["sn"]}',
+                                                            json.dumps({'sn': payload_json["sn"]}))
+                            await device_service.add_device(payload_json)
 
-class ExceptionNoResponseMQTTReceived(Exception):
-    pass
+                        if message.topic.matches("/_report/received"):
+                            # print(f"[/_report/received] {message.payload}")
+                            print('\n')
+                            print('***', datetime.now().strftime('%H:%M:%S'), '***')
+                            # pprint(payload_json)
+                            print('*' * 16)
 
+                            feature_key = f'{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
+                            result_future = futures.pop(feature_key, None)
 
-def get_mqtt_client():
-    client = mqtt.Client("terminal_mqtt")
-    client.username_pw_set(settings.MQTT_USER, settings.MQTT_PASSWORD)
-    client.connect(settings.MQTT_HOST, settings.MQTT_PORT, 60)
-    return client
+                            if result_future:
+                                result_future.set_result(payload_json)
 
-
-class ResultEvent(object):
-    def __init__(self):
-        self.event = threading.Event()
-        self.result = None
-
-
-class MQTTClientWrapper:
-    def __init__(self):
-        self.client = get_mqtt_client()
-        self.result_events = {}
-        self.lock = threading.Lock()
-        self.is_receiving = False
-
-        self.client.on_message = self._on_message
-        self.client.on_connect = self._on_connect
-        self.client.user_data_set((self.result_events, self.lock))
-
-    def _on_connect(self, client, userdata, flags, rc):
-        print("Подключено: " + str(rc))
-        client.subscribe("/_report/state")
-        client.subscribe("/_report/received")
-
-    def _on_message(self, client, userdata, msg):
-        topic = msg.topic
-        payload = msg.payload.decode("utf-8")
-        payload_json = json.loads(payload)
-        result_events, lock = userdata
-
-        print('\n')
-        print('***', datetime.now().strftime('%H:%M:%S'), '***')
-        print(f'GOT MESSAGE ON {topic}')
-        pprint(payload_json)
-        print('*' * 16)
-
-        if topic == "/_report/state":
-            # Отправляем пинг устройства в очередь
-            rmq_publish_message(
-                queue=f'ping_{payload_json["sn"]}',
-                exchange="",
-                data={'sn': f'{payload_json["sn"]}'}
-            )
-            # Добавляем устройство
-            device_service.add_device(payload_json["sn"])
-            device_service.add_meta_on_state(payload=payload_json)
-            return
-
-        event_key = f'command_{payload_json["operations"]["id"]}_{payload_json["devSn"]}'
-        with lock:
-            result_event = result_events.get(event_key)
-            if result_event:
-                result_event.result = payload_json
-                result_event.event.set()
-
-    def publish_command(self, sn_device, payload: dict):
-        print('***', datetime.now().strftime('%H:%M:%S'), '***')
-        print("-----PUBLISH COMMAND TO MQTT------")
-        print(f"---TO SN_DEVICE: {sn_device}--")
-        print("-----       PAYLOAD      ------")
-        pprint(payload)
-        print("-----       PAYLOAD      ------")
-        result, _ = self.client.publish(f"/_dispatch/command/{sn_device}", json.dumps(payload))
-        print(result, _)
-        if result != mqtt.MQTT_ERR_SUCCESS:
-            print("--MQTT ERROR PUBLISH COMMAND--")
-            logger.error(f'MQTT ERROR PUBLISH COMMAND, {payload}')
-            raise ExceptionOnPublishMQTTMessage()
-        print("--MQTT SUCCESS PUBLISH COMMAND--")
-
-    def send_command_and_wait_result(self, command, timeout=settings.TIMEOUT_MQTT_RESPONSE):
-        result_event = ResultEvent()
-        event_key = f'command_{command.id_command}_{command.sn_device}'
-
-        with self.lock:
-            self.result_events[event_key] = result_event
-
-        self.publish_command(sn_device=command.sn_device, payload=command.payload)
-        self.result_events[event_key].event.wait(timeout=timeout)
-        result = result_event.result
-
-        with self.lock:
-            del self.result_events[event_key]
-
-        if result is None:
-            logger.error('MQTT NO RESPONSE BY TIMEOUT')
-            raise ExceptionNoResponseMQTTReceived
-        return result
-
-    def start_receiving(self):
-        if not self.is_receiving:
-            self.is_receiving = True
-            self.client.loop_start()
-
-    def stop_receiving(self):
-        if self.is_receiving:
-            self.is_receiving = False
-            self.client.loop_stop()
-
-    def disconnect(self):
-        self.stop_receiving()
-        self.client.disconnect()
-
-
-mqtt_client = MQTTClientWrapper()
+        except aiomqtt.MqttError:
+            print(f"MQTT Connection lost; Reconnecting in {interval} seconds ...")
+            await asyncio.sleep(interval)
+        except Exception as e:
+            logger.error(e, exc_info=1)

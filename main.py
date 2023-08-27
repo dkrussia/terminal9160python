@@ -1,19 +1,20 @@
+import asyncio
 import os
+import sys
 
-import threading
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
+from fastapi.openapi.docs import get_swagger_ui_html
 from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 from config import s
 from base.endpoints import device_router, person_router, device_push_router
-from base.mqtt_client import mqtt_client
-from base.rmq_client import rmq_start_consume
-from services import mock as mock_service
+from base.mqtt_client import mqtt_consumer
+from base.rmq_client import rabbit_mq
 
 from config import (
     BASE_DIR,
@@ -21,11 +22,17 @@ from config import (
     PHOTO_PATH,
     FIRMWARE_PATH,
     FIRMWARE_DIR,
-    CORS
+    CORS,
+    s as settings
 )
-from config import s as settings
+from services.mock import mock_run
 
-app = FastAPI()
+if sys.platform.lower() == "win32" or os.name.lower() == "nt":
+    from asyncio import set_event_loop_policy, WindowsSelectorEventLoopPolicy
+
+    set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+
+app = FastAPI(docs_url=None)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS,
@@ -67,6 +74,23 @@ app.mount(
     name='static',
 )
 
+app.mount(
+    '/swagger',
+    StaticFiles(directory=f'{BASE_DIR}/dashboard/swagger', ),
+    name='swagger',
+)
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title="9160Terminal API",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_js_url="/swagger/5.4.2_swagger-ui-bundle.js",
+        swagger_css_url="/swagger/5.4.2_swagger-ui.css",
+    )
+
 
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
@@ -97,13 +121,19 @@ print("MQTT_PORT_FOR_TERMINAL: ", s.MQTT_PORT_FOR_TERMINAL)
 print("HOST_FOR_TERMINAL: ", s.HOST_FOR_TERMINAL)
 print("PORT_FOR_TERMINAL: ", s.PORT_FOR_TERMINAL)
 
-if __name__ == '__main__':
-    if settings.MOCK_DEVICE:
-        mock_service.handle_commands_from_mock_devices()
-        threading.Thread(target=mock_service.mock_ping_to_mock_devices).start()
 
-    mqtt_client.start_receiving()
-    threading.Thread(target=rmq_start_consume).start()
+@app.on_event("startup")
+async def startup_event():
+    await rabbit_mq.start()
+
+    if s.MOCK_DEVICE:
+        asyncio.create_task(mock_run())
+        return
+
+    asyncio.create_task(mqtt_consumer())
+
+
+if __name__ == '__main__':
     uvicorn.run(
         app=app,
         port=settings.SERVER_PORT,

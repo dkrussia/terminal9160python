@@ -21,12 +21,28 @@ class DeviceControl(BaseModel):
 
 class UpdateConfig(BaseModel):
     adminPassword: str = None
-    brightness: Optional[int] = Field(ge=1, le=100)
-    deviceVolume: Optional[int] = Field(ge=0, le=100)
+
+    company: str = None
+    deviceName: str = None
+    devicePos: str = None
+
+    miniWnd: Literal[0, 1, 3] = None
+
+    brightness: Optional[int] = Field(ge=1, le=100, default=None)
+    deviceVolume: Optional[int] = Field(ge=0, le=100, default=None)
     featureThreshold: int = None
     living: Literal[1, 0] = None
+    maskDetection: Literal[1, 0] = None
+
+    doorBellEnable: bool = None
+    doorSensorEnable: bool = None
+
+    gateTimeout: int = Field(ge=0, le=20, default=None)
+    relayCtrlDuration: int = Field(ge=0, le=20, default=None)
+    relayDelayDuration: int = Field(ge=0, le=20, default=None)
+
     recogizeInterval: int = None
-    minSize : int = None
+    minSize: int = None
     temperature: Literal[1, 0] = None
     playVoice: bool = None
     lowPower: bool = None
@@ -44,6 +60,8 @@ class UpdateConfig(BaseModel):
     passScene: bool = None
     passHeadPhoto: bool = None
     recordStranger: bool = None
-    fillLight: Literal[0,1,2] = None
+    fillLight: Literal[0, 1, 2] = None
     recordLimitTime: int = None
     recordLimitNumber: int = None
+    attendance: bool = None
+    attendanceBtn: bool = None

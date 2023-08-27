@@ -1,15 +1,17 @@
+import json
 from datetime import datetime
 from pprint import pprint
-from typing import Optional
+from typing import Optional, Literal
 from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
+
+from base.rmq_client import rabbit_mq
 from base.schema import PersonCreate, UpdateConfig
 from config import BASE_DIR
 from config import s as settings
 from base import mqtt_api
-from base.rmq_client import rmq_publish_message
 from services.device_command import ControlAction
 from services.devices import device_service
 
@@ -49,29 +51,33 @@ def checker(person_payload: str = Form(...)):
 
 @person_router.get("/{id}", description="Получение пользователя по ID")
 @person_router.get("", description="Получение всех пользователей")
-def get_person(sn_device: str, id: Optional[int] = ""):
+async def get_person(sn_device: str, id: Optional[int] = ""):
     if not id:
-        resp = mqtt_api.get_all_person(sn_device=sn_device)
+        r = await mqtt_api.update_config({}, sn_device=sn_device)
+        if r["answer"]:
+            device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
+
+        resp = await mqtt_api.get_all_person(sn_device=sn_device)
         if resp.get('answer'):
             for person in resp["answer"]["operations"]["users"]:
                 person.update({"faceUrl": PersonPhoto.get_photo_url(person["id"])})
         return resp
-    return mqtt_api.get_person(id_person=id, sn_device=sn_device)
+    return await mqtt_api.get_person(id_person=id, sn_device=sn_device)
 
 
 @person_router.delete("/{id}", description="Удаление пользователя по ID")
 @person_router.delete("", description="Удаление всех пользователей")
-def delete_person(sn_device: str, id: int = None):
-    return mqtt_api.delete_person(sn_device=sn_device, id=id)
+async def delete_person(sn_device: str, id: int = None):
+    return await mqtt_api.delete_person(sn_device=sn_device, id=id)
 
 
 @person_router.post("/self", description="Добавить себя")
-def add_self_person(
+async def add_self_person(
         sn_device: str,
 ):
     with open(f'{BASE_DIR}/tests/base64photo.txt', 'r') as f:
         p = f.read()
-    return mqtt_api.create_or_update(
+    return await mqtt_api.create_or_update(
         sn_device=sn_device,
         id_person=999,
         firstName="Сергей",
@@ -94,7 +100,7 @@ async def person_create_or_update(
     Таймаут ожидания указан в конфиге {TIMEOUT_MQTT_RESPONSE}.
     Фотография не обязательна.
     """
-    return mqtt_api.create_or_update(
+    return await mqtt_api.create_or_update(
         sn_device=sn_device,
         id_person=id,
         firstName=person_payload.firstName,
@@ -104,15 +110,18 @@ async def person_create_or_update(
 
 
 @device_router.get('/all')
-def all_devices_registered():
+async def all_devices_registered():
     for sn_device in device_service.devices:
         if sn_device in device_service.devices_meta.keys() \
                 and 'config' not in device_service.devices_meta[sn_device].keys():
             # Вызвать это для получения конфига с сервера с пустой нагрузкой
-            mqtt_api.update_config({}, sn_device=sn_device)
+            r = await mqtt_api.update_config({}, sn_device=sn_device)
+            if r["answer"]:
+                device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
     return {
         'meta': device_service.devices_meta,
-        'observed': device_service.devices_observed
+        'observed': device_service.devices_observed,
+        'function_arrive': device_service.devices_function_arrive
     }
 
 
@@ -139,7 +148,7 @@ async def device_login(request: Request):
 
     payload = await request.json()
     sn_device = payload["devSn"]
-    device_service.add_ip_address(sn_device, payload.get("networkIp", ""))
+    device_service.add_ip_address(sn_device, payload["networkIp"])
 
     r = {
         "code": 0,
@@ -165,7 +174,7 @@ async def dconfig(request: Request):
     d = await request.json()
 
     sn_device = d["devSn"]
-    device_service.add_ip_address(sn_device, request.client.host)
+    # device_service.add_ip_address(sn_device, request.client.host)
     device_service.update_meta_update_conf(sn_device, d)
     return {}
 
@@ -206,19 +215,21 @@ async def pass_face(request: Request):
         payload['passageTime'], '%Y-%m-%d %H:%M:%S'
     ).strftime('%Y-%m-%dT%H:%M:%S')
 
-    device_service.add_ip_address(sn_device, request.client.host)
+    if device_service.is_access_mode(sn_device):
+        atType = 3
+        if sn_device in device_service.devices_function_arrive:
+            atType = 2
 
     if id_user > 0:
         #
-        rmq_publish_message(
-            data={
+        await rabbit_mq.publish_message(
+            q_name=f'events_{sn_device}',
+            message=json.dumps({
                 'sn': f'events_{sn_device}',
                 'time': passDateTime,
                 'status': str(atType),
                 "pin": str(id_user),
-            },
-            queue=f'events_{sn_device}',
-            exchange=""
+            })
         )
     return {}
 
@@ -235,7 +246,7 @@ async def send_control_action(
     DOOR_OPEN = 4 \n
     UPDATE_SOFTWARE = 5 \n
     """
-    return mqtt_api.control_action(action, sn_device=sn_device)
+    return await mqtt_api.control_action(action, sn_device=sn_device)
 
 
 @device_router.post("/config", )
@@ -264,7 +275,10 @@ async def update_config(device_config: UpdateConfig, sn_device: str, ):
     cardNumDecimal	Bool	Decimal card number\n
     cardNumReverse	Bool	Reverse sequence card number\n
     """
-    return mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
+    r = await mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
+    if r["answer"]:
+        device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
+    return r
 
 
 @device_router.post("/to_observed", )
@@ -275,3 +289,8 @@ async def add_to_observed(sn_device: str, ):
 @device_router.post("/unobserved", )
 async def unobserved(sn_device: str, ):
     return device_service.remove_device_from_observed(sn_device)
+
+
+@device_router.post("/access_control", )
+async def access_mode_set_function(sn_device: str, function: Literal["arrive", "depart"]):
+    return device_service.set_function(sn_device, function)

@@ -2,7 +2,7 @@
 Создание json-команд для терминалов 9160
 Которые будут отправлены в MQTT[commands_$sn_device]
 """
-
+import random
 from datetime import datetime
 from typing import Optional
 from enum import Enum
@@ -50,6 +50,7 @@ def create_person_json(id: int, lastName: str = "", firstName: str = "", face_st
         "remark": "",
         "expiry": ""
     }
+    # "expiry": "2023-08-20 18:25:00,2023-08-20 19:06:00"
     if face_str:
         photo_url = person_photo_service.base64_to_file(person_id=id, photo_base64=face_str)
         d["faceUrl"] = photo_url
@@ -80,7 +81,8 @@ class BaseCommand:
     def __init__(self, sn_device: str, id_command: Optional[int] = None):
         if not id_command:
             # 1685446768.340883 -> 340883
-            id_command = int(str(datetime.now().timestamp()).split('.')[1])
+            id_command = int(str(datetime.now().timestamp()).split('.')[1]) + random.randint(1,
+                                                                                             100000000)
 
         self.sn_device = sn_device
         self.id_command = id_command
@@ -91,6 +93,10 @@ class BaseCommand:
             "devSn": self.sn_device,
             "feedbackUrl": "",
         }
+
+    @property
+    def key_id(self):
+        return f'{self.id_command}_{self.sn_device}'
 
     def add_operation_in_list(self, data_json: dict):
         if not self.payload.get('operations', None):

@@ -1,4 +1,5 @@
 *Swagger UI Доступен по пути: `/docs`*
+*Swagger UI Доступен по пути: `/docs`*
 
 * Загрузить requirements.txt для установки оффлайн
 
@@ -28,7 +29,9 @@ PYTHON_TERMINAL_SERVICE Отправляет результат выполнен
 MCI_SERVICE Получает данные результата выполнение команды на терминале из RABBIT_MQ (`/reply_to`)     
 MCI_SERVICE Отправляет результаты выполнение команды на терминале в ПО Matrix
 _______________________
+
 *EMQX, RABBIT in Docker*
+
 
 `docker run -d --name emqx -p 8086:1883 -p 8085:18083 emqx/emqx:latest`    
 `docker run -p 15672:15672 -p 5672:5672 rabbitmq:3.10.7-management`
@@ -39,6 +42,11 @@ _______________________
 * docker build . -t terminal9160
 * docker tag terminal9160:latest kuznetsovsergey/9160:v1
 * docker push kuznetsovsergey/9160:v1
+
+Импорт\Экспорт контейнера
+
+* docker save -o 9160-batch.tar terminal9160-async | Export to FILE
+* docker load -i 9160-batch.tar | Import from file
 
 !!! Если rabbit не запускается в demon, проверить Line Separator в файла init.sh
 
@@ -54,6 +62,18 @@ To exe (pyconsole)
 **Установка**  
 Устанавливаем Docker.
 
+    Windows Enable Hyper-V using PowerShell  
+    Open a PowerShell console as Administrator.  
+    Run the following command PowerShell:  
+    
+    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+    
+    https://www.coretechnologies.com/products/AlwaysUp/Apps/StartDockerDaemonAsAWindowsService.html
+    https://learn.microsoft.com/ru-ru/virtualization/windowscontainers/manage-docker/configure-docker-daemon
+
+    Run this command to install the Docker Daemon service:
+      dockerd --register-service
+    
     Заходим в учетную запись Docker, с правами только на чтение.
     Нажимаем Pull на доступной версии Image.
 
@@ -64,25 +84,50 @@ To exe (pyconsole)
     docker save -o имя_архива.tar имя_образа:тег
     docker save -o myimage.tar myimage:latest
     docker load -i имя_архива.tar
+   
+    Скопировать фронтенд в контейнер
+    docker cp .\dist\ latest-9160-container:/app/dashboard/dist
 
 -----------------------
+  
+PIP Скачать библиотеки в папку packages  
+`pip download  -r .\requirements.txt  -d . \packages\` 
+`pip install -r requirements.txt --no-index --find-links .\packages\`
+  
 
 RabbitMQ == `3.11.8`    
 Erlang == `25.2.2`   
 EMQX == `5.0.24`      
 TERMINAL Firmware == `1.4.15C_DBG`
 
-`rabbitmq-plugins enable rabbitmq_management`  
-`rabbitmq-plugins enable rabbitmq_mqtt` *NOT WORKING WITH RABBIT MQTT!
+EMQX install service:    
+set ENV Variables   
+`EMQX_LOG_DIR=`  
+`EMQX_ETC_DIR=`  
+`.../bin/emqx install` 
+Запуск emqx локально в Docker  
+`docker run -d --name emqx -p 1883:1883 18083:18083 emqx/emqx:5.1.1`  
+  
 
+Set ENV windows variables:  
+  
+RABBIRMQ_BASE  
+RABBIRMQ_LOG_BASE  
+  
+`rabbitmq-service.bat remove`  
+`rabbitmq-service.bat install`  
+`rabbitmq-plugins enable rabbitmq_management`    
+  
+Запуск rabbitmq локально в Docker  
+`docker run -p 5672:5672 -p 15672:15672 --name rabbitmq rabbitmq:3.11.19-management`  
 
 ------------------------
-*Заметки*
+*Заметки*  
 
 !При назначении/изменении Server IP возможно требуется сделать Restart Terminal
 
 `[update_person/create] userName = firstName + lastName`  
-`???MQTT команда update_user создает персону`
+`???MQTT команда update_user создает персону`  
 
 Для DEBUG режима и просмотра логов по ssh
 
@@ -109,9 +154,14 @@ __________________________________
 
 
 2. MCI_SERVICE слушает события в очереди => events_$device.      
-   `{sn: str, time:2000-01-01:21:00:00, status:str, pin: int,str}`  
+   `{sn: str, time:2000-01-01T21:00:00, status:str, pin: int,str}`
+
+        status: 
+        IN: 2
+        OUT: 3
+        TRIP: 4 + REMARK
+
    sn: номер устройства.  
-   status = '1' (Успешный проход)   
    pin === id_person (Идентификатор человека)
 
 
