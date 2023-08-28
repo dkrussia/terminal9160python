@@ -34,23 +34,25 @@ async def seed_booking():
         # Проверяем, является ли текущий день субботой или воскресеньем
         if current_date.weekday() != 5 and current_date.weekday() != 6:
             # Генерируем случайное время для входа утром (7:00-9:00)
-            morning_entry = datetime.combine(
-                current_date.date(),
-                time(random.randint(7, 8),
-                     random.randint(0, 59)))
-
-            # Генерируем случайное время для ухода вечером (16:00-18:00)
-            evening_exit = datetime.combine(current_date.date(),
-                                            time(random.randint(16, 17),
-                                                 random.randint(0, 59)))
 
             for person_id in ALL_PERSON_NUMBER:
+                morning_entry = datetime.combine(
+                    current_date.date(),
+                    time(random.randint(7, 8),
+                         random.randint(0, 59)))
+
+                # Генерируем случайное время для ухода вечером (16:00-18:00)
+                evening_exit = datetime.combine(current_date.date(),
+                                                time(random.randint(16, 17),
+                                                     random.randint(0, 59)))
                 sn_device = random.choice(ALL_SN_DEVICE)
                 q_name = f'events_{sn_device}'
                 morning_entry_str = morning_entry.strftime('%Y-%m-%dT%H:%M:%S')
-                evening_exit_str = morning_entry.strftime('%Y-%m-%dT%H:%M:%S')
-                print(f"Morning Entry: {sn_device}", morning_entry)
-                print(f"Evening Exit: {sn_device}", evening_exit)
+                evening_exit_str = evening_exit.strftime('%Y-%m-%dT%H:%M:%S')
+
+                print(f"{person_id} GO!")
+                print(f"{person_id} Morning Entry: {sn_device}", morning_entry)
+                print(f"{person_id} Evening Exit: {sn_device}", evening_exit)
 
                 await rabbit_mq.publish_message(
                     q_name=q_name,
