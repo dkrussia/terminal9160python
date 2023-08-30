@@ -142,6 +142,15 @@ class CommandGetPerson(BaseCommand):
 class CommandControlTerminal(BaseCommand):
     type = 9
 
+    def set_ntp(self, timeServer="", timeZone="", ntp=False, time=""):
+        self.set_operation_as_dict({
+            "devAction": 1,
+            "timeServer": timeServer,
+            "timeZone": timeZone,
+            "ntp": ntp,
+            "time": time
+        })
+
     def restart_system(self):
         self.set_operation_as_dict({
             "devAction": 2,

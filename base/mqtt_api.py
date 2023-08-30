@@ -298,6 +298,17 @@ async def control_action(action, sn_device, timeout=settings.TIMEOUT_MQTT_RESPON
     }
 
 
+async def control_action_set_ntp(sn_device, payload, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    command = CommandControlTerminal(sn_device=sn_device)
+    command.set_ntp(**payload)
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
+    return {
+        "answer": answer,
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
+    }
+
+
 async def update_config(payload, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = CommandUpdateConfig(sn_device=sn_device)
     command.update_config(payload)

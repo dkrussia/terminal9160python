@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from starlette import status
 
 from base.rmq_client import rabbit_mq
-from base.schema import PersonCreate, UpdateConfig
+from base.schema import PersonCreate, UpdateConfig, NtpTime
 from config import BASE_DIR
 from config import s as settings
 from base import mqtt_api
@@ -232,6 +232,17 @@ async def pass_face(request: Request):
             })
         )
     return {}
+
+
+@device_router.post("/control/set_ntp_time", )
+async def set_ntp_time(sn_device: str, payload: NtpTime):
+    """
+    timeServer: 1.ntp.org \n
+    timeZone: timeZone \n
+    ntp: bool \n
+    time: 2021-01-31 12:00:00 \n
+    """
+    return await mqtt_api.control_action_set_ntp(sn_device=sn_device, payload=payload.model_dump())
 
 
 @device_router.post("/control/{action}", )

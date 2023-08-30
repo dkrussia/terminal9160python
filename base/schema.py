@@ -19,6 +19,13 @@ class DeviceControl(BaseModel):
     action: ControlAction
 
 
+class NtpTime(BaseModel):
+    timeServer: str
+    timeZone: str
+    ntp: bool
+    time: str
+
+
 class UpdateConfig(BaseModel):
     adminPassword: str = None
 
