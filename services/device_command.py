@@ -148,7 +148,8 @@ class CommandControlTerminal(BaseCommand):
             "timeServer": timeServer,
             "timeZone": timeZone,
             "ntp": ntp,
-            "time": time
+            "time": time,
+            "id": self.sn_device
         })
 
     def restart_system(self):

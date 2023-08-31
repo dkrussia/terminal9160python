@@ -20,10 +20,10 @@ class DeviceControl(BaseModel):
 
 
 class NtpTime(BaseModel):
-    timeServer: str
-    timeZone: str
-    ntp: bool
-    time: str
+    timeServer: str = ""
+    timeZone: str = ""
+    ntp: bool = False
+    time: str = ""
 
 
 class UpdateConfig(BaseModel):
