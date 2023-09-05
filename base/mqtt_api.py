@@ -261,6 +261,7 @@ async def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT
 
     if not id:
         all_users_response = await get_all_person(sn_device)
+        command.delete_person(0)
         if all_users_response['answer']:
             # Надо ли обрабатывать этот случай?
             for user in all_users_response['answer']['operations']['users']:

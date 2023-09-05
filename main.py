@@ -3,15 +3,19 @@ import os
 import sys
 
 import uvicorn
+
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.docs import get_swagger_ui_html
+
 from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
+
 from config import s
+
 from base.endpoints import device_router, person_router, device_push_router
 from base.mqtt_client import mqtt_consumer
 from base.rmq_client import rabbit_mq
