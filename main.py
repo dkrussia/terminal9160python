@@ -47,9 +47,9 @@ app.add_middleware(
 app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
 app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
 
-app.include_router(person_router, tags=['Управление персонами'])
-app.include_router(device_router, tags=['M API for Device'])
-app.include_router(device_push_router, tags=['Push API Device'])
+app.include_router(person_router, tags=['Persons'])
+app.include_router(device_router, tags=['API Device'])
+app.include_router(device_push_router, tags=['Push From Device'])
 
 
 def parse_pydantic_validation_error(errors):
@@ -93,6 +93,7 @@ async def custom_swagger_ui_html():
         oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
         swagger_js_url="/swagger/5.4.2_swagger-ui-bundle.js",
         swagger_css_url="/swagger/5.4.2_swagger-ui.css",
+        swagger_favicon_url="/favicon.ico"
     )
 
 
