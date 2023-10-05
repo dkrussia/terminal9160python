@@ -22,6 +22,7 @@ async def mock_commands_handler(queue_name, message: IncomingMessage):
         if random_number < s.MOCK_DEVICE_SUCCESS_CHANCE:
             await asyncio.sleep(random.choice(s.MOCK_DEVICE_SUCCESS_TIMEOUT))
             await rabbit_mq.publish_message(
+                q_name=reply_to,
                 reply_to=reply_to,
                 message=json.dumps({"result": 'Successful', 'Return': "0"})
             )
@@ -29,6 +30,7 @@ async def mock_commands_handler(queue_name, message: IncomingMessage):
         else:
             await asyncio.sleep(random.choice(s.MOCK_DEVICE_ERROR_TIMEOUT))
             await rabbit_mq.publish_message(
+                q_name=reply_to,
                 reply_to=reply_to,
                 message=json.dumps({"result": 'Error', 'Return': "1"})
             )
