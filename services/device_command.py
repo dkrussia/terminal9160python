@@ -25,7 +25,11 @@ class CreatePersonJsonException(Exception):
     pass
 
 
-def create_person_json(id: int, lastName: str = "", firstName: str = "", face_str: str = ""):
+def create_person_json(
+        id: int, lastName: str = "",
+        firstName: str = "",
+        cardNumber: int = None,
+        face_str: str = ""):
     if not isinstance(id, int) or id < 1:
         raise CreatePersonJsonException
     # TODO: add faceUrl
@@ -42,7 +46,7 @@ def create_person_json(id: int, lastName: str = "", firstName: str = "", face_st
         "firstName": lastName,
         "lastName": firstName,
         "userPhone": "",
-        "cardNum": str(id),
+        "cardNum": cardNumber,
         "wiegandNum": str(id),
         "company": "",
         "department": "",

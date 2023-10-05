@@ -113,7 +113,7 @@ def is_answer_has_error(command, answer):
     return errors
 
 
-async def create_or_update(sn_device, id_person, firstName, lastName, photo,
+async def create_or_update(sn_device, id_person, firstName, lastName, photo, cardNumber,
         timeout=settings.TIMEOUT_MQTT_RESPONSE):
     import base64
     if photo and isinstance(photo, UploadFile):
@@ -123,7 +123,8 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo,
         id=id_person,
         firstName=firstName,
         lastName=lastName,
-        face_str=photo
+        face_str=photo,
+        cardNumber=cardNumber
     )
 
     person_response = await get_person(id_person=id_person, sn_device=sn_device, )
@@ -152,7 +153,8 @@ async def create_persons(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPO
             id=int(person["id"]),
             firstName=person["firstName"],
             lastName=person["lastName"],
-            face_str=person["picture"]
+            face_str=person["picture"],
+            cardNumber=person["cardNumber"]
         )
         command.add_person(person_json)
     result = await publish_command_and_wait_result(command, timeout=timeout)
@@ -168,7 +170,8 @@ async def process_batch(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPON
             id=int(person["id"]),
             firstName=person["firstName"],
             lastName=person["lastName"],
-            face_str=person["picture"]
+            face_str=person["picture"],
+            cardNumber=person["cardNumber"]
         )
 
         command_update = person_service.CommandUpdatePerson(sn_device=sn_device)

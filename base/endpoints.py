@@ -82,7 +82,8 @@ async def add_self_person(
         id_person=999,
         firstName="Сергей",
         lastName="Кузнецов",
-        photo=p
+        photo=p,
+        cardNumber=None,
     )
 
 
@@ -105,7 +106,8 @@ async def person_create_or_update(
         id_person=id,
         firstName=person_payload.firstName,
         lastName=person_payload.lastName,
-        photo=photo
+        photo=photo,
+        cardNumber=person_payload.cardNumber
     )
 
 

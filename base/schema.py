@@ -13,6 +13,7 @@ class PersonCreate(BaseModel):
     id: int = random.randint(55555, 66666)
     firstName: str = fake.name().split(' ')[0]
     lastName: str = fake.name().split(' ')[1]
+    cardNumber: int = None
 
 
 class DeviceControl(BaseModel):
