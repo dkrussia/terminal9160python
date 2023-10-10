@@ -189,3 +189,12 @@ class CommandUpdateConfig(BaseCommand):
 
     def update_config(self, payload):
         self.set_operation_as_dict(payload)
+
+
+class CommandCheckFace(BaseCommand):
+    type = 1004
+
+    def check_face(self, photo_base64):
+        self.set_operation_as_dict({
+            "photo": photo_base64
+        })

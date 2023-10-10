@@ -11,7 +11,7 @@ from config import s as settings
 from base.log import logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
-    CommandGetPerson
+    CommandGetPerson, CommandCheckFace
 
 FAILURE_CODES_REASON = {
     -2: 'Open photo failure',
@@ -36,7 +36,7 @@ async def publish_command_and_wait_result(command, timeout):
         print("-----PUBLISH COMMAND TO MQTT------")
         print(f"---TO SN_DEVICE: {command.sn_device}--")
         print("-----       PAYLOAD      ------")
-        # pprint(command.payload)
+        pprint(command.payload)
         print("-----       PAYLOAD      ------")
 
         await client.publish(f"/_dispatch/command/{command.sn_device}",
@@ -317,6 +317,18 @@ async def update_config(payload, sn_device, timeout=settings.TIMEOUT_MQTT_RESPON
     command = CommandUpdateConfig(sn_device=sn_device)
     command.update_config(payload)
     answer = await publish_command_and_wait_result(command, timeout=timeout)
+
+    return {
+        "answer": answer,
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
+    }
+
+
+async def check_face(photo_base64, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    command = CommandCheckFace(sn_device=sn_device)
+    command.check_face(photo_base64)
+    answer = await publish_command_and_wait_result(command, timeout)
 
     return {
         "answer": answer,

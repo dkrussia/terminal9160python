@@ -1,3 +1,4 @@
+import base64
 import json
 from datetime import datetime
 from pprint import pprint
@@ -12,7 +13,7 @@ from base.schema import PersonCreate, UpdateConfig, NtpTime
 from config import BASE_DIR
 from config import s as settings
 from base import mqtt_api
-from services.device_command import ControlAction
+from services.device_command import ControlAction, CommandCheckFace
 from services.devices import device_service
 
 # TODO: Разделить то что пушит девайс, и свои роуты
@@ -307,3 +308,9 @@ async def unobserved(sn_device: str, ):
 @device_router.post("/access_control", )
 async def access_mode_set_function(sn_device: str, function: Literal["arrive", "depart"]):
     return device_service.set_function(sn_device, function)
+
+
+@device_router.post("/face_already_existing", )
+async def check_face_already_existing(sn_device: str, photo: Optional[UploadFile] = File(),):
+    photo_base64 = base64.b64encode(photo.file.read()).decode("utf-8")
+    return await mqtt_api.check_face(photo_base64, sn_device)
