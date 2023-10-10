@@ -20,6 +20,10 @@ class DeviceControl(BaseModel):
     action: ControlAction
 
 
+class CheckPhoto(BaseModel):
+    photo_base64: str
+
+
 class NtpTime(BaseModel):
     timeServer: str = ""
     timeZone: str = ""

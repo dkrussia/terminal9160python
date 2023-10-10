@@ -72,7 +72,8 @@ def is_answer_has_error(command, answer):
     if command.type not in [
         CommandGetPerson.type,
         CommandControlTerminal.type,
-        CommandUpdateConfig.type
+        CommandUpdateConfig.type,
+        CommandCheckFace.type,
     ]:
 
         if isinstance(answer["operations"]["result"], list):

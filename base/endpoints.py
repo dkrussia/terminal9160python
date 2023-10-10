@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from starlette import status
 
 from base.rmq_client import rabbit_mq
-from base.schema import PersonCreate, UpdateConfig, NtpTime
+from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
 from config import s as settings
 from base import mqtt_api
@@ -311,6 +311,5 @@ async def access_mode_set_function(sn_device: str, function: Literal["arrive", "
 
 
 @device_router.post("/face_already_existing", )
-async def check_face_already_existing(sn_device: str, photo: Optional[UploadFile] = File(),):
-    photo_base64 = base64.b64encode(photo.file.read()).decode("utf-8")
-    return await mqtt_api.check_face(photo_base64, sn_device)
+async def check_face_already_existing(sn_device: str, payload: CheckPhoto):
+    return await mqtt_api.check_face(payload.photo_base64, sn_device)
