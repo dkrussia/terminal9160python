@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     FIRMWARE_URL: str = None
     PHOTO_URL: str = None
 
+    MCI_PHOTO_MANAGER: bool = False
+
     class Config:
         env_file = f"{BASE_DIR}/.env.{SERVER_MODE}"
 
@@ -61,4 +63,3 @@ class Settings(BaseSettings):
 s = Settings()
 s.FIRMWARE_URL = f"http://{s.HOST_FOR_TERMINAL}:{s.PORT_FOR_TERMINAL}{FIRMWARE_PATH}"
 s.PHOTO_URL = f"http://{s.HOST_FOR_TERMINAL}:{s.PORT_FOR_TERMINAL}{PHOTO_PATH}"
-
