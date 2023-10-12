@@ -7,8 +7,7 @@ from aio_pika import connect_robust, IncomingMessage, Message
 from base import mqtt_api
 from config import s as settings
 
-logger = logging.getLogger('rmq_log')
-logger.setLevel(logging.INFO)
+from base.log import logger
 
 
 # {"id": 1, "firstName": "Sergey1", "lastName": "Kuz1", "picture": "1"}
