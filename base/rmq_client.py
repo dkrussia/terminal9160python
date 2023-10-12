@@ -85,7 +85,7 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
 
         logger.info(
             f' [{len(rmq_payload) if type(rmq_payload) is list else 1}]'
-            f' ~{type_command}~ #{result["command"]["id"]}'
+            f' ~{type_command}'
             f' SN={sn_device} total={(t2 - t1).total_seconds()}s'
             f' start={t1.strftime("%H:%M:%S")}'
             f' end={t2.strftime("%H:%M:%S")}'
