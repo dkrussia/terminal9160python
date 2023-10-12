@@ -67,7 +67,6 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
             'Return': "0",
             'details': result.get("has_error", None)
         }
-
         if not result or result["has_error"]:
             await rabbit_mq.publish_message(
                 q_name=reply_to,
@@ -84,6 +83,12 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
             )
         t2 = datetime.now()
         print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
+
+        logger.info(
+            f' [{len(rmq_payload) if type(rmq_payload) is list else 1}]'
+            f' ~{type_command}~ #{result["command"]["id"]} '
+            f' SN={sn_device} completed in {(t2 - t1).total_seconds()} seconds'
+        )
     # type_command == 'user_update' or
     # type_command == 'multiuser_update' or
     # if type_command == 'user_update_biophoto':
