@@ -6,6 +6,7 @@ from pprint import pprint
 from typing import Dict
 import aiomqtt
 from starlette.datastructures import UploadFile
+from services.person_photo import PersonPhoto as person_photo_service
 
 from config import s as settings
 from base.log import logger
@@ -53,6 +54,25 @@ async def publish_command_and_wait_result(command, timeout):
             return None
         finally:
             futures.pop(command.key_id, None)
+
+
+def save_template_from_answer(answer):
+    if answer:
+        for created_person in answer["operations"]["result"]:
+            if created_person["code"] == 0:
+                person_photo_service.save_person_template_if_not_exist(
+                    created_person["id"],
+                    created_person["feature"],
+                )
+
+
+def delete_template_from_answer(answer):
+    if answer:
+        for deleted_person in answer["operations"]["result"]:
+            if deleted_person["code"] == 0:
+                person_photo_service.delete_template(
+                    deleted_person["id"],
+                )
 
 
 def is_answer_has_error(command, answer):
@@ -139,6 +159,8 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo, car
 
     answer = await publish_command_and_wait_result(command, timeout=timeout)
 
+    save_template_from_answer(answer)
+
     return {
         "answer": answer,
         "command": command.payload,
@@ -146,10 +168,12 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo, car
     }
 
 
-async def create_persons(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def process_batch_create(sn_device, batch_persons, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    # Для создания людей используем одну задачу
+
     command = person_service.CommandCreatePerson(sn_device=sn_device)
 
-    for person in persons:
+    for person in batch_persons:
         person_json = person_service.create_person_json(
             id=int(person["id"]),
             firstName=person["firstName"],
@@ -158,15 +182,20 @@ async def create_persons(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPO
             cardNumber=person["cardNumber"]
         )
         command.add_person(person_json)
-    result = await publish_command_and_wait_result(command, timeout=timeout)
-    return is_answer_has_error(command, result)
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
+
+    # Заносим созданные шаблоны в наш список
+    save_template_from_answer(answer)
+
+    return is_answer_has_error(command, answer)
 
 
-async def process_batch(sn_device, persons, timeout=settings.TIMEOUT_MQTT_RESPONSE):
-    print(f'batch {len(persons)}')
+async def process_batch_update(sn_device, batch_persons, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    # Для обновления людей используем несколько асинхронных задач
+    print(f'batch {len(batch_persons)}')
     all_commands = []
 
-    for person in persons:
+    for person in batch_persons:
         person_json = person_service.create_person_json(
             id=int(person["id"]),
             firstName=person["firstName"],
@@ -218,12 +247,12 @@ async def batch_create_or_update(
     errors = []
 
     if person_for_create:
-        person_create_result = await create_persons(sn_device, person_for_create)
+        person_create_result = await process_batch_create(sn_device, person_for_create)
         errors += person_create_result
 
     for i in range(0, len(person_for_update), batch_size):
         batch = person_for_update[i:i + batch_size]
-        task = asyncio.create_task(process_batch(sn_device, batch, timeout))
+        task = asyncio.create_task(process_batch_update(sn_device, batch, timeout))
         errors += await task
 
     print(f'Batch create {len(person_for_create)}')
@@ -275,6 +304,8 @@ async def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT
         command.delete_person(id)
 
     answer = await publish_command_and_wait_result(command, timeout=timeout)
+
+    delete_template_from_answer(answer)
 
     return {
         "answer": answer,
