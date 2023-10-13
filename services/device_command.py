@@ -139,6 +139,13 @@ class CommandDeletePerson(BaseCommand):
         self.add_operation_in_list(payload)
 
 
+class CommandDeleteAllPerson(BaseCommand):
+    type = 1007
+
+    def delete_all_person(self, ):
+        self.set_operation_as_dict({"deleteAll": True})
+
+
 class CommandGetPerson(BaseCommand):
     type = 1000
 

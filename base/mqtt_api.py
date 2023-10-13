@@ -12,7 +12,7 @@ from config import s as settings
 from base.log import logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
-    CommandGetPerson, CommandCheckFace
+    CommandGetPerson, CommandCheckFace, CommandDeleteAllPerson
 
 FAILURE_CODES_REASON = {
     -2: 'Open photo failure',
@@ -67,7 +67,7 @@ def save_template_from_answer(answer):
 
 
 def delete_template_from_answer(answer):
-    if answer:
+    if answer and answer["operations"].get('result'):
         for deleted_person in answer["operations"]["result"]:
             if deleted_person["code"] == 0:
                 person_photo_service.delete_template(
@@ -89,13 +89,24 @@ def is_answer_has_error(command, answer):
         })
         return errors
 
+    if answer["operations"].get('executeStatus'):
+        # CommandDeleteAllPerson
+        if answer["operations"].get('executeStatus') == 2:
+            logger.error(
+                f' ![+]ERROR Some operations'
+                f'\n Answer= ${json.dumps(answer)}'
+                f'\n Command={command.payload}'
+                f'\n ERROR Operation={answer["operations"]}'
+            )
+
     if command.type not in [
         CommandGetPerson.type,
         CommandControlTerminal.type,
         CommandUpdateConfig.type,
         CommandCheckFace.type,
-    ]:
+        CommandDeleteAllPerson.type
 
+    ]:
         if isinstance(answer["operations"]["result"], list):
             # Собрать все ошибки по каждой операции
             for operation in answer["operations"]["result"]:
@@ -291,16 +302,12 @@ async def get_person(id_person, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONS
 
 async def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     # TODO: Удалять фото также
-    command = person_service.CommandDeletePerson(sn_device=sn_device)
 
     if not id:
-        all_users_response = await get_all_person(sn_device)
-        command.delete_person(0)
-        if all_users_response['answer']:
-            # Надо ли обрабатывать этот случай?
-            for user in all_users_response['answer']['operations']['users']:
-                command.delete_person(user['id'])
+        command = person_service.CommandDeleteAllPerson(sn_device=sn_device)
+        command.delete_all_person()
     else:
+        command = person_service.CommandDeletePerson(sn_device=sn_device)
         command.delete_person(id)
 
     answer = await publish_command_and_wait_result(command, timeout=timeout)
