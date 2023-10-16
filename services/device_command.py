@@ -56,7 +56,6 @@ def create_person_json(
         "expiry": ""
     }
     # "expiry": "2023-08-20 18:25:00,2023-08-20 19:06:00"
-    print('Saved templates: ', len(person_photo_service.face_templates))
     if person_photo_service.get_face_template(id):
         d["feature"] = person_photo_service.get_face_template(id)
         return d

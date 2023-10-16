@@ -32,6 +32,7 @@ class PersonPhoto:
 
     @classmethod
     def save_person_template(cls, person_id, face_template):
+        print(f'SV: id={person_id} Start={face_template[:3]}...{face_template[-3:-1]}. Total: {len(cls.face_templates)}')
         cls.face_templates[person_id] = face_template
 
     @classmethod

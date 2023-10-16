@@ -37,7 +37,7 @@ async def publish_command_and_wait_result(command, timeout):
         print("-----PUBLISH COMMAND TO MQTT------")
         print(f"---TO SN_DEVICE: {command.sn_device}--")
         print("-----       PAYLOAD      ------")
-        pprint(command.payload)
+        # pprint(command.payload)
         print("-----       PAYLOAD      ------")
 
         await client.publish(f"/_dispatch/command/{command.sn_device}",
@@ -312,7 +312,8 @@ async def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT
 
     answer = await publish_command_and_wait_result(command, timeout=timeout)
 
-    delete_template_from_answer(answer)
+    if id:
+        person_photo_service.delete_template(id)
 
     return {
         "answer": answer,
