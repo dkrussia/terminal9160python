@@ -56,16 +56,19 @@ def create_person_json(
         "expiry": ""
     }
     # "expiry": "2023-08-20 18:25:00,2023-08-20 19:06:00"
+    if not face_str:
+        return d
+
     if person_photo_service.get_face_template(id):
         d["feature"] = person_photo_service.get_face_template(id)
         return d
 
-    if face_str:
-        if settings.MCI_PHOTO_MANAGER:
-            d["faceUrl"] = person_photo_service.get_photo_url(person_id=id)
-        else:
-            photo_url = person_photo_service.base64_to_file(person_id=id, photo_base64=face_str)
-            d["faceUrl"] = photo_url
+    if settings.MCI_PHOTO_MANAGER:
+        d["faceUrl"] = person_photo_service.get_photo_url(person_id=id)
+    else:
+        photo_url = person_photo_service.base64_to_file(person_id=id, photo_base64=face_str)
+        d["faceUrl"] = photo_url
+
     return d
 
 
