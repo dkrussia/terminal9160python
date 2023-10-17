@@ -13,3 +13,4 @@ docker-release/launcher/env.json
 .env.local
 __pycache__/
 packages/
+face_template_cache.json
