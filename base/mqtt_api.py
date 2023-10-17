@@ -13,6 +13,7 @@ from base.log import logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
     CommandGetPerson, CommandCheckFace, CommandDeleteAllPerson
+from services.persond_ids_storage import PersonStorage
 
 FAILURE_CODES_REASON = {
     -2: 'Open photo failure',
@@ -172,6 +173,15 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo, car
 
     save_template_from_answer(answer)
 
+    if answer:
+        person_ids = []
+        for created_person in answer["operations"]["result"]:
+            if created_person["code"] == 0:
+                person_ids.append(created_person["id"])
+        PersonStorage.add(sn_device, person_ids)
+
+    print(f'Person storage: {PersonStorage.get_all()}')
+
     return {
         "answer": answer,
         "command": command.payload,
@@ -193,10 +203,20 @@ async def process_batch_create(sn_device, batch_persons, timeout=settings.TIMEOU
             cardNumber=person["cardNumber"]
         )
         command.add_person(person_json)
+
     answer = await publish_command_and_wait_result(command, timeout=timeout)
 
-    # Заносим созданные шаблоны в наш список
+    # Сохраняем шаблоны в память
     save_template_from_answer(answer)
+    # Заносим ID персон в память
+    if answer:
+        person_ids = []
+        for created_person in answer["operations"]["result"]:
+            if created_person["code"] == 0:
+                person_ids.append(created_person["id"])
+        PersonStorage.add(sn_device, person_ids)
+
+    print(f'Person storage: {PersonStorage.get_all()}')
 
     return is_answer_has_error(command, answer)
 
@@ -239,13 +259,18 @@ async def batch_create_or_update(
         persons, batch_size=2,
         timeout=settings.TIMEOUT_MQTT_RESPONSE
 ):
-    persons_result = await get_all_person(sn_device)
+    all_person_ids = PersonStorage.get_person_ids(sn_device)
 
-    if persons_result["has_error"]:
-        return persons_result
+    if not all_person_ids:
+        persons_result = await get_all_person(sn_device)
+        if persons_result["has_error"]:
+            return persons_result
 
-    all_person_ids = list(map(lambda user: int(user["id"]),
-                              persons_result["answer"]["operations"]["users"]))
+        all_person_ids = list(map(lambda user: int(user["id"]),
+                                  persons_result["answer"]["operations"]["users"]))
+        PersonStorage.add(sn_device, all_person_ids)
+
+    print(f'Person storage: {PersonStorage.get_all()}')
     person_for_create = []
     person_for_update = []
 
@@ -312,8 +337,13 @@ async def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT
 
     answer = await publish_command_and_wait_result(command, timeout=timeout)
 
-    if id:
+    if not id:
+        PersonStorage.clear(sn_device)
+    else:
         person_photo_service.delete_template(id)
+        PersonStorage.remove(sn_device, id)
+
+    pprint(f'Person storage: {PersonStorage.get_all()}')
 
     return {
         "answer": answer,

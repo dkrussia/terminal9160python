@@ -1,8 +1,18 @@
+import asyncio
 import base64
+import json
 import os
 
 from config import PHOTO_DIR
 from config import s as settings
+
+templates_file = 'face_template_cache.json'
+
+
+def json_keys_to_int(x):
+    if isinstance(x, dict):
+        return {int(k): v for k, v in x.items()}
+    return x
 
 
 class PersonPhoto:
@@ -32,7 +42,8 @@ class PersonPhoto:
 
     @classmethod
     def save_person_template(cls, person_id, face_template):
-        print(f'SV: id={person_id} Start={face_template[:3]}...{face_template[-3:-1]}. Total: {len(cls.face_templates)}')
+        print(
+            f'SV: id={person_id} Start={face_template[:3]}...{face_template[-3:-1]}. Total: {len(cls.face_templates)}')
         cls.face_templates[person_id] = face_template
 
     @classmethod
@@ -46,3 +57,19 @@ class PersonPhoto:
             del cls.face_templates[person_id]
         except KeyError:
             pass
+
+    @classmethod
+    async def save_templates_to_file(cls):
+        while True:
+            with open(templates_file, 'w') as f:
+                json.dump(cls.face_templates, f)
+            await asyncio.sleep(2 * 60)
+
+    @classmethod
+    def load_faces(cls):
+        try:
+            with open(templates_file, 'r') as f:
+                cls.face_templates = json.load(f, object_hook=json_keys_to_int)
+                print(f'Load pi cache {len(cls.face_templates)}')
+        except FileNotFoundError as e:
+            print(f'File pi cache not found {str(e)}')

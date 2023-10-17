@@ -13,8 +13,8 @@ from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
 from config import s as settings
 from base import mqtt_api
-from services.device_command import ControlAction, CommandCheckFace
-from services.devices import device_service
+from services.device_command import ControlAction
+from services.devices_storage import device_service
 
 # TODO: Разделить то что пушит девайс, и свои роуты
 from services.person_photo import PersonPhoto

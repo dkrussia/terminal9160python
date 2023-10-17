@@ -30,6 +30,7 @@ from config import (
     s as settings
 )
 from services.mock import mock_run
+from services.person_photo import PersonPhoto
 
 if sys.platform.lower() == "win32" or os.name.lower() == "nt":
     from asyncio import set_event_loop_policy, WindowsSelectorEventLoopPolicy
@@ -114,10 +115,6 @@ def index():
     return FileResponse(f'{BASE_DIR}/dashboard/index.html')
 
 
-# Test
-# При добавлении персон в терминал, надо дождаться результата выполнения
-# и затем уже отправлять снова.
-# Если надо загрузить много персон сразу, то делаем это пачками по 100 человек.
 print("BASE DIR: ", BASE_DIR)
 print("PHOTO URL: ", s.PHOTO_URL)
 print("PHOTO DIR: ", PHOTO_DIR)
@@ -135,7 +132,9 @@ async def startup_event():
         asyncio.create_task(mock_run())
         return
 
+    PersonPhoto.load_faces()
     asyncio.create_task(mqtt_consumer())
+    asyncio.create_task(PersonPhoto.save_templates_to_file())
 
 
 if __name__ == '__main__':

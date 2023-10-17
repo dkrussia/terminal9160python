@@ -8,7 +8,7 @@ import json
 from base.log import logger
 from base.mqtt_api import futures
 from config import s as settings
-from services.devices import device_service
+from services.devices_storage import device_service
 from base.rmq_client import rabbit_mq
 
 
