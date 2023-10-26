@@ -52,7 +52,7 @@ class UpdateConfig(BaseModel):
     gateTimeout: int = Field(ge=0, le=20, default=None)
     relayCtrlDuration: int = Field(ge=0, le=20, default=None)
     relayDelayDuration: int = Field(ge=0, le=20, default=None)
-
+    duplicatePhoto: bool = None
     recogizeInterval: int = None
     minSize: int = None
     temperature: Literal[1, 0] = None
