@@ -2,7 +2,7 @@ import json
 import asyncio
 from asyncio import Future
 from datetime import datetime
-from pprint import pprint
+import base64
 from typing import Dict
 import aiomqtt
 from starlette.datastructures import UploadFile
@@ -76,6 +76,15 @@ def delete_template_from_answer(answer):
                 )
 
 
+def save_person_ids_in_storage_from_answer(sn_device, answer):
+    if answer:
+        person_ids = []
+        for created_person in answer["operations"]["result"]:
+            if created_person["code"] == 0:
+                person_ids.append(created_person["id"])
+        PersonStorage.add(sn_device, person_ids)
+
+
 def is_answer_has_error(command, answer):
     errors = []
     if answer is None:
@@ -146,9 +155,15 @@ def is_answer_has_error(command, answer):
     return errors
 
 
-async def create_or_update(sn_device, id_person, firstName, lastName, photo, cardNumber,
-        timeout=settings.TIMEOUT_MQTT_RESPONSE):
-    import base64
+async def create_or_update(
+        sn_device,
+        id_person,
+        firstName,
+        lastName,
+        photo,
+        cardNumber,
+        timeout=settings.TIMEOUT_MQTT_RESPONSE
+):
     if photo and isinstance(photo, UploadFile):
         photo = base64.b64encode(photo.file.read()).decode("utf-8")
 
@@ -172,15 +187,7 @@ async def create_or_update(sn_device, id_person, firstName, lastName, photo, car
     answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     save_template_from_answer(answer)
-
-    if answer:
-        person_ids = []
-        for created_person in answer["operations"]["result"]:
-            if created_person["code"] == 0:
-                person_ids.append(created_person["id"])
-        PersonStorage.add(sn_device, person_ids)
-
-    print(f'Person storage: {PersonStorage.get_all()}')
+    save_person_ids_in_storage_from_answer(sn_device, answer)
 
     return {
         "answer": answer,
@@ -209,14 +216,7 @@ async def process_batch_create(sn_device, batch_persons, timeout=settings.TIMEOU
     # Сохраняем шаблоны в память
     save_template_from_answer(answer)
     # Заносим ID персон в память
-    if answer:
-        person_ids = []
-        for created_person in answer["operations"]["result"]:
-            if created_person["code"] == 0:
-                person_ids.append(created_person["id"])
-        PersonStorage.add(sn_device, person_ids)
-
-    print(f'Person storage: {PersonStorage.get_all()}')
+    save_person_ids_in_storage_from_answer(sn_device, answer)
 
     return is_answer_has_error(command, answer)
 
@@ -237,8 +237,10 @@ async def process_batch_update(sn_device, batch_persons, timeout=settings.TIMEOU
 
         command_update = person_service.CommandUpdatePerson(sn_device=sn_device)
         command_update.update_person(person_json)
+
         all_commands.append(command_update)
 
+    # Асинхронная обработка списка команд и сбор результатов
     map_commands_task = {c.key_id: c for c in all_commands}
 
     all_commands_tasks = [
@@ -251,6 +253,7 @@ async def process_batch_update(sn_device, batch_persons, timeout=settings.TIMEOU
     for done_task in done_tasks:
         command = map_commands_task[done_task.get_name()]
         errors += is_answer_has_error(command, done_task.result())
+
     return errors
 
 
@@ -264,15 +267,16 @@ async def batch_create_or_update(
     if not all_person_ids:
         persons_result = await get_all_person(sn_device)
         if persons_result["has_error"]:
+            # Не смогли получить людей(терминал не ответил -> прерываем выполнение)
             return persons_result
 
         all_person_ids = list(map(lambda user: int(user["id"]),
                                   persons_result["answer"]["operations"]["users"]))
         PersonStorage.add(sn_device, all_person_ids)
 
-    print(f'Person storage: {PersonStorage.get_all()}')
     person_for_create = []
     person_for_update = []
+    errors = []
 
     for p in persons:
         if int(p["id"]) in all_person_ids:
@@ -280,16 +284,17 @@ async def batch_create_or_update(
         else:
             person_for_create.append(p)
 
-    errors = []
-
+    # 1. Отправка команды на создание всех людей <50 штук
     if person_for_create:
         person_create_result = await process_batch_create(sn_device, person_for_create)
         errors += person_create_result
 
-    for i in range(0, len(person_for_update), batch_size):
-        batch = person_for_update[i:i + batch_size]
-        task = asyncio.create_task(process_batch_update(sn_device, batch, timeout))
-        errors += await task
+    # 2. Запуск обновления людей по пачкам асинхронно
+    if person_for_update:
+        for i in range(0, len(person_for_update), batch_size):
+            batch = person_for_update[i:i + batch_size]
+            task = asyncio.create_task(process_batch_update(sn_device, batch, timeout))
+            errors += await task
 
     print(f'Batch create {len(person_for_create)}')
     print(f'Batch update {len(person_for_update)}')
@@ -342,8 +347,6 @@ async def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT
     else:
         person_photo_service.delete_template(id)
         PersonStorage.remove(sn_device, id)
-
-    pprint(f'Person storage: {PersonStorage.get_all()}')
 
     return {
         "answer": answer,
