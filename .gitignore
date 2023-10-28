@@ -13,3 +13,4 @@ assets/firmware
 __pycache__/
 assets/packages/
 face_template_cache.json
+assets/photo
