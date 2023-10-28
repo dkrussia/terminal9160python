@@ -7,6 +7,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 PHOTO_DIR = os.path.join(BASE_DIR, 'assets/photo')
 PHOTO_PATH = "/photo"
 FIRMWARE_PATH = "/firmware"
+LOG_DIR = os.path.join(BASE_DIR, 'assets/logs')
 DEVICE_JSON_DATA_FILE = os.path.join(BASE_DIR, 'devices_db.json')
 CORS = ['*']
 FIRMWARE_DIR = os.path.join(BASE_DIR, 'assets/firmware')
