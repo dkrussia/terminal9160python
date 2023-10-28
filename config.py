@@ -12,8 +12,11 @@ CORS = ['*']
 FIRMWARE_DIR = os.path.join(BASE_DIR, 'firmware')
 MAX_WORKERS_MCI_COMMAND = 8
 
-with open(os.path.join(BASE_DIR, 'tests', 'base64photo.txt'), 'r') as f:
-    TEST_MY_PHOTO = f.read()
+try:
+    with open(os.path.join(BASE_DIR, 'utils', 'base64photo.txt'), 'r') as f:
+        TEST_MY_PHOTO = f.read()
+except FileExistsError:
+    TEST_MY_PHOTO = ""
 
 
 class Settings(BaseSettings):

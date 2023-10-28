@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, time
 from base.rmq_client import rabbit_mq
 
 
-async def seed_booking():
+async def seed_booking(start_date, end_date):
     await rabbit_mq.start()
     # ALL_SN_DEVICE = ['SNKDLSJD92']
     # ALL_PERSON_NUMBER = ['1', '2', '3']
@@ -26,8 +26,6 @@ async def seed_booking():
     IN = 2
     OUT = 3
 
-    start_date = datetime(2023, 8, 1)
-    end_date = datetime(2023, 8, 3)
     current_date = start_date
 
     while current_date < end_date:
@@ -76,4 +74,7 @@ async def seed_booking():
         current_date += timedelta(days=1)  # Переходим к следующему дню
 
 
-asyncio.run(seed_booking())
+start_date = datetime(2023, 8, 1)
+end_date = datetime(2023, 8, 3)
+
+asyncio.run(seed_booking(start_date, end_date))
