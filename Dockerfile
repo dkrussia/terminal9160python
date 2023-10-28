@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-ADD docker-release/init.sh /init.sh
+ADD assets/docker-release/init.sh /init.sh
 RUN chmod +x /init.sh
 
 CMD ["/init.sh"]

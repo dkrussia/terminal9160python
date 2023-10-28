@@ -4,12 +4,12 @@ from pydantic.v1 import BaseSettings
 
 SERVER_MODE = os.getenv("SERVER_MODE", "local")
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-PHOTO_DIR = os.path.join(BASE_DIR, 'photo')
+PHOTO_DIR = os.path.join(BASE_DIR, 'assets/photo')
 PHOTO_PATH = "/photo"
 FIRMWARE_PATH = "/firmware"
 DEVICE_JSON_DATA_FILE = os.path.join(BASE_DIR, 'devices_db.json')
 CORS = ['*']
-FIRMWARE_DIR = os.path.join(BASE_DIR, 'firmware')
+FIRMWARE_DIR = os.path.join(BASE_DIR, 'assets/firmware')
 MAX_WORKERS_MCI_COMMAND = 8
 
 try:

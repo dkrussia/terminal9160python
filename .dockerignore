@@ -8,6 +8,6 @@ devices_db.json
 Dockerfile
 frontend/
 .idea/
-docker-release/launcher/
+assets/docker-release/launcher/
 .env.local
-packages/
+assets/packages/

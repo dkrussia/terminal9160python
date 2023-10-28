@@ -7,7 +7,7 @@ logger.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-file_handler = RotatingFileHandler(f'{BASE_DIR}/logs/logfile.log', 'a', 1 * 1024 * 1024, 10)
+file_handler = RotatingFileHandler(f'{BASE_DIR}/assets/logs/logfile.log', 'a', 1 * 1024 * 1024, 10)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 
