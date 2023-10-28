@@ -2,11 +2,8 @@ import asyncio
 import base64
 import json
 import os
-
-from config import PHOTO_DIR
+from config import PHOTO_DIR, FACE_TEMPLATES_FILE
 from config import s as settings
-
-templates_file = 'face_template_cache.json'
 
 
 def json_keys_to_int(x):
@@ -61,14 +58,14 @@ class PersonPhoto:
     @classmethod
     async def save_templates_to_file(cls):
         while True:
-            with open(templates_file, 'w') as f:
+            with open(FACE_TEMPLATES_FILE, 'w') as f:
                 json.dump(cls.face_templates, f)
             await asyncio.sleep(2 * 60)
 
     @classmethod
     def load_faces(cls):
         try:
-            with open(templates_file, 'r') as f:
+            with open(FACE_TEMPLATES_FILE, 'r') as f:
                 cls.face_templates = json.load(f, object_hook=json_keys_to_int)
                 print(f'Load pi cache {len(cls.face_templates)}')
         except FileNotFoundError as e:

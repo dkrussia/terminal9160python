@@ -8,7 +8,9 @@ PHOTO_DIR = os.path.join(BASE_DIR, 'assets/photo')
 PHOTO_PATH = "/photo"
 FIRMWARE_PATH = "/firmware"
 LOG_DIR = os.path.join(BASE_DIR, 'assets/logs')
-DEVICE_JSON_DATA_FILE = os.path.join(BASE_DIR, 'devices_db.json')
+DEVICE_JSON_DATA_FILE = os.path.join(BASE_DIR, 'assets/devices_db.json')
+FACE_TEMPLATES_FILE = os.path.join(BASE_DIR, 'assets/face_template_cache.json')
+
 CORS = ['*']
 FIRMWARE_DIR = os.path.join(BASE_DIR, 'assets/firmware')
 MAX_WORKERS_MCI_COMMAND = 8
