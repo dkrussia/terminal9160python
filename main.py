@@ -15,7 +15,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
-from config import s, LOG_DIR
+from config import s
 
 from base.endpoints import device_router, person_router, device_push_router
 from base.mqtt_client import mqtt_consumer
@@ -40,8 +40,6 @@ if sys.platform.lower() == "win32" or os.name.lower() == "nt":
 
 pathlib.Path(PHOTO_DIR).mkdir(parents=True, exist_ok=True)
 pathlib.Path(FIRMWARE_DIR).mkdir(parents=True, exist_ok=True)
-pathlib.Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
-
 
 app = FastAPI(docs_url=None)
 app.add_middleware(

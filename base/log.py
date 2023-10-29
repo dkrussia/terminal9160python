@@ -1,6 +1,10 @@
 import logging
-from config import BASE_DIR
+import pathlib
+
+from config import BASE_DIR, LOG_DIR
 from logging.handlers import RotatingFileHandler
+
+pathlib.Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
 
 logger = logging.getLogger('app')
 logger.setLevel(logging.DEBUG)
