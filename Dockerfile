@@ -20,4 +20,4 @@ COPY . .
 ADD assets/start.sh /start.sh
 RUN chmod +x /start.sh
 
-CMD ["/init.sh"]
+CMD ["/start.sh"]
