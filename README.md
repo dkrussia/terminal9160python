@@ -1,6 +1,11 @@
 *Swagger UI Доступен по пути: `/docs`*
 *Swagger UI Доступен по пути: `/docs`*
+  
+**Собрать проект с npm build**  
 
+`./compile_src_archive.cmd env_mode`
+_Где env_mode файл лежащий в папке frontend .env.env_mode_ 
+  
 * Загрузить requirements.txt для установки оффлайн
 
 `pip download -r .\requirements.txt -d .\packages\` # Загрузить пакеты  
