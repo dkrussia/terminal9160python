@@ -3,6 +3,9 @@
 /.idea/
 /frontend/
 
+packages.zip
+/packages/
+
 *.ini
 *.log
 .env.*
