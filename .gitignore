@@ -2,10 +2,9 @@
 /__pycache__/
 /.idea/
 /frontend/
-
-packages.zip
 /packages/
 
+*.zip
 *.ini
 *.log
 .env.*
