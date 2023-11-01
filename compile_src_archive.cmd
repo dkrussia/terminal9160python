@@ -3,7 +3,7 @@ set env_mode=%1
 echo "Dashboard build %env_mode%"
 
 cd frontend
-call npm run build -- --mode ".env.%env_mode%"
+call npm run build -- --mode %env_mode%
 cd ..
 
 call ./archive_whl_packages.cmd
