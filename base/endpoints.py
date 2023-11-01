@@ -8,6 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 
+from base.mqtt_api import get_total_person_all_devices
 from base.rmq_client import rabbit_mq
 from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
@@ -126,6 +127,13 @@ async def all_devices_registered():
         'observed': device_service.devices_observed,
         'function_arrive': device_service.devices_function_arrive
     }
+
+
+@device_router.get('/total_persons')
+async def get_total_persons():
+    all_sn_devices = [sn_device for sn_device in list(device_service.devices_meta.keys())]
+    result = await get_total_person_all_devices(all_sn_devices)
+    return result
 
 
 @device_push_router.post("/login")

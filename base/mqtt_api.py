@@ -12,7 +12,7 @@ from config import s as settings
 from base.log import logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
-    CommandGetPerson, CommandCheckFace, CommandDeleteAllPerson
+    CommandGetPerson, CommandCheckFace, CommandDeleteAllPerson, CommandGetTotalPerson
 from services.persond_ids_storage import PersonStorage
 
 FAILURE_CODES_REASON = {
@@ -409,3 +409,42 @@ async def check_face(photo_base64, sn_device, timeout=settings.TIMEOUT_MQTT_RESP
         "command": command.payload,
         "has_error": is_answer_has_error(command, answer)
     }
+
+
+async def get_total_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    command = CommandGetTotalPerson(sn_device=sn_device)
+    command.get_total()
+    answer = await publish_command_and_wait_result(command, timeout)
+
+    return {
+        "answer": answer,
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
+    }
+
+
+async def get_total_person_all_devices(all_sn_devices):
+    total_persons: Dict[str, int] = {}
+    all_tasks = []
+    task_sn_device: [asyncio.Task, str] = {}
+    timeout_command = 5
+
+    for sn_device in all_sn_devices:
+        total_persons[sn_device] = -1  # Значение по умолчанию (Не смогли получить)
+
+        total_task = asyncio.create_task(get_total_person(sn_device, timeout=timeout_command), )
+        task_sn_device[total_task] = sn_device
+        all_tasks.append(total_task)
+
+    if all_tasks:
+        done_tasks, pending_tasks = await asyncio.wait(all_tasks, timeout=timeout_command * 2)
+
+        for done_task in done_tasks:
+            result = done_task.result()
+            sn_device = task_sn_device[done_task]
+            if result.get('answer'):
+                users = result['answer']['operations']['users']
+                total = users[0]['total'] if users else 0
+                total_persons[sn_device] = total
+
+    return total_persons

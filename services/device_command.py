@@ -79,13 +79,15 @@ def delete_person_json(id: int):
     }
 
 
-def query_person_json(id: int):
+def query_person_json(id, total: int = 3000):
+    # ID int/empty string
+
     return {
         "emp_id": str(id),
         "keyword": "",
         "need_feature": False,
-        "need_photo": True,
-        "page_num": 3000,
+        "need_photo": False,
+        "page_num": total,
         "page_idx": 0
     }
 
@@ -158,6 +160,12 @@ class CommandGetPerson(BaseCommand):
 
     def search_person(self, id):
         payload = query_person_json(id)
+        self.set_operation_as_dict(payload)
+
+
+class CommandGetTotalPerson(CommandGetPerson):
+    def get_total(self, ):
+        payload = query_person_json("", total=1)
         self.set_operation_as_dict(payload)
 
 
