@@ -2,18 +2,20 @@ import os
 
 from pydantic.v1 import BaseSettings
 
+CORS = ['*']
+MAX_WORKERS_MCI_COMMAND = 8
+
 SERVER_MODE = os.getenv("SERVER_MODE", "local")
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-PHOTO_DIR = os.path.join(BASE_DIR, 'assets/photo')
+LOG_DIR = os.path.join(BASE_DIR, 'assets/logs')
+FIRMWARE_DIR = os.path.join(BASE_DIR, 'assets/firmware')
+
 PHOTO_PATH = "/photo"
 FIRMWARE_PATH = "/firmware"
-LOG_DIR = os.path.join(BASE_DIR, 'assets/logs')
+
 DEVICE_JSON_DATA_FILE = os.path.join(BASE_DIR, 'assets/devices_db.json')
 FACE_TEMPLATES_FILE = os.path.join(BASE_DIR, 'assets/face_template_cache.json')
-
-CORS = ['*']
-FIRMWARE_DIR = os.path.join(BASE_DIR, 'assets/firmware')
-MAX_WORKERS_MCI_COMMAND = 8
 
 try:
     with open(os.path.join(BASE_DIR, 'utils', 'base64photo.txt'), 'r') as f:
@@ -56,6 +58,8 @@ class Settings(BaseSettings):
     MOCK_DEVICE_SUCCESS_CHANCE: int = 99
     MOCK_DEVICE_SUCCESS_TIMEOUT = range(1, 2)
     MOCK_DEVICE_ERROR_TIMEOUT = range(1, 2)
+
+    PHOTO_DIR = os.path.join(BASE_DIR, 'assets/photo')
 
     FIRMWARE_URL: str = None
     PHOTO_URL: str = None
