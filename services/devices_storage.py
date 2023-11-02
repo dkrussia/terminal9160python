@@ -38,6 +38,10 @@ class Devices:
         cls.devices_function_arrive = d.get('function_arrive', [])
         return object.__new__(cls)
 
+    @property
+    def all_sn_list(self):
+        return list(self.devices_meta.keys())
+
     @classmethod
     def add_device_to_observed(cls, sn):
         if sn not in cls.devices_observed:

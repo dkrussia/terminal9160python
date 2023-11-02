@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 
-from base.mqtt_api import get_total_person_all_devices
+from base.mqtt_api import get_total_person_all_devices, get_total_person_device
 from base.rmq_client import rabbit_mq
 from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
@@ -130,10 +130,21 @@ async def all_devices_registered():
 
 
 @device_router.get('/total_persons')
-async def get_total_persons():
-    all_sn_devices = [sn_device for sn_device in list(device_service.devices_meta.keys())]
+async def get_total_devices():
+    sn_list = device_service.all_sn_list
+    all_sn_devices = [sn_device for sn_device in sn_list]
     result = await get_total_person_all_devices(all_sn_devices)
     return result
+
+
+@device_router.get('/total_persons/{sn_device}')
+async def get_total_persons_on_device(sn_device: Optional[str]):
+    sn_list = device_service.all_sn_list
+
+    if sn_device not in sn_list:
+        raise HTTPException(status_code=404, detail="Device not found")
+    total = await get_total_person_device(sn_device, timeout=5)
+    return {"total": total}
 
 
 @device_push_router.post("/login")

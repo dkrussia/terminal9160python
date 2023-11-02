@@ -23,7 +23,6 @@ from base.rmq_client import rabbit_mq
 
 from config import (
     BASE_DIR,
-    PHOTO_DIR,
     PHOTO_PATH,
     FIRMWARE_PATH,
     FIRMWARE_DIR,
@@ -38,7 +37,7 @@ if sys.platform.lower() == "win32" or os.name.lower() == "nt":
 
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
-pathlib.Path(PHOTO_DIR).mkdir(parents=True, exist_ok=True)
+pathlib.Path(settings.PHOTO_DIR).mkdir(parents=True, exist_ok=True)
 pathlib.Path(FIRMWARE_DIR).mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(docs_url=None)
@@ -49,7 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount(PHOTO_PATH, StaticFiles(directory=PHOTO_DIR), name="photo")
+app.mount(PHOTO_PATH, StaticFiles(directory=settings.PHOTO_DIR), name="photo")
 app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
 
 app.include_router(person_router, tags=['Persons'])
@@ -120,8 +119,8 @@ def index():
 
 
 print("BASE DIR: ", BASE_DIR)
-print("PHOTO DIR: ", PHOTO_DIR)
-print("PHOTO DIR: ", FIRMWARE_DIR)
+print("PHOTO DIR: ", settings.PHOTO_DIR)
+print("FIRMWARE DIR: ", FIRMWARE_DIR)
 print("MQTT_PORT_FOR_TERMINAL: ", s.MQTT_PORT_FOR_TERMINAL)
 print("HOST_FOR_TERMINAL: ", s.HOST_FOR_TERMINAL)
 print("PORT_FOR_TERMINAL: ", s.PORT_FOR_TERMINAL)

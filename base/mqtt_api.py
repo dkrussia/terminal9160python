@@ -423,6 +423,15 @@ async def get_total_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     }
 
 
+async def get_total_person_device(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE) -> int:
+    result = await get_total_person(sn_device=sn_device, timeout=timeout)
+    if result.get('answer'):
+        users = result['answer']['operations']['users']
+        total = users[0]['total'] if users else 0
+        return total
+    return -1
+
+
 async def get_total_person_all_devices(all_sn_devices):
     total_persons: Dict[str, int] = {}
     all_tasks = []
