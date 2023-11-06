@@ -7,10 +7,10 @@
 *.zip
 *.ini
 *.log
+*.json
 .env.*
 
 assets/docker-release/launcher/Launcher9160.exe
-assets/docker-release/launcher/env.json
 
 assets/firmware
 assets/packages/

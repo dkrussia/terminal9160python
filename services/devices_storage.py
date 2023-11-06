@@ -95,13 +95,25 @@ class Devices:
         pass
 
     @classmethod
-    def update_meta_update_conf(cls, sn_device, payload):
+    def set_meta_config(cls, sn_device, payload):
         if payload:
             d = cls.devices_meta.get(sn_device, {})
             d["config"] = payload
             d["config_update_time"] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
             cls.devices_meta[sn_device] = d
-            cls.write_to_json()
+
+    @classmethod
+    def save_config(cls, sn_device, payload):
+        cls.set_meta_config(sn_device, payload)
+        cls.write_to_json()
+
+    @classmethod
+    def save_config_multi(cls, payloads: dict):
+        # payload {sn_devices: conf | None}
+        for sn_device, conf in enumerate(payloads):
+            if conf:
+                cls.set_meta_config(sn_device, conf)
+        cls.write_to_json()
 
     @classmethod
     def add_meta_on_state(cls, payload):

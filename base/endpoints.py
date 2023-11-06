@@ -2,7 +2,7 @@ import base64
 import json
 from datetime import datetime
 from pprint import pprint
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
@@ -57,7 +57,7 @@ async def get_person(sn_device: str, id: Optional[int] = ""):
     if not id:
         r = await mqtt_api.update_config({}, sn_device=sn_device)
         if r["answer"]:
-            device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
+            device_service.save_config(sn_device, r["answer"].get('operations'))
 
         resp = await mqtt_api.get_all_person(sn_device=sn_device)
         if resp.get('answer'):
@@ -121,7 +121,7 @@ async def all_devices_registered():
             # Вызвать это для получения конфига с сервера с пустой нагрузкой
             r = await mqtt_api.update_config({}, sn_device=sn_device)
             if r["answer"]:
-                device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
+                device_service.save_config(sn_device, r["answer"].get('operations'))
     return {
         'meta': device_service.devices_meta,
         'observed': device_service.devices_observed,
@@ -197,7 +197,7 @@ async def dconfig(request: Request):
 
     sn_device = d["devSn"]
     # device_service.add_ip_address(sn_device, request.client.host)
-    device_service.update_meta_update_conf(sn_device, d)
+    device_service.save_config(sn_device, d)
     return {}
 
 
@@ -310,8 +310,16 @@ async def update_config(device_config: UpdateConfig, sn_device: str, ):
     """
     r = await mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
     if r["answer"]:
-        device_service.update_meta_update_conf(sn_device, r["answer"].get('operations'))
+        device_service.save_config(sn_device, r["answer"].get('operations'))
     return r
+
+
+@device_router.post("/config/selected", )
+async def update_config(device_config: UpdateConfig, sn_devices: List[str], ):
+    # check
+    r = await mqtt_api.update_config_multi(device_config.dict(exclude_none=True), sn_devices=sn_devices)
+    device_service.save_config_multi(r)
+    return {sn_device: bool(r[sn_device]) for sn_device in r.keys()}
 
 
 @device_router.post("/to_observed", )
