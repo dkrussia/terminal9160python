@@ -110,7 +110,7 @@ class Devices:
     @classmethod
     def save_config_multi(cls, payloads: dict):
         # payload {sn_devices: conf | None}
-        for sn_device, conf in enumerate(payloads):
+        for sn_device, conf in payloads.items():
             if conf:
                 cls.set_meta_config(sn_device, conf)
         cls.write_to_json()
