@@ -387,7 +387,7 @@ async def control_action_set_ntp(sn_device, payload, timeout=settings.TIMEOUT_MQ
     }
 
 
-async def update_config(payload, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def update_config(sn_device, payload, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = CommandUpdateConfig(sn_device=sn_device)
     command.update_config(payload)
     answer = await publish_command_and_wait_result(command, timeout=timeout)

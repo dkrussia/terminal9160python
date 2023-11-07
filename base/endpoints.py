@@ -55,7 +55,7 @@ def checker(person_payload: str = Form(...)):
 @person_router.get("", description="Получение всех пользователей")
 async def get_person(sn_device: str, id: Optional[int] = ""):
     if not id:
-        r = await mqtt_api.update_config({}, sn_device=sn_device)
+        r = await mqtt_api.update_config(sn_device, {})
         if r["answer"]:
             device_service.save_config(sn_device, r["answer"].get('operations'))
 
@@ -119,7 +119,7 @@ async def all_devices_registered():
         if sn_device in device_service.devices_meta.keys() \
                 and 'config' not in device_service.devices_meta[sn_device].keys():
             # Вызвать это для получения конфига с сервера с пустой нагрузкой
-            r = await mqtt_api.update_config({}, sn_device=sn_device)
+            r = await mqtt_api.update_config(sn_device, {},)
             if r["answer"]:
                 device_service.save_config(sn_device, r["answer"].get('operations'))
     return {
