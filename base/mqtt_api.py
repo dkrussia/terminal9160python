@@ -415,8 +415,9 @@ async def update_config_multi(payload, sn_devices: List[str],
         done_tasks, _ = await asyncio.wait(all_tasks, timeout=timeout_command * 2)
         for done_task in done_tasks:
             sn_device = task_sn_device[done_task]
-            print('result: ', result)
-            result[sn_device] = result["answer"]["operations"] if result.get('answer') else None
+            task_result = done_task.result()
+            result[sn_device] = task_result["answer"]["operations"] if task_result.get(
+                'answer') else None
 
     return result
 
