@@ -119,7 +119,7 @@ async def all_devices_registered():
         if sn_device in device_service.devices_meta.keys() \
                 and 'config' not in device_service.devices_meta[sn_device].keys():
             # Вызвать это для получения конфига с сервера с пустой нагрузкой
-            r = await mqtt_api.update_config(sn_device, {},)
+            r = await mqtt_api.update_config(sn_device, {}, )
             if r["answer"]:
                 device_service.save_config(sn_device, r["answer"].get('operations'))
     return {
@@ -308,8 +308,8 @@ async def update_config(device_config: UpdateConfig, sn_device: str, ):
     cardNumDecimal	Bool	Decimal card number\n
     cardNumReverse	Bool	Reverse sequence card number\n
     """
-    r = await mqtt_api.update_config(device_config.dict(exclude_none=True), sn_device=sn_device)
-    if r["answer"]:
+    r = await mqtt_api.update_config(sn_device, device_config.dict(exclude_none=True), )
+    if r.get("answer"):
         device_service.save_config(sn_device, r["answer"].get('operations'))
     return r
 
@@ -317,9 +317,10 @@ async def update_config(device_config: UpdateConfig, sn_device: str, ):
 @device_router.post("/config/selected", )
 async def update_config(device_config: UpdateConfig, sn_devices: List[str], ):
     # check
-    r = await mqtt_api.update_config_multi(device_config.dict(exclude_none=True), sn_devices=sn_devices)
+    r = await mqtt_api.update_config_multi(device_config.dict(exclude_none=True),
+                                           sn_devices=sn_devices)
     device_service.save_config_multi(r)
-    return {sn_device: bool(r[sn_device]) for sn_device in r.keys()}
+    return {sn_device: bool(r[sn_device]) for sn_device in sn_devices}
 
 
 @device_router.post("/to_observed", )

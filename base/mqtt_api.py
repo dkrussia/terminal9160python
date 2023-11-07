@@ -399,21 +399,23 @@ async def update_config(sn_device, payload, timeout=settings.TIMEOUT_MQTT_RESPON
     }
 
 
-async def update_config_multi(payload, sn_devices: List[str], timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def update_config_multi(payload, sn_devices: List[str],
+        timeout=settings.TIMEOUT_MQTT_RESPONSE):
     result = {sn: None for sn in sn_devices}
     all_tasks = []
     task_sn_device: [asyncio.Task, str] = {}
     timeout_command = 5
 
     for sn_device in sn_devices:
-        total_task = asyncio.create_task(update_config(sn_device, payload, timeout=timeout), )
-        task_sn_device[total_task] = sn_device
-        all_tasks.append(total_task)
+        config_task = asyncio.create_task(update_config(sn_device, payload, timeout=timeout), )
+        task_sn_device[config_task] = sn_device
+        all_tasks.append(config_task)
 
     if all_tasks:
         done_tasks, _ = await asyncio.wait(all_tasks, timeout=timeout_command * 2)
         for done_task in done_tasks:
             sn_device = task_sn_device[done_task]
+            print('result: ', result)
             result[sn_device] = result["answer"]["operations"] if result.get('answer') else None
 
     return result
