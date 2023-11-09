@@ -387,6 +387,30 @@ async def control_action_set_ntp(sn_device, payload, timeout=settings.TIMEOUT_MQ
     }
 
 
+async def control_action_set_ntp_multi(payload, sn_devices: List[str],
+        timeout=settings.TIMEOUT_MQTT_RESPONSE):
+    result = {sn: None for sn in sn_devices}
+    all_tasks = []
+    task_sn_device: [asyncio.Task, str] = {}
+    timeout_command = 5
+
+    for sn_device in sn_devices:
+        time_zone_task = asyncio.create_task(
+            control_action_set_ntp(sn_device, payload, timeout=timeout), )
+        task_sn_device[time_zone_task] = sn_device
+        all_tasks.append(time_zone_task)
+
+    if all_tasks:
+        done_tasks, _ = await asyncio.wait(all_tasks, timeout=timeout_command * 2)
+        for done_task in done_tasks:
+            sn_device = task_sn_device[done_task]
+            task_result = done_task.result()
+            result[sn_device] = task_result["answer"]["executeStatus"] == 1 if task_result.get(
+                'answer') else None
+
+    return result
+
+
 async def update_config(sn_device, payload, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = CommandUpdateConfig(sn_device=sn_device)
     command.update_config(payload)

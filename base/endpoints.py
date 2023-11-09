@@ -267,6 +267,14 @@ async def set_ntp_time(sn_device: str, payload: NtpTime):
     return await mqtt_api.control_action_set_ntp(sn_device=sn_device, payload=payload.model_dump())
 
 
+@device_router.post("/control/set_ntp_time/selected", )
+async def update_config(ntp_time: NtpTime, sn_devices: List[str], ):
+    # check
+    r = await mqtt_api.control_action_set_ntp_multi(ntp_time.dict(exclude_none=True),
+                                                    sn_devices=sn_devices)
+    return {sn_device: bool(r[sn_device]) for sn_device in sn_devices}
+
+
 @device_router.post("/control/{action}", )
 async def send_control_action(
         action: ControlAction,
