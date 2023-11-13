@@ -405,7 +405,8 @@ async def control_action_set_ntp_multi(payload, sn_devices: List[str],
         for done_task in done_tasks:
             sn_device = task_sn_device[done_task]
             task_result = done_task.result()
-            result[sn_device] = task_result["answer"]["executeStatus"] == 1 if task_result.get(
+            result[sn_device] = task_result["answer"]["operations"][
+                                    "executeStatus"] == 1 if task_result.get(
                 'answer') else None
 
     return result
