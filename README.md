@@ -111,7 +111,7 @@ set ENV Variables
 `EMQX_ETC_DIR=`  
 `.../bin/emqx install` 
 Запуск emqx локально в Docker  
-`docker run -d --name emqx -p 1883:1883 18083:18083 emqx/emqx:5.1.1`  
+`docker run -d --name emqx -p 1883:1883 -p 18083:18083 emqx/emqx:5.1.1`  
   
 
 Set ENV windows variables:  
