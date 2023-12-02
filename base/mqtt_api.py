@@ -164,6 +164,10 @@ async def create_or_update(
         cardNumber,
         timeout=settings.TIMEOUT_MQTT_RESPONSE
 ):
+    person_response = await get_person(id_person=id_person, sn_device=sn_device, )
+    if not person_response["answer"]:
+        return person_response
+
     if photo and isinstance(photo, UploadFile):
         photo = base64.b64encode(photo.file.read()).decode("utf-8")
 
@@ -174,8 +178,6 @@ async def create_or_update(
         face_str=photo,
         cardNumber=cardNumber
     )
-
-    person_response = await get_person(id_person=id_person, sn_device=sn_device, )
 
     if person_response["answer"]["operations"]["executeStatus"] == 2:
         command = person_service.CommandCreatePerson(sn_device=sn_device)
