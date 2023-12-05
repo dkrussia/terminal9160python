@@ -2,10 +2,11 @@ import asyncio
 import os
 import pathlib
 import sys
+from typing import List
 
 import uvicorn
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -29,6 +30,8 @@ from config import (
     CORS,
     s as settings
 )
+from reports import make_report
+from services.devices_storage import device_service
 from services.mock import mock_run
 from services.person_photo import PersonPhoto
 
@@ -116,6 +119,13 @@ def dashboard_index(path: str):
 @app.get('/', response_class=HTMLResponse)
 def index():
     return FileResponse(f'{BASE_DIR}/dashboard/index.html')
+
+
+@app.get('/report')
+async def report(sn_device: str, featureThreshold: List[int] = Query(None)):
+    origin_fs = device_service.devices_meta[sn_device]["config"]["featureThreshold"]
+    await make_report(sn_device, featureThreshold, origin_fs)
+    return FileResponse(f'{BASE_DIR}/assets/report.json')
 
 
 print("BASE DIR: ", BASE_DIR)

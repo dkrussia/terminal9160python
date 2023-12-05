@@ -12,7 +12,7 @@ from services.devices_storage import device_service
 from base.rmq_client import rabbit_mq
 
 
-async def mqtt_consumer():
+async def mqtt_consumer(state=True, ):
     interval = 5  # Seconds
     while True:
         try:
@@ -26,11 +26,13 @@ async def mqtt_consumer():
                     async for message in messages:
                         payload_json = json.loads(message.payload.decode('utf-8'))
 
-                        if message.topic.matches("/_report/state"):
-                            # print(f"[/_report/state] {message.payload}")
-                            await rabbit_mq.publish_message(f'ping_{payload_json["sn"]}',
-                                                            json.dumps({'sn': payload_json["sn"]}))
-                            await device_service.add_device(payload_json)
+                        if state:
+                            if message.topic.matches("/_report/state"):
+                                # print(f"[/_report/state] {message.payload}")
+                                await rabbit_mq.publish_message(f'ping_{payload_json["sn"]}',
+                                                                json.dumps(
+                                                                    {'sn': payload_json["sn"]}))
+                                await device_service.add_device(payload_json)
 
                         if message.topic.matches("/_report/received"):
                             # print(f"[/_report/received] {message.payload}")
