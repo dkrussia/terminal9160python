@@ -9,7 +9,7 @@ cd ..
 call ./archive_whl_packages.cmd
 
 echo "Create an archive src all..."
-tar -acf 9160-service-%env_mode%.zip base dashboard services utils config.py main.py requirements.txt run.cmd open_config_file.cmd install_requirements_offline.cmd packages.zip
+tar -acf 9160-service-%env_mode%.zip base dashboard services utils config.py main.py requirements.txt run.cmd open_config_file.cmd install_requirements_offline.cmd packages.zip reports.py
 
 del .\packages.zip
 
