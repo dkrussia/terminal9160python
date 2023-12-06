@@ -1,4 +1,3 @@
-import base64
 import json
 from datetime import datetime
 from pprint import pprint
@@ -8,6 +7,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 
+from base.log import get_logger
 from base.mqtt_api import get_total_person_all_devices, get_total_person_device
 from base.rmq_client import rabbit_mq
 from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
@@ -201,6 +201,9 @@ async def dconfig(request: Request):
     return {}
 
 
+logger_booking = get_logger('booking')
+
+
 @device_push_router.post("/passRecord/addRecord")
 async def pass_face(request: Request):
     """
@@ -228,32 +231,40 @@ async def pass_face(request: Request):
         'userName': ''
     }
     """
-    await print_request(request)
     payload = await request.json()
-    sn_device = payload["devSn"]
-    id_user = payload["devUserId"]
-    atType = payload.get('atType', 0)
-    passDateTime = datetime.strptime(
-        payload['passageTime'], '%Y-%m-%d %H:%M:%S'
-    ).strftime('%Y-%m-%dT%H:%M:%S')
 
-    if device_service.is_access_mode(sn_device):
-        atType = 3
-        if sn_device in device_service.devices_function_arrive:
-            atType = 2
+    try:
+        sn_device = payload["devSn"]
+        id_user = payload["devUserId"]
+        atType = payload.get('atType', 0)
+        passDateTime = datetime.strptime(
+            payload['passageTime'], '%Y-%m-%d %H:%M:%S'
+        ).strftime('%Y-%m-%dT%H:%M:%S')
 
-    if id_user > 0:
-        #
-        await rabbit_mq.publish_message(
-            q_name=f'events_{sn_device}',
-            message=json.dumps({
-                'sn': f'events_{sn_device}',
-                'time': passDateTime,
-                'status': str(atType),
-                "pin": str(id_user),
-            })
+        logger_booking.info(f'Booking {sn_device} {passDateTime} {atType} {id_user}')
+
+        if device_service.is_access_mode(sn_device):
+            atType = 3
+            if sn_device in device_service.devices_function_arrive:
+                atType = 2
+
+        if id_user > 0:
+            #
+            await rabbit_mq.publish_message(
+                q_name=f'events_{sn_device}',
+                message=json.dumps({
+                    'sn': f'events_{sn_device}',
+                    'time': passDateTime,
+                    'status': str(atType),
+                    "pin": str(id_user),
+                })
+            )
+        return {}
+    except Exception as e:
+        logger_booking.error(f'Booking error {payload} - {e}')
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    return {}
 
 
 @device_router.post("/control/set_ntp_time", )

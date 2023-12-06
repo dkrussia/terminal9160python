@@ -37,8 +37,9 @@ from services.person_photo import PersonPhoto
 
 if sys.platform.lower() == "win32" or os.name.lower() == "nt":
     from asyncio import set_event_loop_policy, WindowsSelectorEventLoopPolicy
-
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+    loop = asyncio.ProactorEventLoop()
+    asyncio.set_event_loop(loop)
 
 pathlib.Path(settings.PHOTO_DIR).mkdir(parents=True, exist_ok=True)
 pathlib.Path(FIRMWARE_DIR).mkdir(parents=True, exist_ok=True)

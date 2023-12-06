@@ -6,13 +6,22 @@ from logging.handlers import RotatingFileHandler
 
 pathlib.Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
 
-logger = logging.getLogger('app')
-logger.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+def get_logger(name):
+    l = logging.getLogger(name)
+    l.setLevel(logging.DEBUG)
 
-file_handler = RotatingFileHandler(f'{BASE_DIR}/assets/logs/logfile.log', 'a', 1 * 1024 * 1024, 10)
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-logger.addHandler(file_handler)
+    file_handler = RotatingFileHandler(f'{BASE_DIR}/assets/logs/logfile_{name}.log',
+                                       'a',
+                                       1 * 1024 * 1024,
+                                       10)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+
+    l.addHandler(file_handler)
+    return l
+
+
+logger = get_logger('app')
