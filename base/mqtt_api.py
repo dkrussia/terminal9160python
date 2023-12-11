@@ -9,11 +9,15 @@ from starlette.datastructures import UploadFile
 from services.person_photo import PersonPhoto as person_photo_service
 
 from config import s as settings
-from base.log import logger
+from base.log import logger, get_logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
     CommandGetPerson, CommandCheckFace, CommandDeleteAllPerson, CommandGetTotalPerson
 from services.persond_ids_storage import PersonStorage
+
+from base.log import get_logger
+
+mqtt_push_logger = get_logger('mqtt_publish_command')
 
 FAILURE_CODES_REASON = {
     -2: 'Open photo failure',
@@ -26,36 +30,36 @@ futures: Dict[str, asyncio.Future] = {}
 
 
 async def publish_command_and_wait_result(command, timeout):
-    async with aiomqtt.Client(hostname=settings.MQTT_HOST,
-                              port=settings.MQTT_PORT,
-                              username=settings.MQTT_USER,
-                              password=settings.MQTT_PASSWORD) as client:
+    print('***', datetime.now().strftime('%H:%M:%S'), '***')
+    print("-----PUBLISH COMMAND TO MQTT------")
+    print(f"---TO SN_DEVICE: {command.sn_device}--")
+    print("-----       PAYLOAD      ------")
+    # pprint(command.payload)
+    print("-----       PAYLOAD      ------")
+    future: Future = asyncio.get_running_loop().create_future()
+    futures[command.key_id] = future
 
-        # ADD
-        # except ExceptionOnPublishMQTTMessage:
-        # except ExceptionNoResponseMQTTReceived
-        print('***', datetime.now().strftime('%H:%M:%S'), '***')
-        print("-----PUBLISH COMMAND TO MQTT------")
-        print(f"---TO SN_DEVICE: {command.sn_device}--")
-        print("-----       PAYLOAD      ------")
-        # pprint(command.payload)
-        print("-----       PAYLOAD      ------")
+    try:
+        async with aiomqtt.Client(hostname=settings.MQTT_HOST,
+                                  port=settings.MQTT_PORT,
+                                  username=settings.MQTT_USER,
+                                  password=settings.MQTT_PASSWORD) as client:
 
-        await client.publish(f"/_dispatch/command/{command.sn_device}",
-                             payload=json.dumps(command.payload))
+            await client.publish(f"/_dispatch/command/{command.sn_device}",
+                                 payload=json.dumps(command.payload))
+    except Exception as e:
+        mqtt_push_logger.error(e, exc_info=True)
+        return None
 
-        future: Future = asyncio.get_running_loop().create_future()
-        futures[command.key_id] = future
-        try:
-            await asyncio.wait_for(future, timeout=timeout)
-            return future.result()
-        except asyncio.TimeoutError as e:
-            return None
-        except Exception as e:
-            return None
-        finally:
-            futures.pop(command.key_id, None)
-
+    try:
+        await asyncio.wait_for(future, timeout=timeout)
+        return future.result()
+    except asyncio.TimeoutError as e:
+        return None
+    except Exception as e:
+        return None
+    finally:
+        f = futures.pop(command.key_id, None)
 
 def save_template_from_answer(answer):
     if answer:
