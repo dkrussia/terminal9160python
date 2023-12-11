@@ -1,4 +1,6 @@
+import asyncio
 import json
+import uuid
 from datetime import datetime
 from pprint import pprint
 from typing import Optional, Literal, List
@@ -214,57 +216,75 @@ async def pass_face(request: Request):
         OUT: 3
         TRIP: 4 + REMARK
     {
-        'atType': 2,
-        'devName': 'YGKJ202107TR08EL0007',
-        'devSn': 'YGKJ202107TR08EL0007',
-        'devUserDeptId': 0,
-        'devUserId': 20964,
-        'facemask': 0,
-        'firstName': '',
-        'id': 66,
-        'lastName': '',
-        'passStatus': 0,
-        'passType': 0,
-        'passageTime': '2023-05-25 18:31:22',
-        'remark': '',
-        'temperature': 0,
-        'userName': ''
+        "atType": 2,
+        "devName": "YGKJ202107TR08EL0007",
+        "devSn": "YGKJ202107TR08EL0007",
+        "devUserDeptId": 0,
+        "devUserId": 20964,
+        "facemask": 0,
+        "firstName": "",
+        "id": 66,
+        "lastName": "",
+        "passStatus": 0,
+        "passType": 0,
+        "passageTime": "2023-05-25 18:31:22",
+        "remark": "",
+        "temperature": 0,
+        "userName": ""
     }
     """
+
     payload = await request.json()
+    max_attempt = 3
+    attempt = 1
+    sleep_between_attempt = 3
+    log_uuid = str(uuid.uuid4())
 
-    try:
-        sn_device = payload["devSn"]
-        id_user = payload["devUserId"]
-        atType = payload.get('atType', 0)
-        passDateTime = datetime.strptime(
-            payload['passageTime'], '%Y-%m-%d %H:%M:%S'
-        ).strftime('%Y-%m-%dT%H:%M:%S')
+    while attempt <= max_attempt:
+        try:
+            sn_device = payload["devSn"]
+            id_user = payload["devUserId"]
+            atType = payload.get('atType', 0)
+            passDateTime = datetime.strptime(
+                payload['passageTime'], '%Y-%m-%d %H:%M:%S'
+            ).strftime('%Y-%m-%dT%H:%M:%S')
 
-        logger_booking.info(f'Booking {sn_device} {passDateTime} {atType} {id_user}')
+            if device_service.is_access_mode(sn_device):
+                atType = 3
+                if sn_device in device_service.devices_function_arrive:
+                    atType = 2
 
-        if device_service.is_access_mode(sn_device):
-            atType = 3
-            if sn_device in device_service.devices_function_arrive:
-                atType = 2
+            if id_user > 0:
+                #
+                await rabbit_mq.publish_message(
+                    q_name=f'events_{sn_device}',
+                    message=json.dumps({
+                        'sn': f'events_{sn_device}',
+                        'time': passDateTime,
+                        'status': str(atType),
+                        "pin": str(id_user),
+                    })
+                )
 
-        if id_user > 0:
-            #
-            await rabbit_mq.publish_message(
-                q_name=f'events_{sn_device}',
-                message=json.dumps({
-                    'sn': f'events_{sn_device}',
-                    'time': passDateTime,
-                    'status': str(atType),
-                    "pin": str(id_user),
-                })
+            logger_booking.info(f'Booking {sn_device} {passDateTime} {atType} {id_user}')
+            return {}
+
+        except Exception as e:
+            logger_booking.error(
+                f'{log_uuid} Booking append error {payload} - {e} '
+                f'attempt#{attempt} of {max_attempt}'
             )
-        return {}
-    except Exception as e:
-        logger_booking.error(f'Booking error {payload} - {e}')
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+
+        attempt += 1
+        await asyncio.sleep(sleep_between_attempt)
+
+    logger_booking.error(
+        f'{log_uuid} Booking was not added {payload}'
+    )
+
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
 @device_router.post("/control/set_ntp_time", )
