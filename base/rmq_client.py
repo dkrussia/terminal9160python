@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+from typing import Union
 
 from aio_pika import connect_robust, IncomingMessage, Message
 
@@ -25,7 +26,7 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
     async with message.process():
         type_command = message.headers.get("command_type")
         reply_to = message.reply_to
-        rmq_payload = json.loads(message.body.decode('utf-8'))
+        rmq_payload: Union[dict, list] = json.loads(message.body.decode('utf-8'))
 
         sn_device = queue_name.split("_")[-1]
 
@@ -33,28 +34,30 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
         result = None
 
         if type_command == 'user_update_biophoto':
-            # photo = rmq_payload.get('picture', "")
-            # if photo:
-            result = await mqtt_api.create_or_update(
-                sn_device=sn_device,
-                id_person=int(rmq_payload["id"]),
-                firstName=rmq_payload["firstName"],
-                lastName=rmq_payload["lastName"],
-                photo=rmq_payload.get('picture', ""),
-                cardNumber=rmq_payload["cardNumber"]
-            )
+            if rmq_payload["id"].isdigit():
+                result = await mqtt_api.create_or_update(
+                    sn_device=sn_device,
+                    id_person=int(rmq_payload["id"]),
+                    firstName=rmq_payload["firstName"],
+                    lastName=rmq_payload["lastName"],
+                    photo=rmq_payload.get('picture', ""),
+                    cardNumber=rmq_payload["cardNumber"]
+                )
 
         if type_command == 'multiuser_update_biophoto':
-            # rmq_payload = list(filter(lambda p: p.get('picture', None), rmq_payload))
+            rmq_payload = list(filter(lambda p: p.isdigit(), rmq_payload))
             result = await mqtt_api.batch_create_or_update(sn_device=sn_device,
                                                            persons=rmq_payload,
                                                            batch_size=settings.BATCH_UPDATE_SIZE)
 
         if type_command == 'user_delete':
-            result = await mqtt_api.delete_person(sn_device=sn_device, id=int(rmq_payload["id"]))
+            if rmq_payload["id"].isdigit():
+                result = await mqtt_api.delete_person(sn_device=sn_device,
+                                                      id=int(rmq_payload["id"]))
 
         if type_command == 'multiuser_delete':
-            result = await mqtt_api.delete_person(sn_device=sn_device)
+            if rmq_payload["id"].isdigit():
+                result = await mqtt_api.delete_person(sn_device=sn_device)
 
         error_result = {
             "result": 'Error',
