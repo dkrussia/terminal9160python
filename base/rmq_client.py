@@ -56,18 +56,17 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
                                                       id=int(rmq_payload["id"]))
 
         if type_command == 'multiuser_delete':
-            if rmq_payload["id"].isdigit():
-                result = await mqtt_api.delete_person(sn_device=sn_device)
+            result = await mqtt_api.delete_person(sn_device=sn_device)
 
         error_result = {
             "result": 'Error',
             'Return': "-1",
-            'details': result.get("has_error", None)
+            'details': result.get("has_error", None) if result else 'Not details'
         }
         success_result = {
             "result": 'Successful',
             'Return': "0",
-            'details': result.get("has_error", None)
+            'details': result.get("has_error", None) if result else 'Not details'
         }
         if not result or result["has_error"]:
             await rabbit_mq.publish_message(
