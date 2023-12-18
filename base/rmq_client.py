@@ -45,7 +45,7 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
                 )
 
         if type_command == 'multiuser_update_biophoto':
-            rmq_payload = list(filter(lambda p: p.isdigit(), rmq_payload))
+            rmq_payload = list(filter(lambda p: p["id"].isdigit(), rmq_payload))
             result = await mqtt_api.batch_create_or_update(sn_device=sn_device,
                                                            persons=rmq_payload,
                                                            batch_size=settings.BATCH_UPDATE_SIZE)
