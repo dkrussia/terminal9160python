@@ -380,3 +380,11 @@ async def access_mode_set_function(sn_device: str, function: Literal["arrive", "
 @device_router.post("/face_already_existing", )
 async def check_face_already_existing(sn_device: str, payload: CheckPhoto):
     return await mqtt_api.check_face(payload.photo_base64, sn_device)
+
+
+@device_router.post("/access_log", )
+async def access_log(sn_device: str, startStamp: int, endStamp: int, keyword: str = ""):
+    return await mqtt_api.access_log(sn_device,
+                                     startStamp=startStamp,
+                                     endStamp=endStamp,
+                                     keyword=keyword)

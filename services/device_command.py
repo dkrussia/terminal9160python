@@ -224,3 +224,14 @@ class CommandCheckFace(BaseCommand):
         self.set_operation_as_dict({
             "photo": photo_base64
         })
+
+
+class CommandGetAccessLog(BaseCommand):
+    type = 1008
+
+    def find(self, startStamp, endStamp, keyword):
+        self.set_operation_as_dict({
+            "startStamp": startStamp,
+            "endStamp": endStamp,
+            "keyword": keyword
+        })

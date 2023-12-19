@@ -12,7 +12,8 @@ from config import s as settings
 from base.log import logger, get_logger
 from services import device_command as person_service
 from services.device_command import CommandControlTerminal, ControlAction, CommandUpdateConfig, \
-    CommandGetPerson, CommandCheckFace, CommandDeleteAllPerson, CommandGetTotalPerson
+    CommandGetPerson, CommandCheckFace, CommandDeleteAllPerson, CommandGetTotalPerson, \
+    CommandGetAccessLog
 from services.persond_ids_storage import PersonStorage
 
 from base.log import get_logger
@@ -60,6 +61,7 @@ async def publish_command_and_wait_result(command, timeout):
         return None
     finally:
         f = futures.pop(command.key_id, None)
+
 
 def save_template_from_answer(answer):
     if answer:
@@ -511,3 +513,19 @@ async def get_total_person_all_devices(all_sn_devices):
                 total_persons[sn_device] = total
 
     return total_persons
+
+
+async def access_log(sn_device, startStamp, endStamp, keyword):
+    command = CommandGetAccessLog(sn_device=sn_device, )
+    command.find(
+        startStamp,
+        endStamp,
+        keyword
+    )
+    answer = await publish_command_and_wait_result(command, timeout=10)
+
+    return {
+        "answer": answer,
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
+    }
