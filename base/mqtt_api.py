@@ -120,7 +120,8 @@ def is_answer_has_error(command, answer):
         CommandControlTerminal.type,
         CommandUpdateConfig.type,
         CommandCheckFace.type,
-        CommandDeleteAllPerson.type
+        CommandDeleteAllPerson.type,
+        CommandGetAccessLog.type
 
     ]:
         if isinstance(answer["operations"]["result"], list):
