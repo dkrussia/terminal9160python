@@ -28,7 +28,7 @@ async def task_try_send_fail_bookings():
                 if isinstance(data, list):
                     fail_bookings = data
 
-        print(f'fails bookings={len(data)} found')
+        print(f'fails bookings={len(fail_bookings)} found')
 
         write_fail_bookings([])
 
