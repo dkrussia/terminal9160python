@@ -1,7 +1,3 @@
-import asyncio
-import json
-import uuid
-from datetime import datetime
 from pprint import pprint
 from typing import Optional, Literal, List
 from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
@@ -9,9 +5,8 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 
-from base.log import get_logger
+from base.booking import add_booking, BookingAddException
 from base.mqtt_api import get_total_person_all_devices, get_total_person_device
-from base.rmq_client import rabbit_mq
 from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
 from config import s as settings
@@ -203,9 +198,6 @@ async def dconfig(request: Request):
     return {}
 
 
-logger_booking = get_logger('booking')
-
-
 @device_push_router.post("/passRecord/addRecord")
 async def pass_face(request: Request):
     """
@@ -233,58 +225,13 @@ async def pass_face(request: Request):
         "userName": ""
     }
     """
-
     payload = await request.json()
-    max_attempt = 3
-    attempt = 1
-    sleep_between_attempt = 3
-    log_uuid = str(uuid.uuid4())
-
-    while attempt <= max_attempt:
-        try:
-            sn_device = payload["devSn"]
-            id_user = payload["devUserId"]
-            atType = payload.get('atType', 0)
-            passDateTime = datetime.strptime(
-                payload['passageTime'], '%Y-%m-%d %H:%M:%S'
-            ).strftime('%Y-%m-%dT%H:%M:%S')
-
-            if device_service.is_access_mode(sn_device):
-                atType = 3
-                if sn_device in device_service.devices_function_arrive:
-                    atType = 2
-
-            if id_user > 0:
-                #
-                await rabbit_mq.publish_message(
-                    q_name=f'events_{sn_device}',
-                    message=json.dumps({
-                        'sn': f'events_{sn_device}',
-                        'time': passDateTime,
-                        'status': str(atType),
-                        "pin": str(id_user),
-                    })
-                )
-
-            logger_booking.info(f'Booking {sn_device} {passDateTime} {atType} {id_user}')
-            return {}
-
-        except Exception as e:
-            logger_booking.error(
-                f'{log_uuid} Booking append error {payload} - {e} '
-                f'attempt#{attempt} of {max_attempt}'
-            )
-
-        attempt += 1
-        await asyncio.sleep(sleep_between_attempt)
-
-    logger_booking.error(
-        f'{log_uuid} Booking was not added {payload}'
-    )
-
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    )
+    try:
+        await add_booking(payload)
+    except BookingAddException:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @device_router.post("/control/set_ntp_time", )

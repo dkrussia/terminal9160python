@@ -16,6 +16,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
+from base.booking import task_try_send_fail_bookings
 from config import s
 
 from base.endpoints import device_router, person_router, device_push_router
@@ -37,6 +38,7 @@ from services.person_photo import PersonPhoto
 
 if sys.platform.lower() == "win32" or os.name.lower() == "nt":
     from asyncio import set_event_loop_policy, WindowsSelectorEventLoopPolicy
+
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
     loop = asyncio.ProactorEventLoop()
     asyncio.set_event_loop(loop)
@@ -140,6 +142,7 @@ print("PORT_FOR_TERMINAL: ", s.PORT_FOR_TERMINAL)
 @app.on_event("startup")
 async def startup_event():
     await rabbit_mq.start()
+    asyncio.create_task(task_try_send_fail_bookings())
 
     if s.MOCK_DEVICE:
         asyncio.create_task(mock_run())
