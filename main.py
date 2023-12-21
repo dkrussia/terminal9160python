@@ -139,9 +139,14 @@ print("HOST_FOR_TERMINAL: ", s.HOST_FOR_TERMINAL)
 print("PORT_FOR_TERMINAL: ", s.PORT_FOR_TERMINAL)
 
 
+def on_reconnect_rmq():
+    device_service.devices = set()
+
+
 @app.on_event("startup")
 async def startup_event():
-    await rabbit_mq.start()
+    await rabbit_mq.start(on_reconnect_rmq)
+    asyncio.create_task(rabbit_mq.monitor_connection())
     asyncio.create_task(task_try_send_fail_bookings())
 
     if s.MOCK_DEVICE:

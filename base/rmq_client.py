@@ -1,5 +1,5 @@
+import asyncio
 import json
-import logging
 from datetime import datetime
 from typing import Union
 
@@ -102,9 +102,32 @@ class RabbitMQClient:
     def __init__(self, amqp_url):
         self.amqp_url = amqp_url
         self.connection = None
+        self.on_reconnect_rmq = None
 
-    async def start(self):
-        self.connection = await connect_robust(self.amqp_url)
+    async def start(self, on_reconnect_rmq):
+        self.on_reconnect_rmq = on_reconnect_rmq
+        await self.connect()
+
+    async def connect(self):
+        while True:
+            try:
+                self.connection = await connect_robust(self.amqp_url)
+                self.on_reconnect_rmq()
+                print("Connected to RabbitMQ")
+                break  # Exit the loop if connected successfully
+            except Exception as e:
+                print(f"Connection failed: {e}")
+                await asyncio.sleep(5)  # Wait before attempting reconnection
+
+    async def monitor_connection(self):
+        while True:
+            try:
+                if self.connection:
+                    await self.connection.ready()
+            except Exception as e:
+                print('Monitor connection reconnect')
+                await self.connect()
+            await asyncio.sleep(2)
 
     async def stop(self):
         if self.connection:
