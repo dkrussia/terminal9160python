@@ -1,3 +1,4 @@
+from datetime import datetime
 from pprint import pprint
 from typing import Optional, Literal, List
 from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
@@ -330,8 +331,12 @@ async def check_face_already_existing(sn_device: str, payload: CheckPhoto):
 
 
 @device_router.get("/access_log", )
-async def access_log(sn_device: str, startStamp: int, endStamp: int, keyword: str = ""):
+async def access_log(
+        sn_device: str,
+        date_start: datetime = datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        date_end: datetime = datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), keyword: str = ""
+):
     return await mqtt_api.access_log(sn_device,
-                                     startStamp=startStamp,
-                                     endStamp=endStamp,
+                                     startStamp=int(date_start.timestamp()),
+                                     endStamp=int(date_end.timestamp()),
                                      keyword=keyword)
