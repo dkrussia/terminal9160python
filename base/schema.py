@@ -37,7 +37,7 @@ class UpdateConfig(BaseModel):
     company: str = None
     deviceName: str = None
     devicePos: str = None
-
+    showName: bool = None
     miniWnd: Literal[0, 1, 3] = None
 
     brightness: Optional[int] = Field(ge=1, le=100, default=None)
