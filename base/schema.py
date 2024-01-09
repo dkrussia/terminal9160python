@@ -71,6 +71,7 @@ class UpdateConfig(BaseModel):
     recgFailedText: str = None
     passScene: bool = None
     passHeadPhoto: bool = None
+    saveRegPhoto: bool = None
     recordStranger: bool = None
     fillLight: Literal[0, 1, 2] = None
     recordLimitTime: int = None
