@@ -164,3 +164,10 @@ if __name__ == '__main__':
         port=settings.SERVER_PORT,
         host=settings.SERVER_HOST,
     )
+    # from hypercorn.config import Config
+    # from hypercorn.asyncio import serve
+    #
+    # config = Config()
+    # server = f'{settings.SERVER_HOST}:{settings.SERVER_PORT}'
+    # config.bind = server
+    # asyncio.run(serve(app, config))
