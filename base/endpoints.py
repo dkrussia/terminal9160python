@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from pprint import pprint
 from typing import Optional, Literal, List
@@ -7,6 +8,7 @@ from pydantic import ValidationError
 from starlette import status
 
 from base.booking import add_booking, BookingAddException
+from base.booking_viewer.viewer import add_booking_report
 from base.mqtt_api import get_total_person_all_devices, get_total_person_device
 from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
@@ -230,18 +232,20 @@ async def pass_face(request: Request):
     try:
         await add_booking(payload)
         return {
-                "code": 0,
-                "desc": "成功",
-                "success": True,
-                "data": {
-                    "params": {},
-                    "id": payload['id']
-                }
+            "code": 0,
+            "desc": "成功",
+            "success": True,
+            "data": {
+                "params": {},
+                "id": payload['id']
             }
+        }
     except BookingAddException:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+    finally:
+        asyncio.create_task(add_booking_report(payload))
 
 
 @device_router.post("/control/set_ntp_time", )

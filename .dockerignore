@@ -4,6 +4,8 @@ frontend/
 .idea/
 .git/
 
+*.db
+
 assets/docs
 assets/logs
 assets/packages

@@ -17,6 +17,7 @@ from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
 from base.booking import task_try_send_fail_bookings
+from base.booking_viewer.viewer import device_booking_viewer
 from config import s
 
 from base.endpoints import device_router, person_router, device_push_router
@@ -60,6 +61,7 @@ app.mount(FIRMWARE_PATH, StaticFiles(directory=FIRMWARE_DIR), name="firmware")
 app.include_router(person_router, tags=['Persons'])
 app.include_router(device_router, tags=['API Device'])
 app.include_router(device_push_router, tags=['Push From Device'])
+app.include_router(device_booking_viewer, tags=['Booking History'])
 
 
 def parse_pydantic_validation_error(errors):
