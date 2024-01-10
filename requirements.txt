@@ -7,3 +7,4 @@ aiomqtt==1.1.0
 python-dotenv==1.0.0
 python-multipart
 hypercorn==0.15.0
+SQLAlchemy==2.0.25

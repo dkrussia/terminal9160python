@@ -229,6 +229,15 @@ async def pass_face(request: Request):
     payload = await request.json()
     try:
         await add_booking(payload)
+        return {
+                "code": 0,
+                "desc": "成功",
+                "success": True,
+                "data": {
+                    "params": {},
+                    "id": payload['id']
+                }
+            }
     except BookingAddException:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
