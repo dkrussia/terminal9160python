@@ -4,8 +4,6 @@ frontend/
 .idea/
 .git/
 
-*.db
-
 assets/docs
 assets/logs
 assets/packages
@@ -13,6 +11,7 @@ assets/photo
 assets/docker-release
 assets/devices_db.json
 assets/face_template_cache.json
+assets/sql_app.db
 
 .gitignore
 .env.local

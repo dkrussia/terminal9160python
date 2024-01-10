@@ -9,7 +9,6 @@ __pycache__/
 *.log
 *.json
 .env.*
-*.db
 
 assets/docker-release/launcher/Launcher9160.exe
 
@@ -18,5 +17,6 @@ assets/packages/
 assets/docs/
 assets/logs/
 assets/photo
+assets/sql_app.db
 
 
