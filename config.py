@@ -66,6 +66,8 @@ class Settings(BaseSettings):
 
     MCI_PHOTO_MANAGER: bool = False
 
+    BOOKING_HISTORY_STRANGER: bool = False
+
     class Config:
         env_file = f"{BASE_DIR}/.env.{SERVER_MODE}"
 
