@@ -1,6 +1,6 @@
 from datetime import datetime
 from os import path
-from typing import List
+from typing import List, Union
 
 from fastapi import APIRouter
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, and_
@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
+from base import mqtt_api
 from config import BASE_DIR, s as settings
 
 SQLALCHEMY_DATABASE_URL = path.join(BASE_DIR, 'assets', 'sql_app.db')
@@ -37,16 +38,24 @@ class BookingHistory(Base):
 BookingHistory.__table__.create(engine, checkfirst=True)
 
 
-class BookingHistorySchema(BaseModel):
+class BookingHistorySchemaBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    internal_id: int
+
     devUserId: int
-    head: str
     devSn: str
     devName: str
     firstName: str
     lastName: str
     passageTime: datetime
+
+
+class BookingHistorySchema(BookingHistorySchemaBase):
+    internal_id: int
+    head: str
+
+
+class BookingHistorySchemaDev(BookingHistorySchemaBase):
+    id: int
 
 
 async def add_booking_report(booking):
@@ -69,7 +78,8 @@ async def add_booking_report(booking):
         session.commit()
 
 
-BookingHistoryList = TypeAdapter(List[BookingHistorySchema])
+BookingHistoryListDB = TypeAdapter(List[BookingHistorySchema])
+BookingHistoryListDEVICE = TypeAdapter(List[BookingHistorySchemaDev])
 
 
 @device_booking_viewer.get('/')
@@ -78,13 +88,22 @@ async def get_booking_history(
         date_start: datetime = datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         date_end: datetime = datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         stranger: bool = False,
-) -> List[BookingHistorySchema]:
-    with Session() as session:
-        query = session.query(BookingHistory).filter(
-            and_(BookingHistory.passageTime.between(date_start, date_end),
-                 BookingHistory.devSn == sn_device)
-        )
-        if not stranger:
-            query = query.filter(BookingHistory.devUserId != -1)
-        r = query.all()
-        return BookingHistoryList.validate_python(r)
+        from_db: bool = False
+) -> Union[List[BookingHistorySchema], List[BookingHistorySchemaDev]]:
+    if from_db:
+        with Session() as session:
+            query = session.query(BookingHistory).filter(
+                and_(BookingHistory.passageTime.between(date_start, date_end),
+                     BookingHistory.devSn == sn_device)
+            )
+            if not stranger:
+                query = query.filter(BookingHistory.devUserId != -1)
+            r = query.all()
+            return BookingHistoryListDB.validate_python(r)
+    else:
+        r = await mqtt_api.access_log(sn_device,
+                                      startStamp=int(date_start.timestamp()),
+                                      endStamp=int(date_end.timestamp()),
+                                      keyword="")
+        result_list = r['answer']['operations'].get('result', []) if r['answer'] else []
+        return BookingHistoryListDEVICE.validate_python(result_list)
