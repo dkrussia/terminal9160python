@@ -4,6 +4,7 @@ from typing import List, Union
 
 from fastapi import APIRouter
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, and_
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -107,3 +108,16 @@ async def get_booking_history(
                                       keyword="")
         result_list = r['answer']['operations'].get('result', []) if r['answer'] else []
         return BookingHistoryListDEVICE.validate_python(result_list)
+
+
+@device_booking_viewer.get('/head')
+def get_head_if_exist(id: int):
+    with Session() as session:
+        query = session.query(BookingHistory).filter(
+            BookingHistory.internal_id == id
+        )
+        try:
+            record = query.one()
+            return {'head': record.head}
+        except NoResultFound:
+            return {'head': None}
