@@ -94,9 +94,12 @@ async def get_booking_history(
     if from_db:
         with Session() as session:
             query = session.query(BookingHistory).filter(
-                and_(BookingHistory.passageTime.between(date_start, date_end),
-                     BookingHistory.devSn == sn_device)
-            )
+                and_(
+                    BookingHistory.passageTime.between(date_start, date_end),
+                    BookingHistory.devSn == sn_device
+                )
+            ).order_by(BookingHistory.passageTime.desc())
+
             if not stranger:
                 query = query.filter(BookingHistory.devUserId != -1)
             r = query.all()
