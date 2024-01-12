@@ -124,6 +124,22 @@ class BaseCommand:
     def set_operation_as_dict(self, data_json: dict):
         self.payload["operations"] = data_json
 
+    @property
+    def log_payload(self):
+        log = self.payload
+        operations: dict | list = self.payload.get('operations')
+        if operations:
+            if isinstance(operations, list):
+                for item in operations:
+                    if item.get('feature'):
+                        feature = item['feature']
+                        item['feature'] = feature[:5] + '...' + feature[-5:]
+            else:
+                if operations.get('feature'):
+                    feature = operations['feature']
+                    operations['feature'] = feature[:5] + '...' + feature[-5:]
+        return log
+
 
 class CommandCreatePerson(BaseCommand):
     type = 3

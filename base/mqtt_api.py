@@ -35,7 +35,7 @@ async def publish_command_and_wait_result(command, timeout):
     print("-----PUBLISH COMMAND TO MQTT------")
     print(f"---TO SN_DEVICE: {command.sn_device}--")
     print("-----       PAYLOAD      ------")
-    # pprint(command.payload)
+    # pprint(command.log_payload)
     print("-----       PAYLOAD      ------")
     future: Future = asyncio.get_running_loop().create_future()
     futures[command.key_id] = future
@@ -92,11 +92,12 @@ def save_person_ids_in_storage_from_answer(sn_device, answer):
 
 
 def is_answer_has_error(command, answer):
+    print(command.log_payload)
     errors = []
     if answer is None:
         logger.error(
             f' ![+]ERROR Not receive answer from MQTT '
-            f'\n Command={command.payload}'
+            f'\n Command={command.log_payload}'
         )
         errors.append({
             'reason': "ERROR Not receive answer from MQTT",
@@ -111,7 +112,7 @@ def is_answer_has_error(command, answer):
             logger.error(
                 f' ![+]ERROR Some operations'
                 f'\n Answer= ${json.dumps(answer)}'
-                f'\n Command={command.payload}'
+                f'\n Command={command.log_payload}'
                 f'\n ERROR Operation={answer["operations"]}'
             )
 
@@ -136,7 +137,7 @@ def is_answer_has_error(command, answer):
                     logger.error(
                         f' ![+]ERROR Some operations'
                         f'\n Answer= ${json.dumps(answer)}'
-                        f'\n Command={command.payload}'
+                        f'\n Command={command.log_payload}'
                         f'\n ERROR Operation={operation}'
                         f'\n Details = {FAILURE_CODES_REASON.get(operation["code"], "Not details")}'
                     )
@@ -153,7 +154,7 @@ def is_answer_has_error(command, answer):
                 logger.error(
                     f' ![+]ERROR Some operations'
                     f'\n Answer= ${json.dumps(answer)}'
-                    f'\n Command={command.payload}'
+                    f'\n Command={command.log_payload}'
                     f'\n ERROR operation={answer["operations"]["result"]}'
                     f'\n Details = {FAILURE_CODES_REASON.get(answer["operations"]["result"]["code"], "Not details")} '
                 )
