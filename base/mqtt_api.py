@@ -16,7 +16,6 @@ from services.device_command import CommandControlTerminal, ControlAction, Comma
     CommandGetAccessLog
 from services.persond_ids_storage import PersonStorage
 
-from base.log import get_logger
 
 mqtt_push_logger = get_logger('mqtt_publish_command')
 
@@ -172,7 +171,9 @@ async def create_or_update(
         cardNumber,
         timeout=settings.TIMEOUT_MQTT_RESPONSE
 ):
-    await delete_person(sn_device=sn_device, id=id_person, timeout=10)
+    r = await delete_person(sn_device=sn_device, id=id_person, timeout=10)
+    if not r.get('answer'):
+        return r
 
     if photo and isinstance(photo, UploadFile):
         photo = base64.b64encode(photo.file.read()).decode("utf-8")
