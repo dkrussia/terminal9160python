@@ -2,6 +2,7 @@
 Создание json-команд для терминалов 9160
 Которые будут отправлены в MQTT[commands_$sn_device]
 """
+import copy
 import random
 from datetime import datetime
 from typing import Optional
@@ -104,7 +105,7 @@ class BaseCommand:
         self.sn_device = sn_device
         self.id_command = id_command
 
-        self.payload = {
+        self.payload: dict = {
             "type": self.type,
             "id": self.id_command,
             "devSn": self.sn_device,
@@ -126,19 +127,27 @@ class BaseCommand:
 
     @property
     def log_payload(self):
-        log = self.payload
-        operations: dict | list = self.payload.get('operations')
+        payload_logs = copy.deepcopy(self.payload)
+        operations: dict | list = payload_logs.get('operations')
+        keys_to_remove = ['createBy', 'deptId', 'sex',
+                          'status', 'userName', 'userPhone',
+                          'company', 'department',
+                          'group', 'remark', ]
         if operations:
             if isinstance(operations, list):
                 for item in operations:
                     if item.get('feature'):
                         feature = item['feature']
                         item['feature'] = feature[:5] + '...' + feature[-5:]
+                        for key in keys_to_remove:
+                            item.pop(key, None)
             else:
                 if operations.get('feature'):
                     feature = operations['feature']
                     operations['feature'] = feature[:5] + '...' + feature[-5:]
-        return log
+                    for key in keys_to_remove:
+                        operations.pop(key, None)
+        return payload_logs
 
 
 class CommandCreatePerson(BaseCommand):
