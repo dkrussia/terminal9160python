@@ -139,8 +139,8 @@ class BaseCommand:
                     if item.get('feature'):
                         feature = item['feature']
                         item['feature'] = feature[:5] + '...' + feature[-5:]
-                        for key in keys_to_remove:
-                            item.pop(key, None)
+                    for key in keys_to_remove:
+                        item.pop(key, None)
             else:
                 if operations.get('feature'):
                     feature = operations['feature']
