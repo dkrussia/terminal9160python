@@ -132,7 +132,7 @@ class BaseCommand:
         keys_to_remove = ['createBy', 'deptId', 'sex',
                           'status', 'userName', 'userPhone',
                           'company', 'department',
-                          'group', 'remark', ]
+                          'group', 'remark', 'createTime', 'updateBy']
         if operations:
             if isinstance(operations, list):
                 for item in operations:
