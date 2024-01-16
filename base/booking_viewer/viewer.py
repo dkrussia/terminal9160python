@@ -114,10 +114,12 @@ async def get_booking_history(
 
 
 @device_booking_viewer.get('/head')
-def get_head_if_exist(id: int):
+def get_head_if_exist(id: int, devUserId: int):
     with Session() as session:
-        query = session.query(BookingHistory).filter(
-            BookingHistory.internal_id == id
+        query = session.query(BookingHistory).filter(and_(
+            BookingHistory.internal_id == id,
+            BookingHistory.devUserId == devUserId,
+        )
         )
         try:
             record = query.one()
