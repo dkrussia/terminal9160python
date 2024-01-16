@@ -8,7 +8,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic import BaseModel, ConfigDict, TypeAdapter, computed_field
 
 from base import mqtt_api
 from config import BASE_DIR, s as settings
@@ -48,6 +48,11 @@ class BookingHistorySchemaBase(BaseModel):
     firstName: str
     lastName: str
     passageTime: datetime
+
+    @computed_field
+    @property
+    def matrix_head(self) -> str:
+        return f'{settings.PHOTO_URL}/{self.devUserId}.jpg'
 
 
 class BookingHistorySchema(BookingHistorySchemaBase):
