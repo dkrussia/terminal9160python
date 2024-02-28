@@ -63,6 +63,10 @@ async def get_person(sn_device: str, id: Optional[int] = ""):
         if resp.get('answer'):
             for person in resp["answer"]["operations"]["users"]:
                 person.update({"faceUrl": PersonPhoto.get_photo_url(person["id"])})
+                person.update(
+                    {"_face_template": "OK" if PersonPhoto.face_templates.get(
+                        str(person["id"]), ) else "NOT FOUND"}
+                )
         return resp
     return await mqtt_api.get_person(id_person=id, sn_device=sn_device)
 
