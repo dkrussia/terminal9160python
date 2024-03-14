@@ -109,22 +109,25 @@ async def get_booking_history(
                 query = query.filter(BookingHistory.devUserId != -1)
             r = query.all()
             return BookingHistoryListDB.validate_python(r)
-    else:
-        r = await mqtt_api.access_log(sn_device,
-                                      startStamp=int(date_start.timestamp()),
-                                      endStamp=int(date_end.timestamp()),
-                                      keyword="")
-        result_list = r['answer']['operations'].get('result', []) if r['answer'] else []
-        return BookingHistoryListDEVICE.validate_python(result_list)
+
+    r = await mqtt_api.access_log(sn_device,
+                                  startStamp=int(date_start.timestamp()),
+                                  endStamp=int(date_end.timestamp()),
+                                  keyword="")
+    result_list = r['answer']['operations'].get('result', []) if r['answer'] else []
+    return BookingHistoryListDEVICE.validate_python(result_list)
 
 
 @device_booking_viewer.get('/head')
-def get_head_if_exist(id: int, devUserId: int):
+def get_head_if_exist(id: int, devUserId: int, passageTime: datetime, devSn: str):
     with Session() as session:
-        query = session.query(BookingHistory).filter(and_(
-            BookingHistory.internal_id == id,
-            BookingHistory.devUserId == devUserId,
-        )
+        query = session.query(BookingHistory).filter(
+            and_(
+                BookingHistory.internal_id == id,
+                BookingHistory.passageTime == passageTime,
+                BookingHistory.devSn == devSn,
+                BookingHistory.devUserId == devUserId,
+            )
         )
         try:
             record = query.one()
