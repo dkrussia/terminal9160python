@@ -16,8 +16,8 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
-from base.booking import task_try_send_fail_bookings
-from base.booking_viewer.viewer import device_booking_viewer, init_db_models
+from base.bookings.booking import task_try_send_fail_bookings
+from base.bookings.viewer import device_booking_viewer, init_db_models
 from config import s
 
 from base.endpoints import device_router, person_router, device_push_router

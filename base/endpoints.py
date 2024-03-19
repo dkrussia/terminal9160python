@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, date
 from pprint import pprint
 from typing import Optional, Literal, List
 from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
@@ -7,8 +7,9 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 
-from base.booking import add_booking, BookingAddException
-from base.booking_viewer.viewer import add_booking_report
+from base.bookings.booking import add_booking, BookingAddException
+from base.bookings.sync import sync_booking_on_device, sync_booking_all_devices
+from base.bookings.viewer import add_booking_report
 from base.mqtt_api import get_total_person_all_devices, get_total_person_device
 from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
@@ -357,3 +358,17 @@ async def access_log(
                                      startStamp=int(date_start.timestamp()),
                                      endStamp=int(date_end.timestamp()),
                                      keyword=keyword)
+
+
+@device_router.post("/sync/all", )
+async def sync_all_device(_date: datetime):
+    devices = device_service.devices
+    devices = ['YGKJ202107TR08EL0007']
+    r = await sync_booking_all_devices(devices, _date)
+    return r
+
+
+@device_router.post("/sync", )
+async def sync_device(sn_device: str, _date: datetime):
+    r = await sync_booking_on_device(sn_device, _date)
+    return r
