@@ -8,3 +8,4 @@ python-dotenv==1.0.0
 python-multipart
 hypercorn==0.15.0
 SQLAlchemy==2.0.25
+aiosqlite==0.20.0

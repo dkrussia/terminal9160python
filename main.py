@@ -17,7 +17,7 @@ from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
 from base.booking import task_try_send_fail_bookings
-from base.booking_viewer.viewer import device_booking_viewer
+from base.booking_viewer.viewer import device_booking_viewer, init_db_models
 from config import s
 
 from base.endpoints import device_router, person_router, device_push_router
@@ -147,6 +147,7 @@ def on_reconnect_rmq():
 
 @app.on_event("startup")
 async def startup_event():
+    await init_db_models()
     await rabbit_mq.start(on_reconnect_rmq)
     asyncio.create_task(rabbit_mq.monitor_connection())
     asyncio.create_task(task_try_send_fail_bookings())

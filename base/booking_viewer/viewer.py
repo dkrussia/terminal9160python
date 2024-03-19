@@ -3,10 +3,10 @@ from os import path
 from typing import List, Union
 
 from fastapi import APIRouter
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, and_
+from sqlalchemy import select, Column, Integer, String, DateTime, and_
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter, computed_field
 
@@ -14,9 +14,14 @@ from base import mqtt_api
 from config import BASE_DIR, s as settings
 
 SQLALCHEMY_DATABASE_URL = path.join(BASE_DIR, 'assets', 'sql_app.db')
-engine = create_engine(f'sqlite:///{SQLALCHEMY_DATABASE_URL}',
-                       connect_args={"check_same_thread": False})
-Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_async_engine(f'sqlite+aiosqlite:///{SQLALCHEMY_DATABASE_URL}',
+                             connect_args={"check_same_thread": False})
+
+ASession = async_sessionmaker(autocommit=False,
+                              autoflush=False, bind=engine,
+                              class_=AsyncSession,
+                              expire_on_commit=False
+                              )
 Base = declarative_base()
 
 device_booking_viewer = APIRouter(prefix='/api/devices/booking/view')
@@ -36,7 +41,9 @@ class BookingHistory(Base):
     passageTime = Column(DateTime, )
 
 
-BookingHistory.__table__.create(engine, checkfirst=True)
+async def init_db_models():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all,)
 
 
 class BookingHistorySchemaBase(BaseModel):
@@ -79,13 +86,29 @@ async def add_booking_report(booking):
             booking['passageTime'], '%Y-%m-%d %H:%M:%S'
         )
     )
-    with Session() as session:
-        session.add(b)
-        session.commit()
+    async with ASession() as session:
+        async with session.begin():
+            session.add(b)
+        await session.commit()
 
 
 BookingHistoryListDB = TypeAdapter(List[BookingHistorySchema])
 BookingHistoryListDEVICE = TypeAdapter(List[BookingHistorySchemaDev])
+
+
+async def fetch_booking_history(session, sn_device, date_start, date_end, stranger):
+    query = select(BookingHistory).where(
+        and_(
+            BookingHistory.passageTime.between(date_start, date_end),
+            BookingHistory.devSn == sn_device
+        )
+    ).order_by(BookingHistory.passageTime.desc())
+
+    if not stranger:
+        query = query.where(BookingHistory.devUserId != -1)
+
+    result = await session.execute(query)
+    return result.scalars().all()
 
 
 @device_booking_viewer.get('/')
@@ -97,18 +120,14 @@ async def get_booking_history(
         from_db: bool = False
 ) -> Union[List[BookingHistorySchema], List[BookingHistorySchemaDev]]:
     if from_db:
-        with Session() as session:
-            query = session.query(BookingHistory).filter(
-                and_(
-                    BookingHistory.passageTime.between(date_start, date_end),
-                    BookingHistory.devSn == sn_device
-                )
-            ).order_by(BookingHistory.passageTime.desc())
-
-            if not stranger:
-                query = query.filter(BookingHistory.devUserId != -1)
-            r = query.all()
-            return BookingHistoryListDB.validate_python(r)
+        async with ASession() as session:
+            async with session.begin():
+                bookings = await fetch_booking_history(session,
+                                                       sn_device,
+                                                       date_start,
+                                                       date_end,
+                                                       stranger)
+                return BookingHistoryListDB.validate_python(bookings, )
 
     r = await mqtt_api.access_log(sn_device,
                                   startStamp=int(date_start.timestamp()),
@@ -119,18 +138,20 @@ async def get_booking_history(
 
 
 @device_booking_viewer.get('/head')
-def get_head_if_exist(id: int, devUserId: int, passageTime: datetime, devSn: str):
-    with Session() as session:
-        query = session.query(BookingHistory).filter(
-            and_(
-                BookingHistory.internal_id == id,
-                BookingHistory.passageTime == passageTime,
-                BookingHistory.devSn == devSn,
-                BookingHistory.devUserId == devUserId,
+async def get_head_if_exist(id: int, devUserId: int, passageTime: datetime, devSn: str):
+    async with ASession() as session:
+        async with session.begin():
+            query = select(BookingHistory).filter(
+                and_(
+                    BookingHistory.internal_id == id,
+                    BookingHistory.passageTime == passageTime,
+                    BookingHistory.devSn == devSn,
+                    BookingHistory.devUserId == devUserId,
+                )
             )
-        )
-        try:
-            record = query.one()
-            return {'head': record.head}
-        except NoResultFound:
-            return {'head': None}
+            try:
+                record = await session.execute(query)
+                record = record.scalars().one()
+                return {'head': record.head}
+            except NoResultFound:
+                return {'head': None}
