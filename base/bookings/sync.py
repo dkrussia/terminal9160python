@@ -67,12 +67,17 @@ async def sync_booking_on_device(sn_device: str, date: datetime, ):
         except Exception as e:
             logger.error(f'\tFail : {b}. {str(e)}')
 
-    return (f'Finding missing={len(missing_bookings)} '
-            f'Success={count}'
-            f'Fail={len(missing_bookings) - count}')
+    return {
+        "missing": len(missing_bookings),
+        "success": count,
+        "fail": len(missing_bookings) - count
+    }
 
 
 async def sync_booking_all_devices(sn_devices: list, date: datetime):
+    results = {}
     for sn_device in sn_devices:
         logger.info(f'Sync booking for {sn_device}. {date}')
-        await sync_booking_on_device(sn_device, date)
+        r = await sync_booking_on_device(sn_device, date)
+        results[sn_device] = r
+    return results

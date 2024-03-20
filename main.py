@@ -20,7 +20,7 @@ from base.bookings.booking import task_try_send_fail_bookings
 from base.bookings.viewer import device_booking_viewer, init_db_models
 from config import s
 
-from base.endpoints import device_router, person_router, device_push_router
+from base.endpoints import device_router, person_router, device_push_router, sync_router
 from base.mqtt_client import mqtt_consumer
 from base.rmq_client import rabbit_mq
 
@@ -62,6 +62,7 @@ app.include_router(person_router, tags=['Persons'])
 app.include_router(device_router, tags=['API Device'])
 app.include_router(device_push_router, tags=['Push From Device'])
 app.include_router(device_booking_viewer, tags=['Booking History'])
+app.include_router(sync_router, tags=['Booking Sync'])
 
 
 def parse_pydantic_validation_error(errors):

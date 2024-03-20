@@ -25,6 +25,7 @@ device_push_router = APIRouter(prefix='/api/devices')
 
 device_router = APIRouter(prefix='/api/devices/my')
 person_router = APIRouter(prefix='/api/devices/my/person')
+sync_router = APIRouter(prefix='/api/devices/sync')
 
 
 # TODO: Добавить во все вызовы API серийный номер устройства
@@ -360,15 +361,21 @@ async def access_log(
                                      keyword=keyword)
 
 
-@device_router.post("/sync/all", )
-async def sync_all_device(_date: datetime):
+@sync_router.post("/all", )
+async def sync_all_device(
+        _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
+            "%Y-%m-%dT%H:%M:%S")
+):
     devices = device_service.devices
-    devices = ['YGKJ202107TR08EL0007']
+    # devices = ['YGKJ202107TR08EL0007']
     r = await sync_booking_all_devices(devices, _date)
     return r
 
 
-@device_router.post("/sync", )
-async def sync_device(sn_device: str, _date: datetime):
+@sync_router.post("/device", )
+async def sync_device(
+        sn_device: str,
+        _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
+            "%Y-%m-%dT%H:%M:%S")):
     r = await sync_booking_on_device(sn_device, _date)
     return r

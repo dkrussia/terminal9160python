@@ -39,11 +39,12 @@ class BookingHistory(Base):
     firstName = Column(String, )
     lastName = Column(String, )
     passageTime = Column(DateTime, )
+    insertTime = Column(DateTime, )
 
 
 async def init_db_models():
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all,)
+        await conn.run_sync(Base.metadata.create_all, )
 
 
 class BookingHistorySchemaBase(BaseModel):
@@ -84,7 +85,9 @@ async def add_booking_report(booking):
         lastName=booking["lastName"],
         passageTime=datetime.strptime(
             booking['passageTime'], '%Y-%m-%d %H:%M:%S'
-        )
+        ),
+        insertTime=datetime.now()
+
     )
     async with ASession() as session:
         async with session.begin():
