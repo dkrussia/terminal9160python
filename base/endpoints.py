@@ -366,7 +366,7 @@ async def sync_all_device(
         _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
             "%Y-%m-%dT%H:%M:%S")
 ):
-    devices = device_service.devices
+    devices = device_service.all_sn_list
     # devices = ['YGKJ202107TR08EL0007']
     r = await sync_booking_all_devices(devices, _date)
     return r
