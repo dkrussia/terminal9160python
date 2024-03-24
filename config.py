@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     SERVER_PORT: int = 8888
     #
     #
+    MATRIX_SQL_HOST = ""
+    MATRIX_SQL_PORT = ""
+    MATRIX_SQL_LOGIN = ""
+    MATRIX_SQL_PASSWORD = ""
+    #
     RMQ_HOST: str = "localhost"
     RMQ_PORT: int = 5672
     # RABBIT CREDENTIALS

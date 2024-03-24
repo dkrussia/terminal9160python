@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, date
+from datetime import datetime
 from pprint import pprint
 from typing import Optional, Literal, List
 from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
@@ -7,9 +7,9 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette import status
 
-from base.bookings.booking import add_booking, BookingAddException
+from base.bookings.booking import add_booking_to_rmq, BookingAddException
 from base.bookings.sync import sync_booking_on_device, sync_booking_all_devices
-from base.bookings.viewer import add_booking_report
+from base.bookings.viewer import add_booking_to_local_db, fetch_booking_from_matrix
 from base.mqtt_api import get_total_person_all_devices, get_total_person_device
 from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
@@ -17,7 +17,6 @@ from config import s as settings
 from base import mqtt_api
 from services.device_command import ControlAction
 from services.devices_storage import device_service
-
 # TODO: Разделить то что пушит девайс, и свои роуты
 from services.person_photo import PersonPhoto
 
@@ -236,7 +235,7 @@ async def pass_face(request: Request):
     """
     payload = await request.json()
     try:
-        await add_booking(payload)
+        await add_booking_to_rmq(payload)
         # return {
         #     "code": 0,
         #     "desc": "成功",
@@ -251,7 +250,14 @@ async def pass_face(request: Request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     finally:
-        asyncio.create_task(add_booking_report(payload))
+        asyncio.create_task(add_booking_to_local_db(payload))
+
+
+@device_push_router.post('/diagnostic')
+def download_diagnostic_data(request: Request):
+    print(request.headers)
+    print(request.body())
+    print(request.json())
 
 
 @device_router.post("/control/set_ntp_time", )
@@ -363,19 +369,32 @@ async def access_log(
 
 @sync_router.post("/all", )
 async def sync_all_device(
+        from_matrix: bool = False,
         _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
             "%Y-%m-%dT%H:%M:%S")
 ):
+    """Синхронизуемся по всем устройствам"""
     devices = device_service.all_sn_list
     # devices = ['YGKJ202107TR08EL0007']
-    r = await sync_booking_all_devices(devices, _date)
+    r = await sync_booking_all_devices(devices, _date, from_matrix)
     return r
 
 
 @sync_router.post("/device", )
 async def sync_device(
         sn_device: str,
+        from_matrix: bool = False,
         _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
             "%Y-%m-%dT%H:%M:%S")):
-    r = await sync_booking_on_device(sn_device, _date)
+    r = await sync_booking_on_device(sn_device, _date, from_matrix)
+    return r
+
+
+@sync_router.get("/show_matrix_bookings", description="Получить проходы")
+async def show_matrix_bookings(
+        sn_device: str,
+        _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
+            "%Y-%m-%d")):
+    """Показать зарегистрированные проходы в Matrix"""
+    r = await fetch_booking_from_matrix(sn_device=sn_device, date=_date)
     return r

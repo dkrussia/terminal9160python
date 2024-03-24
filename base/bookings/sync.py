@@ -1,8 +1,8 @@
-import json
 from datetime import datetime
 
-from base.bookings.booking import add_booking
-from base.bookings.viewer import get_booking_history, add_booking_report
+from base.bookings.booking import add_booking_to_rmq
+from base.bookings.viewer import get_booking_history, add_booking_to_local_db, \
+    fetch_booking_from_matrix
 from base.log import get_logger
 
 logger = get_logger('sync_booking')
@@ -19,24 +19,26 @@ def find_missing_bookings(db_bookings, device_bookings):
     return missing_bookings
 
 
-async def get_booking_from_db_on_date(sn_device, date: datetime, ):
-    date_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
-    date_end = date.replace(hour=23, minute=59, second=59, microsecond=0)
-    logger.info(f'Get booking from db {date_start} {date_end}')
-    result = await get_booking_history(
-        sn_device=sn_device,
-        date_start=date_start,
-        date_end=date_end,
-        stranger=False,
-        from_db=True)
-    logger.info(f'Got {len(result)}')
+async def get_booking_from_db_on_date(sn_device, date: datetime, from_matrix):
+    if from_matrix:
+        result = await fetch_booking_from_matrix(sn_device, date)
+    else:
+        date_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
+        date_end = date.replace(hour=23, minute=59, second=59, microsecond=0)
+        result = await get_booking_history(
+            sn_device=sn_device,
+            date_start=date_start,
+            date_end=date_end,
+            stranger=False,
+            from_db=True)
+    logger.info(
+        f'Got booking from {"matrix" if from_matrix else "local"} db {date.date()}={len(result)}')
     return result
 
 
 async def get_booking_from_device_on_date(sn_device, date: datetime.date, ):
     date_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
     date_end = date.replace(hour=23, minute=59, second=59, microsecond=0)
-    logger.info(f'Get booking from device {date_start} {date_end}')
     result = await get_booking_history(
         sn_device=sn_device,
         date_start=date_start,
@@ -44,12 +46,12 @@ async def get_booking_from_device_on_date(sn_device, date: datetime.date, ):
         stranger=False,
         from_db=False)
     result = list(filter(lambda b: b.devUserId != -1, result))
-    logger.info(f'Got {len(result)}')
+    logger.info(f'Got booking from device {date.date()}={len(result)}')
     return result
 
 
-async def sync_booking_on_device(sn_device: str, date: datetime, ):
-    db_booking = await get_booking_from_db_on_date(sn_device, date)
+async def sync_booking_on_device(sn_device: str, date: datetime, from_matrix: bool):
+    db_booking = await get_booking_from_db_on_date(sn_device, date, from_matrix)
     device_bookings = await get_booking_from_device_on_date(sn_device, date)
     missing_bookings = find_missing_bookings(db_booking, device_bookings)
 
@@ -60,8 +62,10 @@ async def sync_booking_on_device(sn_device: str, date: datetime, ):
         try:
             b_json = b.dict()
             b_json["passageTime"] = b.passageTime.strftime('%Y-%m-%d %H:%M:%S')
-            await add_booking(b_json)
-            await add_booking_report(b_json)
+            await add_booking_to_rmq(b_json)
+            if not from_matrix:
+                await add_booking_to_local_db(b_json)
+
             count += 1
             logger.info(f'\tSuccess : {b}')
         except Exception as e:
@@ -74,10 +78,10 @@ async def sync_booking_on_device(sn_device: str, date: datetime, ):
     }
 
 
-async def sync_booking_all_devices(sn_devices: list, date: datetime):
+async def sync_booking_all_devices(sn_devices: list, date: datetime, from_matrix: bool):
     results = {}
     for sn_device in sn_devices:
-        logger.info(f'Sync booking for {sn_device}. {date}')
-        r = await sync_booking_on_device(sn_device, date)
+        logger.info(f'Sync booking for {sn_device}. {date} . from_matrix={from_matrix}')
+        r = await sync_booking_on_device(sn_device, date, from_matrix)
         results[sn_device] = r
     return results

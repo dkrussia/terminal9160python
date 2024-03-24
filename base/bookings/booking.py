@@ -34,7 +34,7 @@ async def task_try_send_fail_bookings():
 
         for fail_b in fail_bookings:
             try:
-                await add_booking(payload=fail_b, logger=logger_fail_booking)
+                await add_booking_to_rmq(payload=fail_b, logger=logger_fail_booking)
             except BookingAddException:
                 pass
         print('end task_try_send_fail_bookings')
@@ -61,7 +61,7 @@ def put_fail_booking_to_file(booking_payload):
     write_fail_bookings(data)
 
 
-async def add_booking(payload: dict, logger=logger_booking):
+async def add_booking_to_rmq(payload: dict, logger=logger_booking):
     max_attempt = 3
     attempt = 1
     sleep_between_attempt = 3

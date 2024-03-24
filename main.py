@@ -161,7 +161,6 @@ async def startup_event():
     asyncio.create_task(mqtt_consumer())
     asyncio.create_task(PersonPhoto.save_templates_to_file())
 
-
 if __name__ == '__main__':
     uvicorn.run(
         app=app,

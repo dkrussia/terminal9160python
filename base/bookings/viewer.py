@@ -1,27 +1,51 @@
+from dataclasses import dataclass
 from datetime import datetime
 from os import path
 from typing import List, Union
-
+import aioodbc
 from fastapi import APIRouter
 from sqlalchemy import select, Column, Integer, String, DateTime, and_
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-
+from sqlalchemy.engine import URL
 from pydantic import BaseModel, ConfigDict, TypeAdapter, computed_field
-
 from base import mqtt_api
 from config import BASE_DIR, s as settings
 
 SQLALCHEMY_DATABASE_URL = path.join(BASE_DIR, 'assets', 'sql_app.db')
-engine = create_async_engine(f'sqlite+aiosqlite:///{SQLALCHEMY_DATABASE_URL}',
-                             connect_args={"check_same_thread": False})
 
-ASession = async_sessionmaker(autocommit=False,
-                              autoflush=False, bind=engine,
-                              class_=AsyncSession,
-                              expire_on_commit=False
-                              )
+SQLALCHEMY_DATABASE_URL_MATRIX = URL(
+    'mssql+aioodbc',
+    settings.MATRIX_SQL_LOGIN,
+    settings.MATRIX_SQL_PASSWORD,
+    settings.MATRIX_SQL_HOST,
+    settings.MATRIX_SQL_PORT,
+    'matrix', {"driver": "ODBC Driver 18 for SQL Server"})
+engine_sql_server = create_async_engine(
+    "mssql+aioodbc://sa:123@151.248.125.126:14330/matrix?"
+    "driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
+)
+
+print(engine_sql_server.driver)
+engine = create_async_engine(
+    f'sqlite+aiosqlite:///{SQLALCHEMY_DATABASE_URL}',
+    connect_args={"check_same_thread": False})
+
+ASession = async_sessionmaker(
+    autocommit=False,
+    autoflush=False, bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
+ASessionSQlServer = async_sessionmaker(
+    autocommit=False,
+    autoflush=False, bind=engine_sql_server,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
 Base = declarative_base()
 
 device_booking_viewer = APIRouter(prefix='/api/devices/booking/view')
@@ -72,7 +96,7 @@ class BookingHistorySchemaDev(BookingHistorySchemaBase):
     id: int
 
 
-async def add_booking_report(booking):
+async def add_booking_to_local_db(booking):
     if booking["devUserId"] < 0 and not settings.BOOKING_HISTORY_STRANGER:
         return
     b = BookingHistory(
@@ -100,6 +124,7 @@ BookingHistoryListDEVICE = TypeAdapter(List[BookingHistorySchemaDev])
 
 
 async def fetch_booking_history(session, sn_device, date_start, date_end, stranger):
+    # Fetch from local db sqlite
     query = select(BookingHistory).where(
         and_(
             BookingHistory.passageTime.between(date_start, date_end),
@@ -112,6 +137,41 @@ async def fetch_booking_history(session, sn_device, date_start, date_end, strang
 
     result = await session.execute(query)
     return result.scalars().all()
+
+
+@dataclass
+class MatrixBooking:
+    passageTime: datetime
+
+
+async def fetch_booking_from_matrix(sn_device, date):
+    SQL_QUERY_BOOKING_DEVICE = """
+    SELECT terminalInfo.shortname,DATEADD(second,DATE_TIME_UTC/1000,'1970-01-01 00:00:00') as passageTime
+    FROM matrix.matrix.BAS_BOOKING_VIEW b
+    inner join matrix.TM_DEVICE_INFO terminalInfo ON b.terminalNumber = terminalInfo.number_
+    where bookingTerminalEventTypeLang='en'
+    --and terminalInfo.shortname='{device_sn}'
+    and DATEADD(second,DATE_TIME_UTC/1000,'1970-01-01 00:00:00') >= '{date} 00:00:00' 
+    and DATEADD(second,DATE_TIME_UTC/1000,'1970-01-01 00:00:00') <= '{date} 23:59:59' 
+    order by DATE_TIME_UTC desc
+    """
+
+    connection_string = (
+        "DRIVER=ODBC Driver 17 for SQL Server;"
+        f"SERVER={settings.MATRIX_SQL_HOST},{settings.MATRIX_SQL_PORT};"
+        "DATABASE=matrix;"
+        f"UID={settings.MATRIX_SQL_LOGIN};PWD={settings.MATRIX_SQL_PASSWORD}"
+    )
+    cnxn = await aioodbc.connect(dsn=connection_string, )
+    crsr = await cnxn.cursor()
+    await crsr.execute(
+        SQL_QUERY_BOOKING_DEVICE.format(device_sn=sn_device, date=date.strftime('%Y-%m-%d'))
+    )
+    rows = await crsr.fetchall()
+    await cnxn.close()
+    bookings = [MatrixBooking(passageTime=r[1]) for r in rows]
+    print(bookings)
+    return bookings
 
 
 @device_booking_viewer.get('/')

@@ -239,7 +239,8 @@ class CommandControlTerminal(BaseCommand):
     def upload_logs(self, ):
         self.set_operation_as_dict({
             "devAction": 10,
-            "id": self.sn_device
+            "id": self.sn_device,
+            "feedbackUrl": f"http://{settings.SERVER_HOST}:{settings.SERVER_PORT}/api/devices/diagnostic"
         })
 
 
