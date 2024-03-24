@@ -21,6 +21,8 @@ class ControlAction(str, Enum):
     DOOR_OPEN = 'DOOR_OPEN'
     # Обновить прошивку
     UPDATE_SOFTWARE = 'UPDATE_SOFTWARE'
+    #
+    UPLOAD_DIAGNOSTIC = 'UPLOAD_DIAGNOSTIC'
 
 
 class CreatePersonJsonException(Exception):
@@ -231,6 +233,12 @@ class CommandControlTerminal(BaseCommand):
         self.set_operation_as_dict({
             "devAction": 5,
             "apkUrl": firmware_url,
+            "id": self.sn_device
+        })
+
+    def upload_logs(self, ):
+        self.set_operation_as_dict({
+            "devAction": 10,
             "id": self.sn_device
         })
 

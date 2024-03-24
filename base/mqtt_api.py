@@ -16,7 +16,6 @@ from services.device_command import CommandControlTerminal, ControlAction, Comma
     CommandGetAccessLog
 from services.persond_ids_storage import PersonStorage
 
-
 mqtt_push_logger = get_logger('mqtt_publish_command')
 
 FAILURE_CODES_REASON = {
@@ -371,6 +370,8 @@ async def control_action(action, sn_device, timeout=settings.TIMEOUT_MQTT_RESPON
         command.open_door()
     if action == ControlAction.UPDATE_SOFTWARE:
         command.update_software(firmware_url=f'{settings.FIRMWARE_URL}/{settings.FIRMWARE_FILE}')
+    if action == ControlAction.UPLOAD_DIAGNOSTIC:
+        command.upload_logs()
 
     answer = await publish_command_and_wait_result(command, timeout=timeout)
 
