@@ -144,15 +144,15 @@ class MatrixBooking:
     passageTime: datetime
 
 
-async def fetch_booking_from_matrix(sn_device, date):
+async def fetch_booking_from_matrix(sn_device, date_start, date_end):
     SQL_QUERY_BOOKING_DEVICE = """
     SELECT terminalInfo.shortname,DATEADD(second,DATE_TIME_UTC/1000,'1970-01-01 00:00:00') as passageTime
     FROM matrix.matrix.BAS_BOOKING_VIEW b
     inner join matrix.TM_DEVICE_INFO terminalInfo ON b.terminalNumber = terminalInfo.number_
     where bookingTerminalEventTypeLang='en'
-    --and terminalInfo.shortname='{device_sn}'
-    and DATEADD(second,DATE_TIME_UTC/1000,'1970-01-01 00:00:00') >= '{date} 00:00:00' 
-    and DATEADD(second,DATE_TIME_UTC/1000,'1970-01-01 00:00:00') <= '{date} 23:59:59' 
+    and terminalInfo.shortname='{device_sn}'
+    and DATEADD(second,DATE_TIME_UTC/1000,'1970-01-01 00:00:00') >= '{date_start} 00:00:00' 
+    and DATEADD(second,DATE_TIME_UTC/1000,'1970-01-01 00:00:00') <= '{date_end} 23:59:59' 
     order by DATE_TIME_UTC desc
     """
 
@@ -165,12 +165,14 @@ async def fetch_booking_from_matrix(sn_device, date):
     cnxn = await aioodbc.connect(dsn=connection_string, )
     crsr = await cnxn.cursor()
     await crsr.execute(
-        SQL_QUERY_BOOKING_DEVICE.format(device_sn=sn_device, date=date.strftime('%Y-%m-%d'))
+        SQL_QUERY_BOOKING_DEVICE.format(
+            device_sn=sn_device,
+            date_start=date_start.strftime('%Y-%m-%d'),
+            date_end=date_end.strftime('%Y-%m-%d'))
     )
     rows = await crsr.fetchall()
     await cnxn.close()
     bookings = [MatrixBooking(passageTime=r[1]) for r in rows]
-    print(bookings)
     return bookings
 
 

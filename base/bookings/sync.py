@@ -21,7 +21,7 @@ def find_missing_bookings(db_bookings, device_bookings):
 
 async def get_booking_from_db_on_date(sn_device, date: datetime, from_matrix):
     if from_matrix:
-        result = await fetch_booking_from_matrix(sn_device, date)
+        result = await fetch_booking_from_matrix(sn_device, date, date)
     else:
         date_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
         date_end = date.replace(hour=23, minute=59, second=59, microsecond=0)

@@ -394,7 +394,7 @@ async def sync_device(
 async def show_matrix_bookings(
         sn_device: str,
         _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
-            "%Y-%m-%d")):
+            "%Y-%m-%dT%H:%M:%S")):
     """Показать зарегистрированные проходы в Matrix"""
-    r = await fetch_booking_from_matrix(sn_device=sn_device, date=_date)
+    r = await fetch_booking_from_matrix(sn_device=sn_device, date_start=_date, date_end=_date)
     return r
