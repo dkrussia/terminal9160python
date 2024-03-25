@@ -10,3 +10,4 @@ hypercorn==0.15.0
 SQLAlchemy==2.0.25
 aiosqlite==0.20.0
 pyodbc==5.0.1
+aioodbc==0.5.0
