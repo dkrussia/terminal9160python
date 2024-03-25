@@ -139,7 +139,7 @@ class RabbitMQClient:
             if reply_to:
                 await channel.default_exchange.publish(
                     Message(message.encode(),
-                            delivery_mode=2,  # 2 делает сообщение персистентным
+                            delivery_mode=2,
                             reply_to=reply_to,
                             correlation_id=correlation_id,
                             content_type='application/json'),
