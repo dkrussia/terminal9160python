@@ -27,6 +27,9 @@ except FileExistsError:
 class Settings(BaseSettings):
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8888
+
+    #
+    DIAGNOSTIC_HOST: str = "localhost"
     #
     #
     MATRIX_SQL_HOST = ""

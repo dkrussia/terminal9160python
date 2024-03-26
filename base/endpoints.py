@@ -1,4 +1,5 @@
 import asyncio
+import os.path
 from datetime import datetime
 from pprint import pprint
 from typing import Optional, Literal, List
@@ -17,7 +18,7 @@ from config import s as settings
 from base import mqtt_api
 from services.device_command import ControlAction
 from services.devices_storage import device_service
-# TODO: Разделить то что пушит девайс, и свои роуты
+
 from services.person_photo import PersonPhoto
 
 device_push_router = APIRouter(prefix='/api/devices')
@@ -253,11 +254,13 @@ async def pass_face(request: Request):
         asyncio.create_task(add_booking_to_local_db(payload))
 
 
-@device_push_router.post('/diagnostic')
-def download_diagnostic_data(request: Request):
-    print(request.headers)
-    print(request.body())
-    print(request.json())
+@device_push_router.put('/diagnostic')
+async def download_diagnostic(sn_device: str, request: Request):
+    f_name = f'diagnostic-{sn_device}-{datetime.now().strftime("%Y-%m-%dT%H-%M-%S")}.tag.gz'
+    with open(os.path.join(BASE_DIR, 'assets', f_name), "wb") as buffer:
+        b = await request.body()
+        buffer.write(b)
+    return 200
 
 
 @device_router.post("/control/set_ntp_time", )

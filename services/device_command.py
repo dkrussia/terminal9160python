@@ -237,10 +237,10 @@ class CommandControlTerminal(BaseCommand):
         })
 
     def upload_logs(self, ):
+        self.payload["feedbackUrl"] = f"{settings.DIAGNOSTIC_HOST}/api/devices/diagnostic?sn_device={self.sn_device}"
         self.set_operation_as_dict({
             "devAction": 10,
             "id": self.sn_device,
-            "feedbackUrl": f"http://{settings.SERVER_HOST}:{settings.SERVER_PORT}/api/devices/diagnostic"
         })
 
 
