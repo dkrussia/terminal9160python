@@ -16,8 +16,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
-from base.bookings.booking import task_try_send_fail_bookings
-from base.bookings.viewer import device_booking_viewer, init_db_models
+from base.bookings.viewer import device_booking_viewer
 from config import s
 
 from base.endpoints import device_router, person_router, device_push_router, sync_router
@@ -148,10 +147,8 @@ def on_reconnect_rmq():
 
 @app.on_event("startup")
 async def startup_event():
-    await init_db_models()
     await rabbit_mq.start(on_reconnect_rmq)
     asyncio.create_task(rabbit_mq.monitor_connection())
-    asyncio.create_task(task_try_send_fail_bookings())
 
     if s.MOCK_DEVICE:
         asyncio.create_task(mock_run())

@@ -1,4 +1,3 @@
-import asyncio
 import os.path
 from datetime import datetime
 from pprint import pprint
@@ -10,7 +9,7 @@ from starlette import status
 
 from base.bookings.booking import add_booking_to_rmq, BookingAddException
 from base.bookings.sync import sync_booking_on_device, sync_booking_all_devices
-from base.bookings.viewer import add_booking_to_local_db, fetch_booking_from_matrix
+from base.bookings.viewer import fetch_booking_from_matrix
 from base.mqtt_api import get_total_person_all_devices, get_total_person_device
 from base.schema import PersonCreate, UpdateConfig, NtpTime, CheckPhoto
 from config import BASE_DIR
@@ -250,8 +249,6 @@ async def pass_face(request: Request):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    finally:
-        asyncio.create_task(add_booking_to_local_db(payload))
 
 
 @device_push_router.put('/diagnostic')
