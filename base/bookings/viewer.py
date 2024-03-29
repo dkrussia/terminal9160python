@@ -68,7 +68,8 @@ async def fetch_booking_from_matrix(sn_device, date_start, date_end):
     """
 
     connection_string = (
-        "DRIVER=ODBC Driver 17 for SQL Server;"
+        f"DRIVER={settings.ODBC_DRIVER};"
+        "TrustServerCertificate=yes;"
         f"SERVER={settings.MATRIX_SQL_HOST},{settings.MATRIX_SQL_PORT};"
         "DATABASE=matrix;"
         f"UID={settings.MATRIX_SQL_LOGIN};PWD={settings.MATRIX_SQL_PASSWORD}"

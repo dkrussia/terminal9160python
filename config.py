@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     MATRIX_SQL_PORT = ""
     MATRIX_SQL_LOGIN = ""
     MATRIX_SQL_PASSWORD = ""
+    ODBC_DRIVER = "ODBC Driver 18 for SQL Server"
     #
     RMQ_HOST: str = "localhost"
     RMQ_PORT: int = 5672

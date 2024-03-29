@@ -1,4 +1,4 @@
-fastapi==0.100.1
+fastapi
 pytest==7.3.1
 aio-pika==9.2.1
 Faker==18.9.0
