@@ -1,40 +1,18 @@
 from dataclasses import dataclass
 from datetime import datetime
-from os import path
-from typing import List, Union
+from typing import List
 import aioodbc
 from fastapi import APIRouter
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.engine import URL
 from pydantic import BaseModel, ConfigDict, TypeAdapter, computed_field
+
+import config
 from base import mqtt_api
 from base.bookings.booking import get_booking_photo_head
-from config import BASE_DIR, s as settings
+from config import s as settings
 
-SQLALCHEMY_DATABASE_URL = path.join(BASE_DIR, 'assets', 'sql_app.db')
-
-SQLALCHEMY_DATABASE_URL_MATRIX = URL(
-    'mssql+aioodbc',
-    settings.MATRIX_SQL_LOGIN,
-    settings.MATRIX_SQL_PASSWORD,
-    settings.MATRIX_SQL_HOST,
-    settings.MATRIX_SQL_PORT,
-    'matrix', {"driver": "ODBC Driver 18 for SQL Server"})
-engine_sql_server = create_async_engine(
-    "mssql+aioodbc://sa:123@151.248.125.126:14330/matrix?"
-    "driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
-)
-
-ASessionSQlServer = async_sessionmaker(
-    autocommit=False,
-    autoflush=False, bind=engine_sql_server,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
 
 Base = declarative_base()
-
 device_booking_viewer = APIRouter(prefix='/api/devices/booking/view')
 
 
@@ -56,7 +34,8 @@ class BookingHistorySchemaBase(BaseModel):
     @computed_field
     @property
     def device_head(self) -> str:
-        return get_booking_photo_head(self.devSn, self.devUserId, self.passageTime, )
+        return (f"{config.s.PHOTO_PASS}/pass_photo/"
+                f"{get_booking_photo_head(self.devSn, self.devUserId, self.passageTime, )}")
 
 
 class BookingHistorySchema(BookingHistorySchemaBase):

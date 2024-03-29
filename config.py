@@ -68,6 +68,7 @@ class Settings(BaseSettings):
     MOCK_DEVICE_ERROR_TIMEOUT = range(1, 2)
 
     PHOTO_DIR = os.path.join(BASE_DIR, 'assets/photo')
+    PHOTO_PASS = ""
 
     FIRMWARE_URL: str = None
     PHOTO_URL: str = None
@@ -83,3 +84,4 @@ class Settings(BaseSettings):
 s = Settings()
 s.FIRMWARE_URL = f"http://{s.HOST_FOR_TERMINAL}:{s.PORT_FOR_TERMINAL}{FIRMWARE_PATH}"
 s.PHOTO_URL = f"http://{s.HOST_FOR_TERMINAL}:{s.PORT_FOR_TERMINAL}{PHOTO_PATH}"
+s.PHOTO_PASS = f"http://{s.HOST_FOR_TERMINAL}:{s.PORT_FOR_TERMINAL}"

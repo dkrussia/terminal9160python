@@ -129,6 +129,8 @@ class Devices:
 
     @classmethod
     def is_access_mode(cls, sn_device):
+        if not cls.devices_meta[sn_device].get("config"):
+            return False
         return cls.devices_meta[sn_device]["config"]["attendance"] is False
 
     @classmethod

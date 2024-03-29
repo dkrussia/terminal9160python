@@ -109,6 +109,14 @@ async def custom_swagger_ui_html():
     )
 
 
+@app.get('/pass_photo/{path:path}', )
+async def pass_photo(path: str):
+    full_path = os.path.abspath(os.path.join(BASE_DIR, "assets/pass_photo", path))
+    if full_path.startswith(BASE_DIR) and os.path.exists(full_path):
+        return FileResponse(full_path)
+    return HTMLResponse(status_code=404)
+
+
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
     return FileResponse(os.path.join(BASE_DIR, 'dashboard', 'favicon.ico'))
@@ -157,6 +165,7 @@ async def startup_event():
     PersonPhoto.load_faces()
     asyncio.create_task(mqtt_consumer())
     asyncio.create_task(PersonPhoto.save_templates_to_file())
+
 
 if __name__ == '__main__':
     uvicorn.run(
