@@ -383,10 +383,9 @@ async def sync_all_device(
 @sync_router.post("/device", )
 async def sync_device(
         sn_device: str,
-        from_matrix: bool = False,
         _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
             "%Y-%m-%dT%H:%M:%S")):
-    r = await sync_booking_on_device(sn_device, _date, from_matrix)
+    r = await sync_booking_on_device(sn_device, _date, )
     return r
 
 

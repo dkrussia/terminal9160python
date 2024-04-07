@@ -13,6 +13,7 @@ set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 devices = device_service.all_sn_list
 date = datetime.datetime.now() - datetime.timedelta(days=1)
 
+
 async def main():
     def reconnect():
         pass
