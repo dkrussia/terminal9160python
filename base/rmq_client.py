@@ -138,23 +138,28 @@ class RabbitMQClient:
         async with self.connection.channel() as channel:
             if reply_to:
                 await channel.default_exchange.publish(
-                    Message(message.encode(),
-                            delivery_mode=2,
-                            reply_to=reply_to,
-                            correlation_id=correlation_id,
-                            content_type='application/json'),
+                    Message(
+                        message.encode(),
+                        reply_to=reply_to,
+                        correlation_id=correlation_id,
+                        content_type='application/json'
+                    ),
                     routing_key=reply_to,
-
                 )
                 return
 
             arguments = {}
             if q_name and 'ping' in q_name:
                 arguments = {'x-message-ttl': 30 * 1000}
+
             queue = await channel.declare_queue(q_name, arguments=arguments)
 
             await channel.default_exchange.publish(
-                Message(message.encode(), content_type='application/json', ),
+                Message(
+                    message.encode(),
+                    content_type='application/json',
+                    delivery_mode=2
+                ),
                 routing_key=queue.name,
             )
 
@@ -162,7 +167,7 @@ class RabbitMQClient:
         channel = await self.connection.channel()
         await channel.set_qos(prefetch_count=1)
         queue = await channel.declare_queue(queue_name)
-        await queue.consume(lambda msg: command_rmq_handler(queue_name, msg))
+        r = await queue.consume(lambda msg: command_rmq_handler(queue_name, msg))
 
 
 rabbit_mq = RabbitMQClient(
