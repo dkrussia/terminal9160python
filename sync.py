@@ -20,7 +20,7 @@ async def main():
 
     asyncio.create_task(mqtt_consumer())
     await rabbit_mq.start(reconnect)
-    await sync_booking_all_devices(devices, date, from_matrix=True)
+    await sync_booking_all_devices(devices, date,)
 
 
 if __name__ == '__main__':
