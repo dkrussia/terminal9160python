@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Union
 
 from aio_pika import connect_robust, IncomingMessage, Message
+from aiormq import ChannelInvalidStateError
 
 from base import mqtt_api
 from config import s as settings
@@ -23,13 +24,16 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
     4. multiuser_update -
     5. user_delete +
     """
-    async with message.process():
-        type_command = message.headers.get("command_type")
-        reply_to = message.reply_to
-        rmq_payload: Union[dict, list] = json.loads(message.body.decode('utf-8'))
-
-        sn_device = queue_name.split("_")[-1]
-
+    try:
+        async with message.process():
+            type_command = message.headers.get("command_type")
+            reply_to = message.reply_to
+            rmq_payload: Union[dict, list] = json.loads(message.body.decode('utf-8'))
+            sn_device = queue_name.split("_")[-1]
+    except ChannelInvalidStateError:
+        # Reconnect consumer?
+        logger.error(f"ChannelInvalidStateError => sn={sn_device} | type_command={type_command}")
+    else:
         t1 = datetime.now()
         result = None
 
@@ -68,6 +72,7 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
             'Return': "0",
             'details': result.get("has_error", None) if result else 'Not details'
         }
+
         if not result or result["has_error"]:
             await rabbit_mq.publish_message(
                 q_name=reply_to,
@@ -83,8 +88,8 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
                 correlation_id=message.correlation_id
             )
         t2 = datetime.now()
-        print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
 
+        print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
         logger.info(
             f' [{len(rmq_payload) if type(rmq_payload) is list else 1}]'
             f' ~{type_command}'
@@ -92,10 +97,6 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
             f' start={t1.strftime("%H:%M:%S")}'
             f' end={t2.strftime("%H:%M:%S")}'
         )
-    # type_command == 'user_update' or
-    # type_command == 'multiuser_update' or
-    # if type_command == 'user_update_biophoto':
-    # if type_command == 'multiuser_update_biophoto':
 
 
 class RabbitMQClient:
