@@ -153,7 +153,7 @@ class RabbitMQClient:
             if q_name and 'ping' in q_name:
                 arguments = {'x-message-ttl': 30 * 1000}
 
-            queue = await channel.declare_queue(q_name, arguments=arguments)
+            queue = await channel.declare_queue(q_name, arguments=arguments, durable=True)
 
             await channel.default_exchange.publish(
                 Message(
@@ -167,8 +167,8 @@ class RabbitMQClient:
     async def start_queue_listener(self, queue_name, ):
         channel = await self.connection.channel()
         await channel.set_qos(prefetch_count=1)
-        queue = await channel.declare_queue(queue_name)
-        r = await queue.consume(lambda msg: command_rmq_handler(queue_name, msg))
+        queue = await channel.declare_queue(queue_name, durable=True)
+        await queue.consume(lambda msg: command_rmq_handler(queue_name, msg))
 
 
 rabbit_mq = RabbitMQClient(
