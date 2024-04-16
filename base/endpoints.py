@@ -369,14 +369,13 @@ async def access_log(
 
 @sync_router.post("/all", )
 async def sync_all_device(
-        from_matrix: bool = False,
         _date: datetime = datetime.now().replace(hour=0, minute=0, second=0).strftime(
             "%Y-%m-%dT%H:%M:%S")
 ):
     """Синхронизуемся по всем устройствам"""
     devices = device_service.all_sn_list
     # devices = ['YGKJ202107TR08EL0007']
-    r = await sync_booking_all_devices(devices, _date, from_matrix)
+    r = await sync_booking_all_devices(devices, _date, )
     return r
 
 
