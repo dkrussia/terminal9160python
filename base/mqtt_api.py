@@ -94,8 +94,8 @@ def is_answer_has_error(command, answer):
     errors = []
     if answer is None:
         logger.error(
-            f' ![+]ERROR Not receive answer from MQTT '
-            f'\n Command={command.log_payload}'
+            f'![+]ERROR Not receive answer from MQTT\n'
+            f'\t\tCommand={json.dumps(command.log_payload)}'
         )
         errors.append({
             'reason': "ERROR Not receive answer from MQTT",
@@ -110,7 +110,7 @@ def is_answer_has_error(command, answer):
             logger.error(
                 f' ![+]ERROR Some operations'
                 f'\n Answer= ${json.dumps(answer)}'
-                f'\n Command={command.log_payload}'
+                f'\n Command={json.dumps(command.log_payload)}'
                 f'\n ERROR Operation={answer["operations"]}'
             )
 
@@ -135,7 +135,7 @@ def is_answer_has_error(command, answer):
                     logger.error(
                         f' ![+]ERROR Some operations'
                         f'\n Answer= ${json.dumps(answer)}'
-                        f'\n Command={command.log_payload}'
+                        f'\n Command={json.dumps(command.log_payload)}'
                         f'\n ERROR Operation={operation}'
                         f'\n Details = {FAILURE_CODES_REASON.get(operation["code"], "Not details")}'
                     )
@@ -152,7 +152,7 @@ def is_answer_has_error(command, answer):
                 logger.error(
                     f' ![+]ERROR Some operations'
                     f'\n Answer= ${json.dumps(answer)}'
-                    f'\n Command={command.log_payload}'
+                    f'\n Command={json.dumps(command.log_payload)}'
                     f'\n ERROR operation={answer["operations"]["result"]}'
                     f'\n Details = {FAILURE_CODES_REASON.get(answer["operations"]["result"]["code"], "Not details")} '
                 )
@@ -347,8 +347,10 @@ async def delete_person(sn_device: str, id: int = None, timeout=settings.TIMEOUT
     answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     if not id:
+        # ALL DELETE
         PersonStorage.clear(sn_device)
     else:
+        # DELETE by ID
         person_photo_service.delete_template(id)
         PersonStorage.remove(sn_device, id)
 
@@ -393,7 +395,8 @@ async def control_action_set_ntp(sn_device, payload, timeout=settings.TIMEOUT_MQ
     }
 
 
-async def control_action_set_ntp_multi(payload, sn_devices: List[str],
+async def control_action_set_ntp_multi(
+        payload, sn_devices: List[str],
         timeout=settings.TIMEOUT_MQTT_RESPONSE):
     result = {sn: None for sn in sn_devices}
     all_tasks = []

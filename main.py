@@ -36,12 +36,12 @@ from services.devices_storage import device_service
 from services.mock import mock_run
 from services.person_photo import PersonPhoto
 
+loop = asyncio.new_event_loop()
+
 if sys.platform.lower() == "win32" or os.name.lower() == "nt":
     from asyncio import set_event_loop_policy, WindowsSelectorEventLoopPolicy
-
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
-    loop = asyncio.ProactorEventLoop()
-    asyncio.set_event_loop(loop)
+    loop = asyncio.get_event_loop()
 
 pathlib.Path(settings.PHOTO_DIR).mkdir(parents=True, exist_ok=True)
 pathlib.Path(FIRMWARE_DIR).mkdir(parents=True, exist_ok=True)
@@ -168,11 +168,20 @@ async def startup_event():
 
 
 if __name__ == '__main__':
-    uvicorn.run(
+    # uvicorn.run(
+    #     app=app,
+    #     port=settings.SERVER_PORT,
+    #     host=settings.SERVER_HOST,
+    #     loop="asyncio"
+    # )
+    from uvicorn import Config, Server
+    config = Config(
         app=app,
         port=settings.SERVER_PORT,
         host=settings.SERVER_HOST,
-    )
+        loop=loop)
+    server = Server(config)
+    loop.run_until_complete(server.serve())
     # from hypercorn.config import Config
     # from hypercorn.asyncio import serve
     #
