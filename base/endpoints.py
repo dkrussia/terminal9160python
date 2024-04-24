@@ -120,13 +120,6 @@ async def person_create_or_update(
 
 @device_router.get('/all')
 async def all_devices_registered():
-    for sn_device in device_service.devices:
-        if sn_device in device_service.devices_meta.keys() \
-                and 'config' not in device_service.devices_meta[sn_device].keys():
-            # Вызвать это для получения конфига с сервера с пустой нагрузкой
-            r = await mqtt_api.update_config(sn_device, {}, )
-            if r["answer"]:
-                device_service.save_config(sn_device, r["answer"].get('operations'))
     return {
         'meta': device_service.devices_meta,
         'observed': device_service.devices_observed,
