@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 from datetime import datetime
 from typing import Union
 
@@ -24,79 +25,87 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
     4. multiuser_update -
     5. user_delete +
     """
+    i = random.randint(1000, 10000)
+    print(f'{i}-{queue_name}-start', datetime.now())
     try:
         async with message.process():
             type_command = message.headers.get("command_type")
             reply_to = message.reply_to
             rmq_payload: Union[dict, list] = json.loads(message.body.decode('utf-8'))
             sn_device = queue_name.split("_")[-1]
+            try:
+                t1 = datetime.now()
+                result = None
+
+                if type_command == 'user_update_biophoto':
+                    if rmq_payload["id"].isdigit():
+                        result = await mqtt_api.create_or_update(
+                            sn_device=sn_device,
+                            id_person=int(rmq_payload["id"]),
+                            firstName=rmq_payload["firstName"],
+                            lastName=rmq_payload["lastName"],
+                            photo=rmq_payload.get('picture', ""),
+                            cardNumber=rmq_payload["cardNumber"]
+                        )
+
+                if type_command == 'multiuser_update_biophoto':
+                    rmq_payload = list(filter(lambda p: p["id"].isdigit(), rmq_payload))
+                    result = await mqtt_api.batch_create_or_update(sn_device=sn_device,
+                                                                   persons=rmq_payload,
+                                                                   batch_size=settings.BATCH_UPDATE_SIZE)
+
+                if type_command == 'user_delete':
+                    if rmq_payload["id"].isdigit():
+                        result = await mqtt_api.delete_person(sn_device=sn_device,
+                                                              id=int(rmq_payload["id"]))
+
+                if type_command == 'multiuser_delete':
+                    result = await mqtt_api.delete_person(sn_device=sn_device)
+
+                error_result = {
+                    "result": 'Error',
+                    'Return': "-1",
+                    'details': result.get("has_error", None) if result else 'Not details'
+                }
+                success_result = {
+                    "result": 'Successful',
+                    'Return': "0",
+                    'details': result.get("has_error", None) if result else 'Not details'
+                }
+
+                if not result or result["has_error"]:
+                    await rabbit_mq.publish_message(
+                        q_name=reply_to,
+                        reply_to=reply_to,
+                        message=json.dumps(error_result),
+                        correlation_id=message.correlation_id
+                    )
+                else:
+                    await rabbit_mq.publish_message(
+                        q_name=reply_to,
+                        reply_to=reply_to,
+                        message=json.dumps(success_result),
+                        correlation_id=message.correlation_id
+                    )
+                t2 = datetime.now()
+
+                print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
+                logger.info(
+                    f' [{len(rmq_payload) if type(rmq_payload) is list else 1}]'
+                    f' ~{type_command}'
+                    f' SN={sn_device} total={(t2 - t1).total_seconds()}s'
+                    f' start={t1.strftime("%H:%M:%S")}'
+                    f' end={t2.strftime("%H:%M:%S")}'
+                )
+                print(f'{i}-{queue_name}-end', datetime.now())
+            except Exception as e:
+                logger.error(f"Proces command when call command_rmq_handler error {e}")
+
     except ChannelInvalidStateError:
         # Reconnect consumer?
         logger.error(f"ChannelInvalidStateError => sn={sn_device} | type_command={type_command}")
-    else:
-        t1 = datetime.now()
-        result = None
-
-        if type_command == 'user_update_biophoto':
-            if rmq_payload["id"].isdigit():
-                result = await mqtt_api.create_or_update(
-                    sn_device=sn_device,
-                    id_person=int(rmq_payload["id"]),
-                    firstName=rmq_payload["firstName"],
-                    lastName=rmq_payload["lastName"],
-                    photo=rmq_payload.get('picture', ""),
-                    cardNumber=rmq_payload["cardNumber"]
-                )
-
-        if type_command == 'multiuser_update_biophoto':
-            rmq_payload = list(filter(lambda p: p["id"].isdigit(), rmq_payload))
-            result = await mqtt_api.batch_create_or_update(sn_device=sn_device,
-                                                           persons=rmq_payload,
-                                                           batch_size=settings.BATCH_UPDATE_SIZE)
-
-        if type_command == 'user_delete':
-            if rmq_payload["id"].isdigit():
-                result = await mqtt_api.delete_person(sn_device=sn_device,
-                                                      id=int(rmq_payload["id"]))
-
-        if type_command == 'multiuser_delete':
-            result = await mqtt_api.delete_person(sn_device=sn_device)
-
-        error_result = {
-            "result": 'Error',
-            'Return': "-1",
-            'details': result.get("has_error", None) if result else 'Not details'
-        }
-        success_result = {
-            "result": 'Successful',
-            'Return': "0",
-            'details': result.get("has_error", None) if result else 'Not details'
-        }
-
-        if not result or result["has_error"]:
-            await rabbit_mq.publish_message(
-                q_name=reply_to,
-                reply_to=reply_to,
-                message=json.dumps(error_result),
-                correlation_id=message.correlation_id
-            )
-        else:
-            await rabbit_mq.publish_message(
-                q_name=reply_to,
-                reply_to=reply_to,
-                message=json.dumps(success_result),
-                correlation_id=message.correlation_id
-            )
-        t2 = datetime.now()
-
-        print(f'Total: {type_command}-{(t2 - t1).total_seconds()}')
-        logger.info(
-            f' [{len(rmq_payload) if type(rmq_payload) is list else 1}]'
-            f' ~{type_command}'
-            f' SN={sn_device} total={(t2 - t1).total_seconds()}s'
-            f' start={t1.strftime("%H:%M:%S")}'
-            f' end={t2.strftime("%H:%M:%S")}'
-        )
+    except Exception as e:
+        logger.error(f"Not recognized when call command_rmq_handler() error {e}")
 
 
 class RabbitMQClient:
