@@ -290,14 +290,14 @@ async def batch_create_or_update(
 
     # 1. Отправка команды на создание всех людей <50 штук
     if person_for_create:
-        person_create_result = await process_batch_create(sn_device, person_for_create)
+        person_create_result = await process_batch_create(sn_device, person_for_create, timeout=60)
         errors += person_create_result
 
     # 2. Запуск обновления людей по пачкам асинхронно
     if person_for_update:
         for i in range(0, len(person_for_update), batch_size):
             batch = person_for_update[i:i + batch_size]
-            task = asyncio.create_task(process_batch_update(sn_device, batch, timeout))
+            task = asyncio.create_task(process_batch_update(sn_device, batch, 3 * batch_size))
             errors += await task
 
     print(f'Batch create {len(person_for_create)}')
