@@ -55,6 +55,12 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
                                                                    batch_size=settings.BATCH_UPDATE_SIZE)
 
                 if type_command == 'user_delete':
+                    # expiry_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    # expiry_end = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    # payload = {
+                    #     "id": int(rmq_payload["id"]),
+                    #     "expiry": f'{expiry_start},{expiry_end}'
+                    # }
                     if rmq_payload["id"].isdigit():
                         result = await mqtt_api.delete_person(sn_device=sn_device,
                                                               id=int(rmq_payload["id"]))
