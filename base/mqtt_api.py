@@ -1,7 +1,7 @@
 import json
 import asyncio
 from asyncio import Future
-from datetime import datetime
+from datetime import datetime, timedelta
 import base64
 from typing import Dict, List
 import aiomqtt
@@ -26,6 +26,14 @@ FAILURE_CODES_REASON = {
 }
 
 futures: Dict[str, asyncio.Future] = {}
+
+
+def get_expiry_date(is_expiry=False):
+    expiry_start = datetime(2000, 1, 1).strftime("%Y-%m-%d %H:%M:%S")
+    expiry_end = datetime(2001, 1, 1).strftime("%Y-%m-%d %H:%M:%S")
+    if not is_expiry:
+        expiry_end = (datetime.now() + timedelta(days=365 * 40)).strftime("%Y-%m-%d %H:%M:%S")
+    return f'{expiry_start},{expiry_end}'
 
 
 async def publish_command_and_wait_result(command, timeout):
@@ -170,10 +178,11 @@ async def create_or_update(
         cardNumber,
         timeout=settings.TIMEOUT_MQTT_RESPONSE
 ):
-    r = await delete_person(sn_device=sn_device, id=id_person, timeout=10)
+    r = await get_person(sn_device=sn_device, id_person=id_person, timeout=10)
     if not r.get('answer'):
         return r
 
+    exp = get_expiry_date(is_expiry=False)
     if photo and isinstance(photo, UploadFile):
         photo = base64.b64encode(photo.file.read()).decode("utf-8")
 
@@ -182,16 +191,52 @@ async def create_or_update(
         firstName=firstName,
         lastName=lastName,
         face_str=photo,
-        cardNumber=cardNumber
+        cardNumber=cardNumber,
+        expiry=exp
     )
 
-    command = person_service.CommandCreatePerson(sn_device=sn_device)
-    command.add_person(person_json)
+    if 'users' in r['answer']['operations']:
+        command = person_service.CommandUpdatePerson(sn_device=sn_device)
+        command.update_person(person_json)
+    else:
+        command = person_service.CommandCreatePerson(sn_device=sn_device)
+        command.add_person(person_json)
 
     answer = await publish_command_and_wait_result(command, timeout=timeout)
-
     save_template_from_answer(answer)
     save_person_ids_in_storage_from_answer(sn_device, answer)
+
+    return {
+        "answer": answer,
+        "command": command.payload,
+        "has_error": is_answer_has_error(command, answer)
+    }
+
+
+async def set_person_expired(
+        sn_device,
+        id_person,
+        firstName,
+        lastName,
+        cardNumber,
+        is_expiry=False,
+        timeout=settings.TIMEOUT_MQTT_RESPONSE
+):
+    r = await get_person(sn_device=sn_device, id_person=id_person, timeout=10)
+    if not r.get('answer'):
+        return r
+
+    exp = get_expiry_date(is_expiry)
+    person_json = person_service.create_person_json(
+        id=id_person,
+        firstName=firstName,
+        lastName=lastName,
+        cardNumber=cardNumber,
+        expiry=exp
+    )
+    command = person_service.CommandUpdatePerson(sn_device=sn_device)
+    command.update_person(person_json)
+    answer = await publish_command_and_wait_result(command, timeout=timeout)
 
     return {
         "answer": answer,
@@ -322,7 +367,7 @@ async def get_all_person(sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     }
 
 
-async def get_person(id_person, sn_device, timeout=settings.TIMEOUT_MQTT_RESPONSE):
+async def get_person(sn_device, id_person, timeout=settings.TIMEOUT_MQTT_RESPONSE):
     command = person_service.CommandGetPerson(sn_device=sn_device)
     command.search_person(id_person)
     answer = await publish_command_and_wait_result(command, timeout=timeout)
