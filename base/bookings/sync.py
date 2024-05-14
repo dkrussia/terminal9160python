@@ -63,9 +63,11 @@ async def sync_booking_on_device(sn_device: str, date: datetime, ):
 
 
 async def sync_booking_all_devices(sn_devices: list, date: datetime, ):
+    logger.info(f'SYNC START {date.strftime("%Y-%m-%d")}')
     results = {}
     for sn_device in sn_devices:
         logger.info(f'Sync booking for {sn_device}. {date}')
         r = await sync_booking_on_device(sn_device, date, )
         results[sn_device] = r
+    logger.info(f'SYNC END')
     return results

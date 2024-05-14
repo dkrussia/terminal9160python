@@ -2,9 +2,8 @@ import asyncio
 import os
 import pathlib
 import sys
+from datetime import datetime
 from typing import List
-
-import uvicorn
 
 from fastapi import FastAPI, Request, Query
 from fastapi.encoders import jsonable_encoder
@@ -16,6 +15,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
 
+from base.bookings.sync import sync_booking_all_devices
 from base.bookings.viewer import device_booking_viewer
 from config import s
 
@@ -40,6 +40,7 @@ loop = asyncio.new_event_loop()
 
 if sys.platform.lower() == "win32" or os.name.lower() == "nt":
     from asyncio import set_event_loop_policy, WindowsSelectorEventLoopPolicy
+
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
     loop = asyncio.get_event_loop()
 
@@ -166,6 +167,10 @@ async def startup_event():
     asyncio.create_task(mqtt_consumer())
     asyncio.create_task(PersonPhoto.save_templates_to_file())
 
+    # Синхронизация всех события при старте приложения
+    from services.devices_storage import device_service
+    asyncio.create_task(sync_booking_all_devices(device_service.all_sn_list, datetime.now(), ))
+
 
 if __name__ == '__main__':
     # uvicorn.run(
@@ -175,6 +180,7 @@ if __name__ == '__main__':
     #     loop="asyncio"
     # )
     from uvicorn import Config, Server
+
     config = Config(
         app=app,
         port=settings.SERVER_PORT,
