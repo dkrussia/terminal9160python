@@ -30,10 +30,12 @@ class CreatePersonJsonException(Exception):
 
 
 def create_person_json(
-        id: int, lastName: str = "",
+        id: int,
+        lastName: str = "",
         firstName: str = "",
         cardNumber: int = None,
-        face_str: str = ""):
+        face_str: str = "",
+        expiry: str = ""):
     if not isinstance(id, int) or id < 1:
         raise CreatePersonJsonException
     # TODO: add faceUrl
@@ -56,7 +58,7 @@ def create_person_json(
         "department": "",
         "group": "",
         "remark": "",
-        "expiry": ""
+        "expiry": expiry
     }
     # "expiry": "2023-08-20 18:25:00,2023-08-20 19:06:00"
     if not face_str:
@@ -237,7 +239,8 @@ class CommandControlTerminal(BaseCommand):
         })
 
     def upload_logs(self, ):
-        self.payload["feedbackUrl"] = f"{settings.DIAGNOSTIC_HOST}/api/devices/diagnostic?sn_device={self.sn_device}"
+        self.payload[
+            "feedbackUrl"] = f"{settings.DIAGNOSTIC_HOST}/api/devices/diagnostic?sn_device={self.sn_device}"
         self.set_operation_as_dict({
             "devAction": 10,
             "id": self.sn_device,

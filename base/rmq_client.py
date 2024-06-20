@@ -50,14 +50,23 @@ async def command_rmq_handler(queue_name, message: IncomingMessage):
 
                 if type_command == 'multiuser_update_biophoto':
                     rmq_payload = list(filter(lambda p: p["id"].isdigit(), rmq_payload))
-                    result = await mqtt_api.batch_create_or_update(sn_device=sn_device,
-                                                                   persons=rmq_payload,
-                                                                   batch_size=settings.BATCH_UPDATE_SIZE)
+                    result = await mqtt_api.batch_create_or_update(
+                        sn_device=sn_device,
+                        persons=rmq_payload,
+                        batch_size=settings.BATCH_UPDATE_SIZE)
 
                 if type_command == 'user_delete':
                     if rmq_payload["id"].isdigit():
-                        result = await mqtt_api.delete_person(sn_device=sn_device,
-                                                              id=int(rmq_payload["id"]))
+                        # result = await mqtt_api.delete_person(sn_device=sn_device,
+                        #                                       id=int(rmq_payload["id"]))
+                        result = await mqtt_api.set_person_expired(
+                            sn_device=sn_device,
+                            id_person=int(rmq_payload["id"]),
+                            firstName=rmq_payload["firstName"],
+                            lastName=rmq_payload["lastName"],
+                            cardNumber=rmq_payload["cardNumber"],
+                            is_expiry=True,
+                            timeout=10)
 
                 if type_command == 'multiuser_delete':
                     result = await mqtt_api.delete_person(sn_device=sn_device)

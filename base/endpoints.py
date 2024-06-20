@@ -69,7 +69,7 @@ async def get_person(sn_device: str, id: Optional[int] = ""):
                         person["id"]) else "NOT FOUND"}
                 )
         return resp
-    return await mqtt_api.get_person(id_person=id, sn_device=sn_device)
+    return await mqtt_api.get_person(sn_device=sn_device, id_person=id, )
 
 
 @person_router.delete("/{id}", description="Удаление пользователя по ID")
@@ -78,20 +78,41 @@ async def delete_person(sn_device: str, id: int = None):
     return await mqtt_api.delete_person(sn_device=sn_device, id=id)
 
 
-@person_router.post("/self", description="Добавить себя")
-async def add_self_person(
-        sn_device: str,
-):
-    with open(f'{BASE_DIR}/tests/base64photo.txt', 'r') as f:
-        p = f.read()
-    return await mqtt_api.create_or_update(
-        sn_device=sn_device,
-        id_person=999,
-        firstName="Сергей",
-        lastName="Кузнецов",
-        photo=p,
-        cardNumber=None,
-    )
+@person_router.post("/test", description="TEST")
+async def add_self_person():
+    # person_json = {
+    #     "createBy": "",
+    #     "createTime": 0,
+    #     "deptId": 0,
+    #     "faceUrl": "",
+    #     "id": 75,
+    #     "sex": 0,
+    #     "status": 0,
+    #     "updateBy": "",
+    #     "userCode": "75",
+    #     "userName": "",
+    #     "firstName": "K",
+    #     "lastName": "S",
+    #     "userPhone": "",
+    #     "cardNum": "1234111",
+    #     "wiegandNum": "1234111",
+    #     "company": "",
+    #     "department": "",
+    #     "group": "",
+    #     "remark": "",
+    #     "expiry": ""
+    # }
+    # command = device_command.CommandUpdatePerson(sn_device="YGKJ202107TR08EL0007")
+    # command.update_person(person_json)
+    # answer = await publish_command_and_wait_result(command, timeout=10)
+    result = await mqtt_api.set_person_expired(
+        sn_device="YGKJ202107TR08EL0007",
+        id_person=75,
+        firstName="K",
+        lastName="S",
+        cardNumber=123,
+        is_expiry=True)
+    return result
 
 
 @person_router.post("/{id}", description="Создание или обновление пользователя по ID")
