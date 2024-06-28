@@ -1,9 +1,68 @@
+Папка assets логи и фотографии  
+Папка dashboard фронтенд часть  
+Папка base, services, utils исходный код      
+archive_whl_packages.cmd загружает библиотеки на диск из интернета в папку packages  
+install_requirements_offline.cmd ищет и ставит пакеты offline из папки packages  
+compile_src_archive.cmd делат build dashboard и создает архив с проектом, пакетами, frontend частью  
+sync.py ручной запуск синхронизации bookings за предыдущий день  
+
+Пример  
+./compile_src_archive.cmd local  
+Файл конфигурации Dashboard => frontend/.env.local  
+Файл конфигурации Backend => ./.env.local  
+Запуск npm rub build в папку ./dashboard c настройками ./frontend/.end.local  
+Загрузка пакетов указаных в requirements.txt  
+Создание архива с проектом  
+
+  
+Конфигурация Backend
+  
+SERVER_HOST хост севера  
+SERVER_PORT порт сервера
+
+MATRIX_SQL_HOST хост сервера базы данных
+MATRIX_SQL_PORT порт сервера базы данных
+MATRIX_SQL_LOGIN логин сервера базы данных
+MATRIX_SQL_PASSWORD пароль сервера базы данных
+ODBC_DRIVER используемый драйвер сервера базы данных
+
+RMQ_HOST хост rabbitmq  
+RMQ_PORT порт rabbitmq  
+RMQ_USER: логин rabbitmq  
+RMQ_PASSWORD пароль rabbitmq  
+
+MQTT_HOST хост mqtt  
+MQTT_PORT порт mqtt  
+MQTT_USER логин mqtt  
+MQTT_PASSWORD пароль mqtt  
+
+(для фотографий)  
+HOST_FOR_TERMINAL хост сервера переднный терминалу  
+PORT_FOR_TERMINAL порт сервера переданный терминалу  
+
+FIRMWARE_FILE имя файла прошивки в assets/firmware  
+
+TIMEOUT_MQTT_RESPONSE время ожидание ответа на команду переданню на терминал   
+BATCH_UPDATE_SIZE кол-во асинхронных запросов к терминал при обновлении персоны    
+
+PHOTO_DIR папка с фотографиями персон assets/photo  
+PHOTO_PASS url для фотографий проходов  
+
+FIRMWARE_URL url для загрузкт терминалом прошивки  
+PHOTO_URL url для загрузки фотографий терминалом  
+
+MCI_PHOTO_MANAGER настройка лоигики получения фотографии 1. из папки (mci сохраняет), 2. взять из rabbitmq
+
+BOOKING_HISTORY_STRANGER сохранять историю проходов не распознаных персон
+  
 *Swagger UI Доступен по пути: `/docs`*
 *Swagger UI Доступен по пути: `/docs`*
   
 **Собрать проект с npm build**  
 
 `./compile_src_archive.cmd env_mode`
+env_mode файл с конфигурацией проекта
+
 _Где env_mode файл лежащий в папке frontend .env.env_mode_ 
   
 * Загрузить requirements.txt для установки оффлайн
