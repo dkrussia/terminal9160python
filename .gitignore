@@ -12,11 +12,8 @@ __pycache__/
 
 assets/docker-release/launcher/Launcher9160.exe
 
-assets/firmware
 assets/packages/
-assets/docs/
 assets/logs/
-assets/photo
 assets/sql_app.db
 
 

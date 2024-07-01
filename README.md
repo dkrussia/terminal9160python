@@ -1,4 +1,7 @@
 Папка assets логи и фотографии  
+    1. face_template_cache.json хранит face шаблоны извлеченные из фотографии
+    2. devices_db.json хранит список и состояние устройств в системе
+
 Папка dashboard фронтенд часть  
 Папка base, services, utils исходный код      
 archive_whl_packages.cmd загружает библиотеки на диск из интернета в папку packages  
@@ -232,3 +235,4 @@ __________________________________
 3. MCI_SERVICE слушает очередь Ping => events_$device.
    `{sn: str}`    
    sn: номер устройства.
+4. 
