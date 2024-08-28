@@ -269,8 +269,8 @@ async def pass_face(request: Request):
 async def download_diagnostic(sn_device: str, request: Request):
     f_name = f'diagnostic-{sn_device}-{datetime.now().strftime("%Y-%m-%dT%H-%M-%S")}.tag.gz'
     with open(os.path.join(BASE_DIR, 'assets', f_name), "wb") as buffer:
-        b = await request.body()
-        buffer.write(b)
+        async for chunk in request.stream():
+            buffer.write(chunk)
     return 200
 
 
